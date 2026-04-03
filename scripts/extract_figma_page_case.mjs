@@ -122,7 +122,7 @@ const components = [...typeCount.entries()]
 const topColors = [...colorCount.entries()]
   .sort((a, b) => b[1] - a[1])
   .slice(0, 20)
-  .map(([hex, count]) => ({ hex, count, tokenPath: "待人工映射 dgjTokens.*" }));
+  .map(([hex, count]) => ({ hex, count, tokenPath: "待人工映射 vcTokens.*" }));
 
 const icons = [...iconNameCount.entries()]
   .sort((a, b) => b[1] - a[1])
@@ -130,7 +130,7 @@ const icons = [...iconNameCount.entries()]
   .map(([name, count]) => ({
     figmaName: name,
     count,
-    dgjIconType: "help-circle",
+    vcIconType: "help-circle",
     fallback: true,
   }));
 

@@ -1,6 +1,6 @@
-# Tour 组件规范（dgj-design）
+# Tour 组件规范（vc-design）
 
-基于 Ant Design 5 的 Tour（漫游式引导），用于分步高亮并介绍页面元素，通过 DGJ Tokens 与主题保持样式一致。
+基于 Ant Design 5 的 Tour（漫游式引导），用于分步高亮并介绍页面元素，通过 VC Tokens 与主题保持样式一致。
 
 ---
 
@@ -31,8 +31,8 @@
 
 | 值 | 说明 | Token 映射 |
 |----|------|------------|
-| **default** | 默认样式 | 边框与中性色，`dgjTokens.color.neutral.border.default` |
-| **primary** | 主色强调 | 主按钮与高亮使用 `dgjTokens.color.primary.default` |
+| **default** | 默认样式 | 边框与中性色，`vcTokens.color.neutral.border.default` |
+| **primary** | 主色强调 | 主按钮与高亮使用 `vcTokens.color.primary.default` |
 
 - 可在 Tour 根或单步设置 `type`；单步优先。
 
@@ -58,5 +58,5 @@
 
 ## 6. 其他
 
-- 气泡圆角、内边距与主题一致，使用 `dgjTokens.style.borderRadius.md` 等。
-- 步骤内若需图标，仅使用 **DgjIcon**。
+- 气泡圆角、内边距与主题一致，使用 `vcTokens.style.borderRadius.md` 等。
+- 步骤内若需图标，仅使用 **VcIcon**。

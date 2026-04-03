@@ -1,4 +1,4 @@
-# push 到 main 时自动构建 demo 并部署到 gh-pages，更新 https://vinson-chen.github.io/dgj-design/
+# push 到 main 时自动构建 demo 并部署到 gh-pages，更新 https://vinson-chen.github.io/vc-design/
 name: Deploy demo to GitHub Pages
 
 on:
@@ -23,11 +23,11 @@ jobs:
       - name: Install root dependencies
         run: npm install
 
-      - name: Build dgj-design
+      - name: Build vc-design
         run: npm run build
 
-      - name: Build dgj-biz
-        run: npm run build:dgj-biz
+      - name: Build vc-biz
+        run: npm run build:vc-biz
 
       - name: Install demo dependencies
         run: cd demo && npm install

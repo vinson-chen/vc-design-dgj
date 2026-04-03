@@ -1,2 +1,2 @@
-export { DgjIcon } from './DgjIcon';
-export type { DgjIconProps } from './DgjIcon';
+export { VcIcon } from './VcIcon';
+export type { VcIconProps } from './VcIcon';

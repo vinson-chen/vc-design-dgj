@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dropdown, Button, Space, DgjIcon, dgjTokens } from 'dgj-design';
+import { Dropdown, Button, Space, VcIcon, vcTokens } from 'vc-design';
 
 const basicMenuItems = [
   { key: '1', label: '选项 1' },
@@ -31,23 +31,23 @@ export default function DropdownDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Dropdown 下拉菜单</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         向下弹出的列表，用于收纳操作命令。支持点击/悬停触发、位置、箭头与 Dropdown.Button。规范见 docs/dropdown-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
           <Dropdown menu={{ items: basicMenuItems }}>
-            <span style={{ cursor: 'pointer', color: dgjTokens.color.primary.text }}>
+            <span style={{ cursor: 'pointer', color: vcTokens.color.primary.text }}>
               Hover me
             </span>
           </Dropdown>
@@ -55,13 +55,13 @@ export default function DropdownDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           弹出位置
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -89,13 +89,13 @@ export default function DropdownDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           触发方式（click）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -106,13 +106,13 @@ export default function DropdownDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           分割线与禁用项
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -123,13 +123,13 @@ export default function DropdownDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           带下拉框的按钮（Dropdown.Button）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -140,7 +140,7 @@ export default function DropdownDemo() {
             </Dropdown.Button>
             <Dropdown.Button
               menu={{ items: basicMenuItems }}
-              icon={<DgjIcon type="chevron-down" fontSize={12} />}
+              icon={<VcIcon type="chevron-down" fontSize={12} />}
             >
               自定义图标
             </Dropdown.Button>
@@ -149,13 +149,13 @@ export default function DropdownDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           多级菜单
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

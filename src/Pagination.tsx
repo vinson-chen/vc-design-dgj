@@ -2,10 +2,10 @@ import React, { useContext, useMemo } from 'react';
 import { Pagination as AntPagination } from 'antd';
 import { ConfigContext } from 'antd/es/config-provider/context';
 import type { PaginationProps } from 'antd';
-import { DgjIcon } from './icons/DgjIcon';
+import { VcIcon } from './icons/VcIcon';
 
 /**
- * Ant Design Pagination，默认使用 DgjIcon 的 chevron 系列（左 / 右 / 下）替代内置图标。
+ * Ant Design Pagination，默认使用 VcIcon 的 chevron 系列（左 / 右 / 下）替代内置图标。
  * 仍可通过 props 传入 prevIcon / nextIcon 等覆盖。
  */
 function Pagination(props: PaginationProps) {
@@ -29,18 +29,18 @@ function Pagination(props: PaginationProps) {
     const prevIconNode = (
       <button type="button" tabIndex={-1} className={`${prefixCls}-item-link`}>
         {direction === 'rtl' ? (
-          <DgjIcon type="chevron-right" fontSize={16} />
+          <VcIcon type="chevron-right" fontSize={16} />
         ) : (
-          <DgjIcon type="chevron-left" fontSize={16} />
+          <VcIcon type="chevron-left" fontSize={16} />
         )}
       </button>
     );
     const nextIconNode = (
       <button type="button" tabIndex={-1} className={`${prefixCls}-item-link`}>
         {direction === 'rtl' ? (
-          <DgjIcon type="chevron-left" fontSize={16} />
+          <VcIcon type="chevron-left" fontSize={16} />
         ) : (
-          <DgjIcon type="chevron-right" fontSize={16} />
+          <VcIcon type="chevron-right" fontSize={16} />
         )}
       </button>
     );
@@ -49,9 +49,9 @@ function Pagination(props: PaginationProps) {
       <a className={`${prefixCls}-item-link`}>
         <div className={`${prefixCls}-item-container`}>
           {direction === 'rtl' ? (
-            <DgjIcon type="a-chevron-rightdouble" className={`${prefixCls}-item-link-icon`} fontSize={16} />
+            <VcIcon type="a-chevron-rightdouble" className={`${prefixCls}-item-link-icon`} fontSize={16} />
           ) : (
-            <DgjIcon type="a-chevron-leftdouble" className={`${prefixCls}-item-link-icon`} fontSize={16} />
+            <VcIcon type="a-chevron-leftdouble" className={`${prefixCls}-item-link-icon`} fontSize={16} />
           )}
           {ellipsis}
         </div>
@@ -61,9 +61,9 @@ function Pagination(props: PaginationProps) {
       <a className={`${prefixCls}-item-link`}>
         <div className={`${prefixCls}-item-container`}>
           {direction === 'rtl' ? (
-            <DgjIcon type="a-chevron-leftdouble" className={`${prefixCls}-item-link-icon`} fontSize={16} />
+            <VcIcon type="a-chevron-leftdouble" className={`${prefixCls}-item-link-icon`} fontSize={16} />
           ) : (
-            <DgjIcon type="a-chevron-rightdouble" className={`${prefixCls}-item-link-icon`} fontSize={16} />
+            <VcIcon type="a-chevron-rightdouble" className={`${prefixCls}-item-link-icon`} fontSize={16} />
           )}
           {ellipsis}
         </div>
@@ -79,7 +79,7 @@ function Pagination(props: PaginationProps) {
   }, [direction, prefixCls]);
 
   const mergedShowSizeChanger = useMemo(() => {
-    const downIcon = <DgjIcon type="chevron-down" fontSize={16} />;
+    const downIcon = <VcIcon type="chevron-down" fontSize={16} />;
     if (showSizeChanger === false) {
       return false;
     }

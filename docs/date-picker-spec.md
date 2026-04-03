@@ -1,4 +1,4 @@
-# DatePicker 日期选择框 组件规范（dgj-design）
+# DatePicker 日期选择框 组件规范（vc-design）
 
 基于 Ant Design 5 的 DatePicker，用于输入或选择日期。当用户需要输入一个日期时，可点击输入框弹出日期面板选择。
 
@@ -55,4 +55,4 @@
 
 ## 6. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

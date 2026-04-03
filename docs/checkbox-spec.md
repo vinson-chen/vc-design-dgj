@@ -1,4 +1,4 @@
-# Checkbox 多选框 组件规范（dgj-design）
+# Checkbox 多选框 组件规范（vc-design）
 
 基于 Ant Design 5 的 Checkbox，用于收集用户的多项选择。可单独使用表示两种状态切换（与 Switch 区别：Checkbox 多用于状态标记，需配合提交）。
 
@@ -48,4 +48,4 @@ Form.Item 默认绑定 `value`，Checkbox 的值属性为 `checked`，需设置 
 
 ## 5. Token
 
-使用全局/组件 Token，可由 theme.components.Checkbox 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme.components.Checkbox 覆盖，与 vc-design 品牌色一致。

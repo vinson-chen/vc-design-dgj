@@ -1,4 +1,4 @@
-# Radio 单选框 组件规范（dgj-design）
+# Radio 单选框 组件规范（vc-design）
 
 基于 Ant Design 5 的 Radio，用于在多个备选项中选中单个状态。与 Select 区别：Radio 所有选项默认可见，适合选项不宜过多的场景。
 
@@ -47,4 +47,4 @@ Form.Item 默认绑定 `value`，Radio 的值通过 Group 的 value 体现，无
 
 ## 5. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

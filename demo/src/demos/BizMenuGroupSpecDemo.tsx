@@ -1,6 +1,6 @@
 import React from 'react';
-import { Space, dgjTokens } from 'dgj-design';
-import { BizMenuGroup } from 'dgj-biz';
+import { Space, vcTokens } from 'vc-design';
+import { BizMenuGroup } from 'vc-biz';
 
 const items = [
   { key: 'self-goods', label: '自营商品', iconName: 'catalog' },
@@ -12,12 +12,12 @@ export default function BizMenuGroupSpecDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>导航区 · 第二步 .menu_group 规范</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 16 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 16 }}>
         small:false 用于展开导航，small:true 用于收起导航。
       </p>
       <div
         style={{
-          background: dgjTokens.color.neutral.background.layout,
+          background: vcTokens.color.neutral.background.layout,
           borderRadius: 8,
           padding: 16,
         }}
@@ -26,7 +26,7 @@ export default function BizMenuGroupSpecDemo() {
           <div
             style={{
               width: 180,
-              background: dgjTokens.color.menu.navBackground,
+              background: vcTokens.color.menu.navBackground,
               borderRadius: 8,
               overflow: 'hidden',
             }}
@@ -44,7 +44,7 @@ export default function BizMenuGroupSpecDemo() {
           <div
             style={{
               width: 48,
-              background: dgjTokens.color.menu.navBackground,
+              background: vcTokens.color.menu.navBackground,
               borderRadius: 8,
               overflow: 'hidden',
             }}

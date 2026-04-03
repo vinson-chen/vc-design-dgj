@@ -1,6 +1,6 @@
-# Progress 组件规范（dgj-design）
+# Progress 组件规范（vc-design）
 
-基于 Ant Design 5 的 Progress（进度条），用于展示任务完成度或加载进度，通过 DGJ Tokens 与主题统一颜色与尺寸。
+基于 Ant Design 5 的 Progress（进度条），用于展示任务完成度或加载进度，通过 VC Tokens 与主题统一颜色与尺寸。
 
 ---
 
@@ -24,7 +24,7 @@
 | **format** | 自定义文字，如 `(percent) => percent + '%'` |
 | **success** | 成功段配置，如 `{ percent: 30 }` 表示已完成 30% 的次要进度 |
 
-- 成功态使用 `dgjTokens.color.success.default`，异常态使用 `dgjTokens.color.error.default`，默认态使用 `dgjTokens.color.primary.default`。
+- 成功态使用 `vcTokens.color.success.default`，异常态使用 `vcTokens.color.error.default`，默认态使用 `vcTokens.color.primary.default`。
 
 ---
 
@@ -38,7 +38,7 @@
 | **size** | 线型为 `small`/`default` 或 [width, height]；环形为数字（直径）或 [width, strokeWidth] |
 | **strokeLinecap** | 线型端点形状：`round`、`square`、`butt` |
 
-- 圆角、线宽与设计规范一致时可参考 `dgjTokens.style.borderRadius.sm`。
+- 圆角、线宽与设计规范一致时可参考 `vcTokens.style.borderRadius.sm`。
 
 ---
 

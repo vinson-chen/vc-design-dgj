@@ -1,4 +1,4 @@
-# Space 间距 组件规范（dgj-design）
+# Space 间距 组件规范（vc-design）
 
 基于 Ant Design 5 的 Space，用于设置组件之间的间距。为内联元素提供等距排列，会为每个子元素添加包裹元素；与 Flex 区别见下。
 
@@ -45,4 +45,4 @@
 
 ## 5. Token
 
-Space 使用 AntD 间距 token（marginXS、marginSM、margin 等）对应 size 预设，由 buildAntdTheme(dgjTokens) 全局注入，与 dgj 间距体系一致。
+Space 使用 AntD 间距 token（marginXS、marginSM、margin 等）对应 size 预设，由 buildAntdTheme(vcTokens) 全局注入，与 vc-design 间距体系一致。

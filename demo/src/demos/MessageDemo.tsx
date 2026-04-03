@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Space, dgjTokens, message } from 'dgj-design';
+import { Button, Space, vcTokens, message } from 'vc-design';
 
 export default function MessageDemo() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -26,20 +26,20 @@ export default function MessageDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Message 全局提示</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         轻量级全局反馈，不打断当前操作，适合展示简短状态信息。规范见 docs/message-spec.md。
       </p>
 
       {contextHolder}
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本类型
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -52,13 +52,13 @@ export default function MessageDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           Loading 与更新
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -69,13 +69,13 @@ export default function MessageDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           useMessage Hook
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

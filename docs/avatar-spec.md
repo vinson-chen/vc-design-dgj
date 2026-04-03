@@ -1,4 +1,4 @@
-# Avatar 头像 组件规范（dgj-design）
+# Avatar 头像 组件规范（vc-design）
 
 基于 Ant Design 5 的 Avatar，用于代表用户或事物，支持图片、图标或字符展示。
 

@@ -1,4 +1,4 @@
-# Descriptions 描述列表 组件规范（dgj-design）
+# Descriptions 描述列表 组件规范（vc-design）
 
 基于 Ant Design 5 的 Descriptions，展示多个只读字段的组合。
 

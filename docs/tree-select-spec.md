@@ -1,4 +1,4 @@
-# TreeSelect 树选择 组件规范（dgj-design）
+# TreeSelect 树选择 组件规范（vc-design）
 
 基于 Ant Design 5 的 TreeSelect，树型选择控件。适用于树形结构数据（如公司层级、分类目录等）。
 
@@ -36,4 +36,4 @@
 
 ## 4. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

@@ -1,4 +1,4 @@
-# Input 输入框 组件规范（dgj-design）
+# Input 输入框 组件规范（vc-design）
 
 基于 Ant Design 5 的 Input，通过鼠标或键盘输入内容，是最基础的表单域包装。
 
@@ -52,4 +52,4 @@
 
 ## 6. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

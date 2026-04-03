@@ -1,4 +1,4 @@
-# Select 选择器 组件规范（dgj-design）
+# Select 选择器 组件规范（vc-design）
 
 基于 Ant Design 5 的 Select，下拉选择器。用于弹出一个下拉菜单供用户选择；选项少时（少于 5 项）建议用 Radio；可输可选时考虑 AutoComplete。
 
@@ -39,4 +39,4 @@
 
 ## 4. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Space, dgjTokens, notification, DgjIcon } from 'dgj-design';
+import { Button, Space, vcTokens, notification, VcIcon } from 'vc-design';
 
 export default function NotificationDemo() {
   const [api, contextHolder] = notification.useNotification();
@@ -79,20 +79,20 @@ export default function NotificationDemo() {
   };
 
   const sectionStyle = {
-    background: dgjTokens.color.neutral.background.layout,
-    borderRadius: dgjTokens.style.borderRadius.lg,
+    background: vcTokens.color.neutral.background.layout,
+    borderRadius: vcTokens.style.borderRadius.lg,
     padding: 24,
   };
   const h2Style = {
     fontSize: 16,
     marginBottom: 12,
-    color: dgjTokens.color.neutral.text.label,
+    color: vcTokens.color.neutral.text.label,
   };
 
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Notification 通知提醒框</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         角标式通知，支持标题与描述、多种类型与位置，适用于系统级提醒。规范见 docs/notification-spec.md。
       </p>
 

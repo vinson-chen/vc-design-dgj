@@ -1,6 +1,6 @@
-# Modal 组件规范（dgj-design）
+# Modal 组件规范（vc-design）
 
-基于 Ant Design 5 的 Modal（对话框），用于重要操作确认、信息展示，通过 DGJ Tokens 与主题统一尺寸、层级与语义色。
+基于 Ant Design 5 的 Modal（对话框），用于重要操作确认、信息展示，通过 VC Tokens 与主题统一尺寸、层级与语义色。
 
 ---
 
@@ -20,7 +20,7 @@
 | **width** | 对话框宽度       | 数字或字符串，常见如 `520`、`600` |
 | **centered** | 是否垂直居中 | 默认居中即可 |
 
-- 内边距与圆角参考：`dgjTokens.size.paddingMD`、`dgjTokens.style.borderRadius.lg`。
+- 内边距与圆角参考：`vcTokens.size.paddingMD`、`vcTokens.style.borderRadius.lg`。
 
 ---
 
@@ -33,7 +33,7 @@
 | **okText** / **cancelText** | 确认/取消按钮文案 |
 | **okType** | 确认按钮类型（primary/dashed/link 等） |
 | **footer** | 自定义底部按钮区域，为 `null` 时不展示默认按钮 |
-| **closable** | 是否显示右上角关闭按钮，可配 `closeIcon`（仅用 DgjIcon） |
+| **closable** | 是否显示右上角关闭按钮，可配 `closeIcon`（仅用 VcIcon） |
 | **maskClosable** | 点击遮罩是否关闭，危险操作建议设为 `false` |
 
 ---
@@ -49,7 +49,7 @@
 
 ## 5. 样式与 Token
 
-- 语义色：确认/错误等场景按钮与图标使用 `dgjTokens.color.{primary|success|warning|error}.default`。
+- 语义色：确认/错误等场景按钮与图标使用 `vcTokens.color.{primary|success|warning|error}.default`。
 - 遮罩：与 Drawer 一致的半透明背景，层级高于普通页面元素。
 - 支持通过 `classNames` / `styles` 精细定制标题、内容、底部等区域。
 

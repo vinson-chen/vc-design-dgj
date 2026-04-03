@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { DgjConfigProvider, dgjTokens } from 'dgj-design';
+import { VcConfigProvider, vcTokens } from 'vc-design';
 import { navGroups } from './navConfig';
 import { DemoContent } from './demos';
 
@@ -39,13 +39,13 @@ export default function App() {
   }, []);
 
   return (
-    <DgjConfigProvider>
+    <VcConfigProvider>
       <div
         style={{
           display: 'flex',
           height: '100vh',
           overflow: 'hidden',
-          background: dgjTokens.color.neutral.background.layout,
+          background: vcTokens.color.neutral.background.layout,
         }}
       >
         {/* 左侧导航：固定高度内独立滚动 */}
@@ -54,20 +54,20 @@ export default function App() {
             width: SIDEBAR_WIDTH,
             flexShrink: 0,
             minHeight: 0,
-            background: dgjTokens.color.neutral.background.container,
-            borderRight: `1px solid ${dgjTokens.color.neutral.border.secondary}`,
+            background: vcTokens.color.neutral.background.container,
+            borderRight: `1px solid ${vcTokens.color.neutral.border.secondary}`,
             overflowY: 'auto',
           }}
         >
           <div
             style={{
               padding: '16px 16px 12px',
-              borderBottom: `1px solid ${dgjTokens.color.neutral.border.secondary}`,
+              borderBottom: `1px solid ${vcTokens.color.neutral.border.secondary}`,
               fontWeight: 600,
               fontSize: 16,
             }}
           >
-            dgj-design
+            vc-design
           </div>
           <nav style={{ padding: '8px 0' }}>
             {navGroups.map((group) => (
@@ -77,7 +77,7 @@ export default function App() {
                     style={{
                       padding: '8px 16px 4px',
                       fontSize: 12,
-                      color: dgjTokens.color.neutral.text.description,
+                      color: vcTokens.color.neutral.text.description,
                       fontWeight: 500,
                     }}
                   >
@@ -96,8 +96,8 @@ export default function App() {
                         width: '100%',
                         padding: '8px 16px',
                         border: 'none',
-                        background: isSelected ? dgjTokens.color.primary.bg : 'transparent',
-                        color: isSelected ? dgjTokens.color.primary.text : dgjTokens.color.neutral.text.default,
+                        background: isSelected ? vcTokens.color.primary.bg : 'transparent',
+                        color: isSelected ? vcTokens.color.primary.text : vcTokens.color.neutral.text.default,
                         fontSize: 14,
                         textAlign: 'left',
                         cursor: 'pointer',
@@ -105,7 +105,7 @@ export default function App() {
                       }}
                       onMouseEnter={(e) => {
                         if (!isSelected) {
-                          e.currentTarget.style.background = dgjTokens.color.neutral.fill.secondary;
+                          e.currentTarget.style.background = vcTokens.color.neutral.fill.secondary;
                         }
                       }}
                       onMouseLeave={(e) => {
@@ -129,7 +129,7 @@ export default function App() {
             flex: 1,
             minHeight: 0,
             overflowY: 'auto',
-            background: dgjTokens.color.neutral.background.layout,
+            background: vcTokens.color.neutral.background.layout,
           }}
         >
           <div
@@ -147,6 +147,6 @@ export default function App() {
           </div>
         </main>
       </div>
-    </DgjConfigProvider>
+    </VcConfigProvider>
   );
 }

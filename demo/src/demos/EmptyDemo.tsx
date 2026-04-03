@@ -1,5 +1,5 @@
 import React from 'react';
-import { dgjTokens } from 'dgj-design';
+import { vcTokens } from 'vc-design';
 
 interface EmptyDemoProps {
   componentName: string;
@@ -13,9 +13,9 @@ export default function EmptyDemo({ componentName }: EmptyDemoProps) {
         style={{
           padding: 48,
           textAlign: 'center',
-          background: dgjTokens.color.neutral.background.layout,
-          borderRadius: dgjTokens.style.borderRadius.lg,
-          color: dgjTokens.color.neutral.text.description,
+          background: vcTokens.color.neutral.background.layout,
+          borderRadius: vcTokens.style.borderRadius.lg,
+          color: vcTokens.color.neutral.text.description,
         }}
       >
         暂无演示，后续补充。

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tree, dgjTokens, DgjIcon } from 'dgj-design';
+import { Tree, vcTokens, VcIcon } from 'vc-design';
 import type { TreeDataNode } from 'antd';
 
 const treeData: TreeDataNode[] = [
@@ -32,16 +32,16 @@ const treeDataWithIcon: TreeDataNode[] = [
   {
     title: '文档',
     key: 'doc',
-    icon: <DgjIcon type="file" />,
+    icon: <VcIcon type="file" />,
     children: [
-      { title: '说明.md', key: 'doc-readme', isLeaf: true, icon: <DgjIcon type="file" /> },
-      { title: '规范', key: 'doc-spec', isLeaf: true, icon: <DgjIcon type="file" /> },
+      { title: '说明.md', key: 'doc-readme', isLeaf: true, icon: <VcIcon type="file" /> },
+      { title: '规范', key: 'doc-spec', isLeaf: true, icon: <VcIcon type="file" /> },
     ],
   },
   {
     title: '组件',
     key: 'comp',
-    icon: <DgjIcon type="appstore" />,
+    icon: <VcIcon type="appstore" />,
     children: [
       { title: 'Button', key: 'comp-btn', isLeaf: true },
       { title: 'Input', key: 'comp-input', isLeaf: true },
@@ -57,18 +57,18 @@ export default function TreeDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Tree 树形控件</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         展示层级数据，支持展开、选中、勾选与自定义图标。规范见 docs/tree-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -82,13 +82,13 @@ export default function TreeDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           带连接线（showLine）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -97,13 +97,13 @@ export default function TreeDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           可勾选（checkable）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -122,13 +122,13 @@ export default function TreeDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           自定义图标
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -137,13 +137,13 @@ export default function TreeDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           目录树（DirectoryTree）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

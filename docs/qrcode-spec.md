@@ -1,4 +1,4 @@
-# QRCode 二维码 组件规范（dgj-design）
+# QRCode 二维码 组件规范（vc-design）
 
 基于 Ant Design 5 的 QRCode，将文本转换为二维码，支持自定义配色与 Logo。
 

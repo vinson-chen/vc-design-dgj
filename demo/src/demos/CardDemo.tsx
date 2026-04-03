@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Space, Row, Col, Avatar, DgjIcon, dgjTokens } from 'dgj-design';
+import { Card, Space, Row, Col, Avatar, VcIcon, vcTokens } from 'vc-design';
 
 const coverImg = 'https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png';
 const avatarUrl = 'https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png';
@@ -10,18 +10,18 @@ export default function CardDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Card 卡片</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         通用卡片容器，可承载标题、内容、封面、操作与页签。规范见 docs/card-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -37,9 +37,9 @@ export default function CardDemo() {
             <Card
               title="底部操作"
               actions={[
-                <span key="1"><DgjIcon type="setting" /> 设置</span>,
-                <span key="2"><DgjIcon type="edit" /> 编辑</span>,
-                <span key="3"><DgjIcon type="add" /> 更多</span>,
+                <span key="1"><VcIcon type="setting" /> 设置</span>,
+                <span key="2"><VcIcon type="edit" /> 编辑</span>,
+                <span key="3"><VcIcon type="add" /> 更多</span>,
               ]}
               style={{ width: 300 }}
             >
@@ -50,13 +50,13 @@ export default function CardDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           无边框、简洁、尺寸与悬停
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -75,13 +75,13 @@ export default function CardDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           封面与 Card.Meta
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -95,7 +95,7 @@ export default function CardDemo() {
             </Card>
             <Card style={{ width: 280 }}>
               <Card.Meta
-                avatar={<Avatar icon={<DgjIcon type="user" />} />}
+                avatar={<Avatar icon={<VcIcon type="user" />} />}
                 title="仅 Meta"
                 description="无封面，仅头像+标题+描述"
               />
@@ -105,13 +105,13 @@ export default function CardDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           带页签与加载
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -137,13 +137,13 @@ export default function CardDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           栅格与 Card.Grid
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

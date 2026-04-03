@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Anchor, Flex, dgjTokens } from 'dgj-design';
+import { Anchor, Flex, vcTokens } from 'vc-design';
 
 const ANCHOR_SCROLL_ID = 'anchor-demo-scroll';
 
@@ -24,13 +24,13 @@ function Block({ id, title, height = 120 }: { id: string; title: string; height?
       style={{
         height,
         padding: 16,
-        background: dgjTokens.color.neutral.background.container,
-        borderRadius: dgjTokens.style.borderRadius.sm,
+        background: vcTokens.color.neutral.background.container,
+        borderRadius: vcTokens.style.borderRadius.sm,
         marginBottom: 16,
-        border: `1px solid ${dgjTokens.color.neutral.border.secondary}`,
+        border: `1px solid ${vcTokens.color.neutral.border.secondary}`,
       }}
     >
-      <strong style={{ color: dgjTokens.color.neutral.text.label }}>{title}</strong>
+      <strong style={{ color: vcTokens.color.neutral.text.label }}>{title}</strong>
     </div>
   );
 }
@@ -45,18 +45,18 @@ export default function AnchorDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Anchor 锚点</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         用于跳转到页面指定位置，支持垂直/横向、固定/静态、嵌套与 onChange。规范见 docs/anchor-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -79,13 +79,13 @@ export default function AnchorDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           横向 Anchor
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -99,20 +99,20 @@ export default function AnchorDemo() {
               { key: 'h3', href: '#anchor-api', title: 'API' },
             ]}
           />
-          <p style={{ marginTop: 12, marginBottom: 0, fontSize: 12, color: dgjTokens.color.neutral.text.description }}>
+          <p style={{ marginTop: 12, marginBottom: 0, fontSize: 12, color: vcTokens.color.neutral.text.description }}>
             点击上方链接将滚动到「基本」示例中的对应区块。
           </p>
         </div>
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           监听锚点链接改变（onChange）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -125,10 +125,10 @@ export default function AnchorDemo() {
               style={{ minWidth: 160 }}
             />
             <div style={{ flex: 1 }}>
-              <p style={{ marginBottom: 12, fontSize: 12, color: dgjTokens.color.neutral.text.description }}>
+              <p style={{ marginBottom: 12, fontSize: 12, color: vcTokens.color.neutral.text.description }}>
                 当前高亮: {activeLink || '-'}
               </p>
-              <p style={{ marginBottom: 8, fontSize: 12, color: dgjTokens.color.neutral.text.description }}>
+              <p style={{ marginBottom: 8, fontSize: 12, color: vcTokens.color.neutral.text.description }}>
                 在「基本」示例的右侧区域滚动，或点击左侧锚点，可看到高亮变化。
               </p>
             </div>

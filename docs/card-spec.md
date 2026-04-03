@@ -1,4 +1,4 @@
-# Card 卡片 组件规范（dgj-design）
+# Card 卡片 组件规范（vc-design）
 
 基于 Ant Design 5 的 Card，通用卡片容器。
 

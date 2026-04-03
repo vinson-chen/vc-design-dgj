@@ -1,4 +1,4 @@
-# Upload 上传 组件规范（dgj-design）
+# Upload 上传 组件规范（vc-design）
 
 基于 Ant Design 5 的 Upload，文件选择上传和拖拽上传控件。
 
@@ -39,4 +39,4 @@ name, uid, status（uploading / done / error / removed）, percent, url, thumbUr
 
 ## 4. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

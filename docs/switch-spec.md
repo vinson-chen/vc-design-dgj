@@ -1,4 +1,4 @@
-# Switch 开关 组件规范（dgj-design）
+# Switch 开关 组件规范（vc-design）
 
 基于 Ant Design 5 的 Switch，用于在两种状态之间切换。与 Checkbox 区别：Switch 切换会直接触发状态改变，Checkbox 多用于状态标记并配合提交。
 
@@ -34,4 +34,4 @@ Form.Item 默认绑定 `value`，Switch 的值属性为 `checked`，需设置 **
 
 ## 4. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

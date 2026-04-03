@@ -1,4 +1,4 @@
-# Layout 布局 组件规范（dgj-design）
+# Layout 布局 组件规范（vc-design）
 
 基于 Ant Design 5 的 Layout，用于页面级整体布局。采用 Flex 布局，可嵌套 Header、Sider、Content、Footer。
 
@@ -46,13 +46,13 @@
 ## 4. 设计约定（参考）
 
 - 顶部导航高度：`48+8n`（如 64px）；侧边宽度：`200+8n`。
-- 由 AntD Layout Token（headerBg、siderBg、bodyBg 等）控制视觉，可通过 buildAntdTheme 或 components.Layout 覆盖与 dgj 规范一致。
+- 由 AntD Layout Token（headerBg、siderBg、bodyBg 等）控制视觉，可通过 buildAntdTheme 或 components.Layout 覆盖与 vc-design 规范一致。
 
 ---
 
 ## 5. 使用方式
 
 ```ts
-import { Layout } from 'dgj-design';
+import { Layout } from 'vc-design';
 const { Header, Sider, Content, Footer } = Layout;
 ```

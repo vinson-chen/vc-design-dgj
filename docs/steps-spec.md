@@ -1,4 +1,4 @@
-# Steps 步骤条 组件规范（dgj-design）
+# Steps 步骤条 组件规范（vc-design）
 
 基于 Ant Design 5 的 Steps，引导用户按流程完成任务的导航条。当任务复杂或存在先后关系时，可拆成一系列步骤。
 

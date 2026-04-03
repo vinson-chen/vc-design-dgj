@@ -1,4 +1,4 @@
-# Splitter 分隔面板 组件规范（dgj-design）
+# Splitter 分隔面板 组件规范（vc-design）
 
 基于 Ant Design 5 的 Splitter，用于自由切分指定区域，可水平/垂直分隔、拖拽调整大小、限制 min/max、可折叠。子元素仅支持 **Splitter.Panel**。
 
@@ -40,4 +40,4 @@
 
 ## 4. Token
 
-组件 Token：splitBarSize、splitBarDraggableSize、splitTriggerSize 等，可由 theme.components.Splitter 覆盖，与 dgj 规范一致时无需单独配置。
+组件 Token：splitBarSize、splitBarDraggableSize、splitTriggerSize 等，可由 theme.components.Splitter 覆盖，与 vc-design 规范一致时无需单独配置。

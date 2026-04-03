@@ -1,6 +1,6 @@
 {
   "source": {
-    "figmaLink": "https://www.figma.com/design/a4w8JupybLqnEXPkxRs4wL/DGJ-Design?node-id=663-11500&t=GbwvUkmgYHG3vmT3-1",
+    "figmaLink": "https://www.figma.com/design/a4w8JupybLqnEXPkxRs4wL/VC-Design?node-id=663-11500&t=GbwvUkmgYHG3vmT3-1",
     "nodeId": "663:11500",
     "generatedAt": "2026-03-24T08:34:18.535Z"
   },
@@ -50,60 +50,60 @@
     {
       "hex": "#000000",
       "count": 65,
-      "tokenPath": "待人工映射 dgjTokens.*"
+      "tokenPath": "待人工映射 vcTokens.*"
     },
     {
       "hex": "#ffffff",
       "count": 53,
-      "tokenPath": "待人工映射 dgjTokens.*"
+      "tokenPath": "待人工映射 vcTokens.*"
     },
     {
       "hex": "#424a57",
       "count": 15,
-      "tokenPath": "待人工映射 dgjTokens.*"
+      "tokenPath": "待人工映射 vcTokens.*"
     },
     {
       "hex": "#0888ff",
       "count": 9,
-      "tokenPath": "待人工映射 dgjTokens.*"
+      "tokenPath": "待人工映射 vcTokens.*"
     },
     {
       "hex": "#f0f1f2",
       "count": 2,
-      "tokenPath": "待人工映射 dgjTokens.*"
+      "tokenPath": "待人工映射 vcTokens.*"
     },
     {
       "hex": "#ecf6ff",
       "count": 2,
-      "tokenPath": "待人工映射 dgjTokens.*"
+      "tokenPath": "待人工映射 vcTokens.*"
     },
     {
       "hex": "#ea572e",
       "count": 2,
-      "tokenPath": "待人工映射 dgjTokens.*"
+      "tokenPath": "待人工映射 vcTokens.*"
     },
     {
       "hex": "#fef2ef",
       "count": 1,
-      "tokenPath": "待人工映射 dgjTokens.*"
+      "tokenPath": "待人工映射 vcTokens.*"
     },
     {
       "hex": "#73ac1f",
       "count": 1,
-      "tokenPath": "待人工映射 dgjTokens.*"
+      "tokenPath": "待人工映射 vcTokens.*"
     }
   ],
   "icons": [
     {
       "figmaName": "🎰 icon",
       "count": 29,
-      "dgjIconType": "help-circle",
+      "vcIconType": "help-circle",
       "fallback": true
     },
     {
       "figmaName": "icon",
       "count": 14,
-      "dgjIconType": "help-circle",
+      "vcIconType": "help-circle",
       "fallback": true
     }
   ]

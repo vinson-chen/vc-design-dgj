@@ -1,22 +1,22 @@
 import React from 'react';
-import { Popconfirm, Button, Space, dgjTokens, DgjIcon } from 'dgj-design';
+import { Popconfirm, Button, Space, vcTokens, VcIcon } from 'vc-design';
 
 export default function PopconfirmDemo() {
   const sectionStyle = {
-    background: dgjTokens.color.neutral.background.layout,
-    borderRadius: dgjTokens.style.borderRadius.lg,
+    background: vcTokens.color.neutral.background.layout,
+    borderRadius: vcTokens.style.borderRadius.lg,
     padding: 24,
   };
   const h2Style = {
     fontSize: 16,
     marginBottom: 12,
-    color: dgjTokens.color.neutral.text.label,
+    color: vcTokens.color.neutral.text.label,
   };
 
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Popconfirm 气泡确认框</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         点击触发元素后弹出确认气泡，用于删除、提交等操作的二次确认。规范见 docs/popconfirm-spec.md。
       </p>
 
@@ -70,7 +70,7 @@ export default function PopconfirmDemo() {
           <Popconfirm
             title="确定要离开当前页？"
             description="未保存的修改将丢失。"
-            icon={<DgjIcon type="warning" />}
+            icon={<VcIcon type="warning" />}
             onConfirm={() => {}}
             okText="离开"
             cancelText="留下"

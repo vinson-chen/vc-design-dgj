@@ -1,4 +1,4 @@
-# dgj-design 演示
+# vc-design 演示
 
 用于检验组件规范的可交互页面。
 
@@ -26,4 +26,4 @@ cd demo && npm install && npm run dev
 
 ## 图标
 
-演示页使用 dgj-design 内置的 **DgjIcon**（基于你的 iconfont），所有组件图标均来自同一图标库。若图标不显示，请检查 `demo/index.html` 中的 iconfont「Font class」在线链接是否与你的项目一致（Project id 5131978）。
+演示页使用 vc-design 内置的 **VcIcon**（基于你的 iconfont），所有组件图标均来自同一图标库。若图标不显示，请检查 `demo/index.html` 中的 iconfont「Font class」在线链接是否与你的项目一致（Project id 5131978）。

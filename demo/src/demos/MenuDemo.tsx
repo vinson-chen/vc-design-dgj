@@ -1,15 +1,15 @@
 import React from 'react';
-import { Menu, Flex, DgjIcon, dgjTokens } from 'dgj-design';
+import { Menu, Flex, VcIcon, vcTokens } from 'vc-design';
 
 const itemsWithIcon = [
   {
     key: 'nav-1',
-    icon: <DgjIcon type="home" fontSize={14} />,
+    icon: <VcIcon type="home" fontSize={14} />,
     label: '首页',
   },
   {
     key: 'nav-2',
-    icon: <DgjIcon type="menu-application" fontSize={14} />,
+    icon: <VcIcon type="menu-application" fontSize={14} />,
     label: '应用',
     children: [
       { key: 'nav-2-1', label: '子项 1' },
@@ -18,7 +18,7 @@ const itemsWithIcon = [
   },
   {
     key: 'nav-3',
-    icon: <DgjIcon type="file-1" fontSize={14} />,
+    icon: <VcIcon type="file-1" fontSize={14} />,
     label: '文档',
   },
 ];
@@ -47,18 +47,18 @@ export default function MenuDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Menu 导航菜单</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         为页面和功能提供导航，支持水平/垂直/内嵌、主题与子菜单。规范见 docs/menu-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           水平菜单（顶部导航）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -72,13 +72,13 @@ export default function MenuDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           垂直菜单
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -90,7 +90,7 @@ export default function MenuDemo() {
               items={inlineItems}
               style={{ width: 200 }}
             />
-            <div style={{ flex: 1, padding: 16, background: dgjTokens.color.neutral.background.container, borderRadius: dgjTokens.style.borderRadius.sm, color: dgjTokens.color.neutral.text.description }}>
+            <div style={{ flex: 1, padding: 16, background: vcTokens.color.neutral.background.container, borderRadius: vcTokens.style.borderRadius.sm, color: vcTokens.color.neutral.text.description }}>
               右侧内容区
             </div>
           </Flex>
@@ -98,13 +98,13 @@ export default function MenuDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           内嵌菜单（inline）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -119,13 +119,13 @@ export default function MenuDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           暗色主题
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

@@ -1,4 +1,4 @@
-# ColorPicker 颜色选择器 组件规范（dgj-design）
+# ColorPicker 颜色选择器 组件规范（vc-design）
 
 基于 Ant Design 5（自 5.5.0）的 ColorPicker，用于选择颜色。当用户需要自定义颜色时使用。
 
@@ -44,4 +44,4 @@
 
 ## 4. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, DgjIcon, dgjTokens } from 'dgj-design';
+import { Button, VcIcon, vcTokens } from 'vc-design';
 
 const spec = {
   type: [
@@ -17,21 +17,21 @@ export default function ButtonDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Button 按钮</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         以下为《Button 组件规范》的可交互对照，用于核对尺寸、类型、状态与 Token 效果。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           规范摘要
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 16,
             fontSize: 13,
-            color: dgjTokens.color.neutral.text.default,
+            color: vcTokens.color.neutral.text.default,
           }}
         >
           <p style={{ margin: '0 0 8px 0' }}>
@@ -41,13 +41,13 @@ export default function ButtonDemo() {
             <strong>类型：</strong> primary（#0888FF）、default、dashed、link、text。
           </p>
           <p style={{ margin: 0 }}>
-            <strong>主色：</strong> 默认 #0888FF，Hover #39A0FF，Active #077AE5（来自 dgjTokens.color.primary）。
+            <strong>主色：</strong> 默认 #0888FF，Hover #39A0FF，Active #077AE5（来自 vcTokens.color.primary）。
           </p>
         </div>
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           类型（Type）
         </h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
@@ -64,7 +64,7 @@ export default function ButtonDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           尺寸（Size）
         </h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
@@ -80,7 +80,7 @@ export default function ButtonDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           状态（Disabled / Loading）
         </h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
@@ -92,7 +92,7 @@ export default function ButtonDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           危险按钮（Danger）
         </h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
@@ -103,13 +103,13 @@ export default function ButtonDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           带图标
         </h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
-          <Button type="primary" icon={<DgjIcon type="search" />}>搜索</Button>
-          <Button icon={<DgjIcon type="search" />}>默认带图标</Button>
-          <Button type="primary" icon={<DgjIcon type="search" />} loading>搜索 Loading</Button>
+          <Button type="primary" icon={<VcIcon type="search" />}>搜索</Button>
+          <Button icon={<VcIcon type="search" />}>默认带图标</Button>
+          <Button type="primary" icon={<VcIcon type="search" />} loading>搜索 Loading</Button>
         </div>
       </section>
 
@@ -118,9 +118,9 @@ export default function ButtonDemo() {
           style={{
             marginTop: 24,
             padding: 12,
-            background: dgjTokens.color.primary.bg,
-            borderRadius: dgjTokens.style.borderRadius.sm,
-            color: dgjTokens.color.primary.text,
+            background: vcTokens.color.primary.bg,
+            borderRadius: vcTokens.style.borderRadius.sm,
+            color: vcTokens.color.primary.text,
           }}
         >
           当前点击：<code>{clicked}</code>

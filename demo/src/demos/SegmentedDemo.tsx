@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Segmented, Space, DgjIcon, dgjTokens } from 'dgj-design';
+import { Segmented, Space, VcIcon, vcTokens } from 'vc-design';
 
 const simpleOptions = ['列表', '看板', '地图'];
 const optionsWithIcon = [
-  { label: '列表', value: 'list', icon: <DgjIcon type="menu-application" /> },
-  { label: '看板', value: 'kanban', icon: <DgjIcon type="file-1" /> },
-  { label: '地图', value: 'map', icon: <DgjIcon type="search" /> },
+  { label: '列表', value: 'list', icon: <VcIcon type="menu-application" /> },
+  { label: '看板', value: 'kanban', icon: <VcIcon type="file-1" /> },
+  { label: '地图', value: 'map', icon: <VcIcon type="search" /> },
 ];
 
 export default function SegmentedDemo() {
@@ -14,25 +14,25 @@ export default function SegmentedDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Segmented 分段控制器</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         多选项单选，支持文字、图标、尺寸与垂直排列。规范见 docs/segmented-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
           <Space direction="vertical" size="middle">
             <Segmented options={simpleOptions} />
             <Segmented options={simpleOptions} defaultValue="看板" onChange={(v) => setValue(v)} />
-            <p style={{ margin: 0, fontSize: 12, color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ margin: 0, fontSize: 12, color: vcTokens.color.neutral.text.description }}>
               当前选中: {String(value)}
             </p>
           </Space>
@@ -40,13 +40,13 @@ export default function SegmentedDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           带图标、尺寸与形状
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -60,13 +60,13 @@ export default function SegmentedDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           垂直与 block
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -80,13 +80,13 @@ export default function SegmentedDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           禁用
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

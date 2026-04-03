@@ -1,25 +1,25 @@
 import React, { useState } from 'react';
-import { Spin, Button, Card, dgjTokens } from 'dgj-design';
+import { Spin, Button, Card, vcTokens } from 'vc-design';
 
 export default function SpinDemo() {
   const [loading, setLoading] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
   const sectionStyle = {
-    background: dgjTokens.color.neutral.background.layout,
-    borderRadius: dgjTokens.style.borderRadius.lg,
+    background: vcTokens.color.neutral.background.layout,
+    borderRadius: vcTokens.style.borderRadius.lg,
     padding: 24,
   };
   const h2Style = {
     fontSize: 16,
     marginBottom: 12,
-    color: dgjTokens.color.neutral.text.label,
+    color: vcTokens.color.neutral.text.label,
   };
 
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Spin 加载中</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         表示区域或全局的加载状态，可单独使用或包裹内容。规范见 docs/spin-spec.md。
       </p>
 
@@ -53,7 +53,7 @@ export default function SpinDemo() {
         <div style={sectionStyle}>
           <Spin spinning={loading}>
             <Card title="卡片标题" size="small" style={{ maxWidth: 400 }}>
-              <p style={{ color: dgjTokens.color.neutral.text.description }}>
+              <p style={{ color: vcTokens.color.neutral.text.description }}>
                 这里是卡片内容。点击下方按钮切换加载状态。
               </p>
             </Card>
@@ -76,8 +76,8 @@ export default function SpinDemo() {
             <div
               style={{
                 padding: 24,
-                background: dgjTokens.color.neutral.fill.tertiary,
-                borderRadius: dgjTokens.style.borderRadius.sm,
+                background: vcTokens.color.neutral.fill.tertiary,
+                borderRadius: vcTokens.style.borderRadius.sm,
                 minHeight: 80,
               }}
             >

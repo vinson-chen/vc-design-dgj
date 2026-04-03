@@ -1,22 +1,22 @@
 import React from 'react';
-import { Progress, Space, dgjTokens } from 'dgj-design';
+import { Progress, Space, vcTokens } from 'vc-design';
 
 export default function ProgressDemo() {
   const sectionStyle = {
-    background: dgjTokens.color.neutral.background.layout,
-    borderRadius: dgjTokens.style.borderRadius.lg,
+    background: vcTokens.color.neutral.background.layout,
+    borderRadius: vcTokens.style.borderRadius.lg,
     padding: 24,
   };
   const h2Style = {
     fontSize: 16,
     marginBottom: 12,
-    color: dgjTokens.color.neutral.text.label,
+    color: vcTokens.color.neutral.text.label,
   };
 
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Progress 进度条</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         展示任务完成度或加载进度，支持线型、环形与仪表盘。规范见 docs/progress-spec.md。
       </p>
 

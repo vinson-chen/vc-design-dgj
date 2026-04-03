@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Splitter, dgjTokens } from 'dgj-design';
+import { Splitter, vcTokens } from 'vc-design';
 
 export default function SplitterDemo() {
   const [sizes, setSizes] = useState<number[]>([]);
@@ -7,18 +7,18 @@ export default function SplitterDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Splitter 分隔面板</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         自由切分区域，支持水平/垂直、拖拽调整、min/max、可折叠。子元素仅支持 Splitter.Panel。规范见 docs/splitter-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本用法
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -28,9 +28,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.container,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.container,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 First
@@ -41,9 +41,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.elevated,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.elevated,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 Second
@@ -54,13 +54,13 @@ export default function SplitterDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           垂直方向
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -70,9 +70,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.container,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.container,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 First
@@ -83,9 +83,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.elevated,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.elevated,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 Second
@@ -96,13 +96,13 @@ export default function SplitterDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           可折叠（collapsible）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -112,9 +112,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.container,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.container,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 First
@@ -125,9 +125,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.elevated,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.elevated,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 Second
@@ -138,13 +138,13 @@ export default function SplitterDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           多面板
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -154,9 +154,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.container,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.container,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 Panel 1
@@ -167,9 +167,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.elevated,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.elevated,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 Panel 2
@@ -180,9 +180,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.container,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.container,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 Panel 3
@@ -193,13 +193,13 @@ export default function SplitterDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           受控模式
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -212,9 +212,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.container,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.container,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 First
@@ -225,9 +225,9 @@ export default function SplitterDemo() {
                 style={{
                   height: '100%',
                   padding: 16,
-                  background: dgjTokens.color.neutral.background.elevated,
-                  borderRadius: dgjTokens.style.borderRadius.sm,
-                  color: dgjTokens.color.neutral.text.label,
+                  background: vcTokens.color.neutral.background.elevated,
+                  borderRadius: vcTokens.style.borderRadius.sm,
+                  color: vcTokens.color.neutral.text.label,
                 }}
               >
                 Second
@@ -235,7 +235,7 @@ export default function SplitterDemo() {
             </Splitter.Panel>
           </Splitter>
           {sizes.length === 2 && (
-            <p style={{ marginTop: 12, marginBottom: 0, fontSize: 12, color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ marginTop: 12, marginBottom: 0, fontSize: 12, color: vcTokens.color.neutral.text.description }}>
               当前比例: {Math.round(sizes[0])}% / {Math.round(sizes[1])}%
             </p>
           )}

@@ -1,4 +1,4 @@
-# AutoComplete 自动完成 组件规范（dgj-design）
+# AutoComplete 自动完成 组件规范（vc-design）
 
 基于 Ant Design 5 的 AutoComplete，输入框自动完成功能。与 Select 区别：AutoComplete 是带提示的**输入框**，关键词是辅助输入；Select 是在限定选项中**选择**。
 
@@ -44,4 +44,4 @@
 
 ## 4. Token
 
-组件 Token 与 Input/Select 共用（activeBorderColor、optionSelectedBg 等），由 buildAntdTheme(dgjTokens) 统一注入。
+组件 Token 与 Input/Select 共用（activeBorderColor、optionSelectedBg 等），由 buildAntdTheme(vcTokens) 统一注入。

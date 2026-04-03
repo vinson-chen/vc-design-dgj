@@ -1,7 +1,7 @@
-export * from './theme/dgjTokens';
+export * from './theme/vcTokens';
 export * from './theme/buildAntdTheme';
 export * from './theme/resolveTokenByValue';
-export * from './providers/DgjConfigProvider';
+export * from './providers/VcConfigProvider';
 export * from './icons';
 
 export { default as Pagination } from './Pagination';

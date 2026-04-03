@@ -1,4 +1,4 @@
-# Grid 栅格 组件规范（dgj-design）
+# Grid 栅格 组件规范（vc-design）
 
 基于 Ant Design 5 的 Grid，24 栅格系统。基于行（Row）和列（Col）定义信息区块，基于 Flex 布局，支持对齐、排序与响应式。
 
@@ -46,12 +46,12 @@
 antd 的 `Grid` 默认导出仅含 `useBreakpoint`，`Row`、`Col` 需从主入口单独引入：
 
 ```ts
-import { Row, Col } from 'dgj-design';
-// 若需 useBreakpoint：import { Grid } from 'dgj-design'; Grid.useBreakpoint()
+import { Row, Col } from 'vc-design';
+// 若需 useBreakpoint：import { Grid } from 'vc-design'; Grid.useBreakpoint()
 ```
 
 ---
 
 ## 5. Token
 
-- 栅格断点使用 AntD 全局 token `screenXS`～`screenXXL`，与 dgj 约定一致时可保持默认，无需单独覆盖。
+- 栅格断点使用 AntD 全局 token `screenXS`～`screenXXL`，与 vc-design 约定一致时可保持默认，无需单独覆盖。

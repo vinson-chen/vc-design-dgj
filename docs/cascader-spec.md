@@ -1,4 +1,4 @@
-# Cascader 级联选择 组件规范（dgj-design）
+# Cascader 级联选择 组件规范（vc-design）
 
 基于 Ant Design 5 的 Cascader，级联选择框。适用于省市区、分类层级等关联数据的选择，可在同一浮层完成多级选择。
 

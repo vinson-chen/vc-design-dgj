@@ -1,4 +1,4 @@
-# Breadcrumb 面包屑 组件规范（dgj-design）
+# Breadcrumb 面包屑 组件规范（vc-design）
 
 基于 Ant Design 5 的 Breadcrumb，用于显示当前页面在系统层级结构中的位置，并支持向上返回。适用于超过两级以上的层级、需告知用户「你在哪里」或需向上导航的场景。
 
@@ -42,7 +42,7 @@
 ## 4. 使用方式
 
 ```ts
-import { Breadcrumb } from 'dgj-design';
+import { Breadcrumb } from 'vc-design';
 
 <Breadcrumb
   items={[
@@ -57,4 +57,4 @@ import { Breadcrumb } from 'dgj-design';
 
 ## 5. Token
 
-组件 Token：itemColor、lastItemColor、linkColor、linkHoverColor、separatorColor、separatorMargin、iconFontSize 等，可由 theme.components.Breadcrumb 覆盖，与 dgj 中性色一致。
+组件 Token：itemColor、lastItemColor、linkColor、linkHoverColor、separatorColor、separatorMargin、iconFontSize 等，可由 theme.components.Breadcrumb 覆盖，与 vc-design 中性色一致。

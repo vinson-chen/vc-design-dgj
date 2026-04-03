@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Tour, Button, Space, dgjTokens, DgjIcon } from 'dgj-design';
+import { Tour, Button, Space, vcTokens, VcIcon } from 'vc-design';
 
 export default function TourDemo() {
   const [open, setOpen] = useState(false);
@@ -31,18 +31,18 @@ export default function TourDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Tour 漫游式引导</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         分步高亮页面元素并展示说明，适用于新功能引导与关键操作说明。规范见 docs/tour-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
             minHeight: 200,
           }}
@@ -56,8 +56,8 @@ export default function TourDemo() {
               ref={ref3}
               style={{
                 padding: '8px 16px',
-                background: dgjTokens.color.neutral.fill.tertiary,
-                borderRadius: dgjTokens.style.borderRadius.sm,
+                background: vcTokens.color.neutral.fill.tertiary,
+                borderRadius: vcTokens.style.borderRadius.sm,
                 display: 'inline-block',
               }}
             >
@@ -65,7 +65,7 @@ export default function TourDemo() {
             </div>
           </Space>
           <div>
-            <Button type="primary" onClick={() => setOpen(true)} icon={<DgjIcon type="play" />}>
+            <Button type="primary" onClick={() => setOpen(true)} icon={<VcIcon type="play" />}>
               开始引导
             </Button>
           </div>
@@ -74,17 +74,17 @@ export default function TourDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           主色类型（type="primary"）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
-          <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 12 }}>
+          <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 12 }}>
             设置 <code>type="primary"</code> 后，引导气泡与按钮使用主色强调。
           </p>
           <Tour

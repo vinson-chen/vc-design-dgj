@@ -1,5 +1,5 @@
 {
-  "name": "dgj-design-demo",
+  "name": "vc-design-demo",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "dgj-biz": "file:../packages/dgj-biz",
-    "dgj-design": "file:..",
+    "vc-biz": "file:../packages/vc-biz",
+    "vc-design": "file:..",
     "antd": "^5.22.0",
     "dayjs": "^1.11.11",
     "react": "^18.3.1",

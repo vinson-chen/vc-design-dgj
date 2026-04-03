@@ -1,4 +1,4 @@
-# Slider 滑动输入条 组件规范（dgj-design）
+# Slider 滑动输入条 组件规范（vc-design）
 
 基于 Ant Design 5 的 Slider，滑动型输入器，展示当前值和可选范围。
 
@@ -32,4 +32,4 @@
 
 ## 3. Token
 
-使用全局/组件 Token（railBg、trackBg、handleSize 等），可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token（railBg、trackBg、handleSize 等），可由 theme 覆盖，与 vc-design 品牌色一致。

@@ -1,4 +1,4 @@
-# Empty 空状态 组件规范（dgj-design）
+# Empty 空状态 组件规范（vc-design）
 
 基于 Ant Design 5 的 Empty，空状态时的展示占位。
 

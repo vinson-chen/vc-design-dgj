@@ -1,4 +1,4 @@
-# Collapse 折叠面板 组件规范（dgj-design）
+# Collapse 折叠面板 组件规范（vc-design）
 
 基于 Ant Design 5 的 Collapse，可折叠/展开的内容区域。
 

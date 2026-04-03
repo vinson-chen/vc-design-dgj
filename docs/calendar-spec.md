@@ -1,4 +1,4 @@
-# Calendar 日历 组件规范（dgj-design）
+# Calendar 日历 组件规范（vc-design）
 
 基于 Ant Design 5 的 Calendar，按日历形式展示数据的容器。
 

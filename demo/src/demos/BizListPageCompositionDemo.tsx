@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Checkbox, Pagination, Segmented, dgjTokens, message } from 'dgj-design';
+import { Checkbox, Pagination, Segmented, vcTokens, message } from 'vc-design';
 import {
   FilterGroup,
   type FilterFieldConfig,
@@ -10,11 +10,11 @@ import {
   type OverflowActionItem,
   TableAreaTableInstance,
   useTableAreaDemoState,
-} from 'dgj-biz';
+} from 'vc-biz';
 
 const pageBoxStyle: React.CSSProperties = {
-  background: dgjTokens.color.neutral.background.layout,
-  borderRadius: dgjTokens.style.borderRadius.lg,
+  background: vcTokens.color.neutral.background.layout,
+  borderRadius: vcTokens.style.borderRadius.lg,
   padding: 0,
 };
 
@@ -119,7 +119,7 @@ export default function BizListPageCompositionDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>ListPageShell 列表页串联</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         本例将业务组件按常见列表页顺序串联：`SwitchTabs` + `FilterGroup` + `OperationBar(table)` + `BizTable` + `OperationBar(batch)`。
         用于验证区块级复用与组件间视觉/间距一致。
       </p>
@@ -127,7 +127,7 @@ export default function BizListPageCompositionDemo() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <section>
           <div style={pageBoxStyle}>
-            <div style={{ background: dgjTokens.color.neutral.background.container, padding: 0 }}>
+            <div style={{ background: vcTokens.color.neutral.background.container, padding: 0 }}>
               <SwitchTabs
                 items={storeItems}
                 activeKey={storeActiveKey}
@@ -195,7 +195,7 @@ export default function BizListPageCompositionDemo() {
                 minHeight: 48,
                 padding: '8px 16px',
                 boxSizing: 'border-box',
-                background: dgjTokens.color.neutral.background.container,
+                background: vcTokens.color.neutral.background.container,
                 boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.08)',
               }}
             >

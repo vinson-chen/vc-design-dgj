@@ -1,4 +1,4 @@
-# Popover 气泡卡片 组件规范（dgj-design）
+# Popover 气泡卡片 组件规范（vc-design）
 
 基于 Ant Design 5 的 Popover，点击/移入元素时弹出气泡式卡片浮层。
 

@@ -1,6 +1,6 @@
-# Divider 分割线 组件规范（dgj-design）
+# Divider 分割线 组件规范（vc-design）
 
-基于 Ant Design 5 的 Divider，用于区隔内容。通过 DGJ Tokens 统一分割线颜色与间距。
+基于 Ant Design 5 的 Divider，用于区隔内容。通过 VC Tokens 统一分割线颜色与间距。
 
 ---
 
@@ -17,11 +17,11 @@
 
 | 项 | Token 来源 | 说明 |
 |----|------------|------|
-| 分割线颜色 | `dgjTokens.color.neutral.border.default` | #E1E2E4 |
-| 弱分割线 | `dgjTokens.color.neutral.border.secondary` | #F0F1F2 |
+| 分割线颜色 | `vcTokens.color.neutral.border.default` | #E1E2E4 |
+| 弱分割线 | `vcTokens.color.neutral.border.secondary` | #F0F1F2 |
 | 变体 | variant | solid（默认）、dashed（虚线）、dotted（点线） |
 
-- 由 AntD 全局 token `colorBorder`、`colorSplit` 继承，与 dgj 中性边框一致。
+- 由 AntD 全局 token `colorBorder`、`colorSplit` 继承，与 vc-design 中性边框一致。
 
 ---
 
@@ -46,4 +46,4 @@
 - `colorBorder` / `colorSplit` → 分割线颜色（对应 `color.neutral.border.default`、`color.neutral.border.split`）
 - 组件 token：`orientationMargin`、`textPaddingInline`、`verticalMarginInline`（可选在 theme.components.Divider 中覆盖）
 
-以上由 `buildAntdTheme(dgjTokens)` 全局注入，Divider 无需单独 components 覆盖即可与 dgj 规范一致。
+以上由 `buildAntdTheme(vcTokens)` 全局注入，Divider 无需单独 components 覆盖即可与 vc-design 规范一致。

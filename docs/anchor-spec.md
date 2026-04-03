@@ -1,4 +1,4 @@
-# Anchor 锚点 组件规范（dgj-design）
+# Anchor 锚点 组件规范（vc-design）
 
 基于 Ant Design 5 的 Anchor，用于跳转到页面指定位置，展示当前页可供跳转的锚点链接并快速在锚点间跳转。
 
@@ -46,7 +46,7 @@
 ## 4. 使用方式
 
 ```ts
-import { Anchor } from 'dgj-design';
+import { Anchor } from 'vc-design';
 
 <Anchor
   items={[

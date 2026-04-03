@@ -1,5 +1,5 @@
 import React from 'react';
-import { Timeline, dgjTokens, DgjIcon } from 'dgj-design';
+import { Timeline, vcTokens, VcIcon } from 'vc-design';
 
 const items = [
   {
@@ -30,19 +30,19 @@ const itemsWithIcon = [
     title: '开始',
     content: '流程开始节点。',
     color: 'green',
-    icon: <DgjIcon type="check-circle" />,
+    icon: <VcIcon type="check-circle" />,
   },
   {
     title: '进行中',
     content: '当前处理中的步骤。',
     color: 'blue',
-    icon: <DgjIcon type="clock" />,
+    icon: <VcIcon type="clock" />,
   },
   {
     title: '异常',
     content: '需关注或重试的节点。',
     color: 'red',
-    icon: <DgjIcon type="info" />,
+    icon: <VcIcon type="info" />,
   },
 ];
 
@@ -50,18 +50,18 @@ export default function TimelineDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Timeline 时间轴</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         垂直或水平展示时间流、流程步骤，支持颜色与自定义图标。规范见 docs/timeline-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本（垂直）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -70,13 +70,13 @@ export default function TimelineDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           左右交替（alternate）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -85,13 +85,13 @@ export default function TimelineDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           自定义图标
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -100,13 +100,13 @@ export default function TimelineDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           使用 Timeline.Item 子组件
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

@@ -1,6 +1,6 @@
-# Timeline 组件规范（dgj-design）
+# Timeline 组件规范（vc-design）
 
-基于 Ant Design 5 的 Timeline，通过 DGJ Tokens 统一时间轴节点与连线样式。
+基于 Ant Design 5 的 Timeline，通过 VC Tokens 统一时间轴节点与连线样式。
 
 ---
 
@@ -22,10 +22,10 @@ Timeline.Item 的 `color` 与 Token 映射：
 
 | 预设值 | 说明 | Token 映射 |
 |--------|------|------------|
-| **blue** | 主色/进行中 | `dgjTokens.color.primary.default` |
-| **green** | 成功 | `dgjTokens.color.success.default` |
-| **red** | 错误/失败 | `dgjTokens.color.error.default` |
-| **gray** | 默认/未完成 | `dgjTokens.color.neutral.border.default` 或 `color.neutral.text.tertiary` |
+| **blue** | 主色/进行中 | `vcTokens.color.primary.default` |
+| **green** | 成功 | `vcTokens.color.success.default` |
+| **red** | 错误/失败 | `vcTokens.color.error.default` |
+| **gray** | 默认/未完成 | `vcTokens.color.neutral.border.default` 或 `color.neutral.text.tertiary` |
 
 - 连线与节点圆点颜色与上述语义色一致。
 
@@ -35,9 +35,9 @@ Timeline.Item 的 `color` 与 Token 映射：
 
 | 属性 | 说明 |
 |------|------|
-| **title** | 节点标题（时间或阶段名），建议使用 `dgjTokens.color.neutral.text.label` 层级 |
-| **content** | 节点描述正文，建议使用 `dgjTokens.color.neutral.text.description` |
-| **icon** | 自定义节点图标，仅使用 **DgjIcon** |
+| **title** | 节点标题（时间或阶段名），建议使用 `vcTokens.color.neutral.text.label` 层级 |
+| **content** | 节点描述正文，建议使用 `vcTokens.color.neutral.text.description` |
+| **icon** | 自定义节点图标，仅使用 **VcIcon** |
 | **loading** | 进行中状态，显示加载态 |
 
 - 使用 `items` 数组或 `Timeline.Item` 子组件均可；图标与文字间距遵循 `paddingXS`（8px）。
@@ -47,7 +47,7 @@ Timeline.Item 的 `color` 与 Token 映射：
 ## 4. 布局与间距
 
 - 节点间距与 antd 默认一致，由组件内部 padding 控制。
-- 轴线（连接线）颜色：`dgjTokens.color.neutral.border.default` 或浅一级边框色。
+- 轴线（连接线）颜色：`vcTokens.color.neutral.border.default` 或浅一级边框色。
 - 与其它块级组件（如 Card、List）组合时，建议外层使用 `Space` 或合适 margin 保持留白。
 
 ---

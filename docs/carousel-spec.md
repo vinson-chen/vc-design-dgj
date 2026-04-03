@@ -1,4 +1,4 @@
-# Carousel 走马灯 组件规范（dgj-design）
+# Carousel 走马灯 组件规范（vc-design）
 
 基于 Ant Design 5 的 Carousel，一组轮播区域。
 

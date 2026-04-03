@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tag, Space, dgjTokens, DgjIcon } from 'dgj-design';
+import { Tag, Space, vcTokens, VcIcon } from 'vc-design';
 
 export default function TagDemo() {
   const [closed, setClosed] = useState<Record<string, boolean>>({});
@@ -7,18 +7,18 @@ export default function TagDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Tag 标签</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         用于标记和分类的标签，支持多种颜色、可关闭与图标。规范见 docs/tag-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -34,13 +34,13 @@ export default function TagDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           描边（outlined）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -54,13 +54,13 @@ export default function TagDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           可关闭
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -76,7 +76,7 @@ export default function TagDemo() {
               </Tag>
             )}
             {!closed.c && (
-              <Tag closable closeIcon={<DgjIcon type="close" />} onClose={() => setClosed((c) => ({ ...c, c: true }))}>
+              <Tag closable closeIcon={<VcIcon type="close" />} onClose={() => setClosed((c) => ({ ...c, c: true }))}>
                 自定义关闭图标
               </Tag>
             )}
@@ -85,32 +85,32 @@ export default function TagDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           带图标
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
           <Space size="small" wrap>
-            <Tag icon={<DgjIcon type="check" />}>完成</Tag>
-            <Tag color="primary" icon={<DgjIcon type="info" />}>提示</Tag>
-            <Tag color="success" icon={<DgjIcon type="check-circle" />}>已通过</Tag>
+            <Tag icon={<VcIcon type="check" />}>完成</Tag>
+            <Tag color="primary" icon={<VcIcon type="info" />}>提示</Tag>
+            <Tag color="success" icon={<VcIcon type="check-circle" />}>已通过</Tag>
           </Space>
         </div>
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           禁用与链接
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

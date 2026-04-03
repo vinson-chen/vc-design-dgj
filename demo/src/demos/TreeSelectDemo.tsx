@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TreeSelect, Space, dgjTokens } from 'dgj-design';
+import { TreeSelect, Space, vcTokens } from 'vc-design';
 
 const treeData = [
   {
@@ -26,18 +26,18 @@ export default function TreeSelectDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>TreeSelect 树选择</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         树型选择控件，适用于层级数据。规范见 docs/tree-select-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -50,7 +50,7 @@ export default function TreeSelectDemo() {
               allowClear
               style={{ width: '100%' }}
             />
-            <p style={{ margin: 0, fontSize: 12, color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ margin: 0, fontSize: 12, color: vcTokens.color.neutral.text.description }}>
               当前: {value ?? '-'}
             </p>
           </Space>
@@ -58,13 +58,13 @@ export default function TreeSelectDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           多选与可搜索
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -88,13 +88,13 @@ export default function TreeSelectDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           尺寸与禁用
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

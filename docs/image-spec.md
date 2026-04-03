@@ -1,4 +1,4 @@
-# Image 图片 组件规范（dgj-design）
+# Image 图片 组件规范（vc-design）
 
 基于 Ant Design 5 的 Image，可预览的图片展示。
 

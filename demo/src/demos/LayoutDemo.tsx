@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Button, dgjTokens } from 'dgj-design';
+import { Layout, Button, vcTokens } from 'vc-design';
 import { Menu } from 'antd';
 
 const { Header, Sider, Content, Footer } = Layout;
@@ -17,36 +17,36 @@ export default function LayoutDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Layout 布局</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         页面级整体布局，支持 Header、Sider、Content、Footer 组合。规范见 docs/layout-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本结构
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             overflow: 'hidden',
           }}
         >
           <Layout>
-            <Header style={{ color: dgjTokens.color.neutral.text.solid }}>
+            <Header style={{ color: vcTokens.color.neutral.text.solid }}>
               Header
             </Header>
             <Layout>
               <Sider theme="light" width={200}>
-                <div style={{ padding: 16, color: dgjTokens.color.neutral.text.label }}>
+                <div style={{ padding: 16, color: vcTokens.color.neutral.text.label }}>
                   left sidebar
                 </div>
               </Sider>
-              <Content style={{ padding: 24, minHeight: 120, background: dgjTokens.color.neutral.background.container }}>
+              <Content style={{ padding: 24, minHeight: 120, background: vcTokens.color.neutral.background.container }}>
                 main content
               </Content>
               <Sider theme="light" width={200}>
-                <div style={{ padding: 16, color: dgjTokens.color.neutral.text.label }}>
+                <div style={{ padding: 16, color: vcTokens.color.neutral.text.label }}>
                   right sidebar
                 </div>
               </Sider>
@@ -57,19 +57,19 @@ export default function LayoutDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           上中下布局
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             overflow: 'hidden',
           }}
         >
           <Layout>
-            <Header style={{ color: dgjTokens.color.neutral.text.solid }}>Header</Header>
-            <Content style={{ padding: 24, minHeight: 120, background: dgjTokens.color.neutral.background.container }}>
+            <Header style={{ color: vcTokens.color.neutral.text.solid }}>Header</Header>
+            <Content style={{ padding: 24, minHeight: 120, background: vcTokens.color.neutral.background.container }}>
               Content
             </Content>
             <Footer style={{ textAlign: 'center' }}>Footer</Footer>
@@ -78,13 +78,13 @@ export default function LayoutDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           侧边布局（可收起）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             overflow: 'hidden',
           }}
         >
@@ -98,10 +98,10 @@ export default function LayoutDemo() {
               <Menu mode="inline" items={sideMenuItems} style={{ borderRight: 0 }} />
             </Sider>
             <Layout>
-              <Header style={{ background: dgjTokens.color.neutral.background.container, padding: '0 24px' }}>
+              <Header style={{ background: vcTokens.color.neutral.background.container, padding: '0 24px' }}>
                 Header
               </Header>
-              <Content style={{ padding: 24, background: dgjTokens.color.neutral.background.container }}>
+              <Content style={{ padding: 24, background: vcTokens.color.neutral.background.container }}>
                 Content
               </Content>
             </Layout>
@@ -110,13 +110,13 @@ export default function LayoutDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           自定义触发器
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             overflow: 'hidden',
           }}
         >
@@ -131,12 +131,12 @@ export default function LayoutDemo() {
               <Menu mode="inline" items={sideMenuItems} style={{ borderRight: 0 }} />
             </Sider>
             <Layout>
-              <Header style={{ background: dgjTokens.color.neutral.background.container, padding: '0 24px', display: 'flex', alignItems: 'center' }}>
+              <Header style={{ background: vcTokens.color.neutral.background.container, padding: '0 24px', display: 'flex', alignItems: 'center' }}>
                 <Button type="text" onClick={() => setCustomCollapsed(!customCollapsed)}>
                   {customCollapsed ? '展开' : '收起'}
                 </Button>
               </Header>
-              <Content style={{ padding: 24, background: dgjTokens.color.neutral.background.container }}>
+              <Content style={{ padding: 24, background: vcTokens.color.neutral.background.container }}>
                 content
               </Content>
             </Layout>

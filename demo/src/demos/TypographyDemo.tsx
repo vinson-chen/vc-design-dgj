@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Typography, DgjIcon, dgjTokens } from 'dgj-design';
+import { Typography, VcIcon, vcTokens } from 'vc-design';
 
 const { Title, Text, Paragraph, Link } = Typography;
 
@@ -9,26 +9,26 @@ export default function TypographyDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Typography 排版</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
-        文本与标题的基本格式，支持可编辑、可复制、省略号等。字体与颜色由 dgjTokens 统一。规范见 docs/typography-spec.md。
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
+        文本与标题的基本格式，支持可编辑、可复制、省略号等。字体与颜色由 vcTokens 统一。规范见 docs/typography-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
-          <Title level={1}>h1. dgj-design</Title>
-          <Title level={2}>h2. dgj-design</Title>
-          <Title level={3}>h3. dgj-design</Title>
-          <Title level={4}>h4. dgj-design</Title>
-          <Title level={5}>h5. dgj-design</Title>
+          <Title level={1}>h1. vc-design</Title>
+          <Title level={2}>h2. vc-design</Title>
+          <Title level={3}>h3. vc-design</Title>
+          <Title level={4}>h4. vc-design</Title>
+          <Title level={5}>h5. vc-design</Title>
           <Paragraph>
             Ant Design, a design language for background applications, is refined by Ant UED Team.
             Ant Design, a design language for background applications, is refined by Ant UED Team.
@@ -37,13 +37,13 @@ export default function TypographyDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           标题组件
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -74,13 +74,13 @@ export default function TypographyDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           可复制
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -95,47 +95,47 @@ export default function TypographyDemo() {
           </Paragraph>
           <Paragraph
             copyable={{
-              icon: [<DgjIcon key="copy" type="copy" />, <DgjIcon key="check" type="check" />],
+              icon: [<VcIcon key="copy" type="copy" />, <VcIcon key="check" type="check" />],
               tooltips: ['复制', '已复制'],
             }}
           >
-            Custom Copy icon (DgjIcon).
+            Custom Copy icon (VcIcon).
           </Paragraph>
         </div>
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           可编辑
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
           <Paragraph
             editable={{
-              icon: <DgjIcon type="edit" />,
+              icon: <VcIcon type="edit" />,
               tooltip: '编辑',
-              enterIcon: <DgjIcon type="check" />,
+              enterIcon: <VcIcon type="check" />,
             }}
           >
-            This is an editable text with DgjIcon.
+            This is an editable text with VcIcon.
           </Paragraph>
           <Paragraph editable>Click icon to edit (default icon).</Paragraph>
         </div>
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           省略号
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -158,13 +158,13 @@ export default function TypographyDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           省略（多行 + 后缀）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

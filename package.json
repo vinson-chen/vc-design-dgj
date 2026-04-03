@@ -1,10 +1,10 @@
 {
-  "name": "dgj-design",
-  "version": "0.1.1",
+  "name": "vc-design",
+  "version": "1.0.0",
   "workspaces": [
     "packages/*"
   ],
-  "description": "Design system based on Ant Design 5 with DGJ tokens.",
+  "description": "Design system based on Ant Design 5 with VC design tokens.",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,12 +17,12 @@
   },
   "scripts": {
     "build": "tsup",
-    "build:dgj-biz": "npm run build -w dgj-biz",
+    "build:vc-biz": "npm run build -w vc-biz",
     "clean": "rm -rf dist",
-    "demo": "npm run build && npm run build:dgj-biz && cd demo && npm install && npm run dev",
+    "demo": "npm run build && npm run build:vc-biz && cd demo && npm install && npm run dev",
     "page-case:extract": "node scripts/extract_figma_page_case.mjs",
     "lint": "echo \"no linter configured\"",
-    "test": "npm run test -w dgj-biz",
+    "test": "npm run test -w vc-biz",
     "prepare": "npm run build",
     "prepublishOnly": "npm run clean && npm run build",
     "release:patch": "npm version patch && npm publish",

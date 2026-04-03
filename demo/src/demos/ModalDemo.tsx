@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, Space, Form, Input, dgjTokens, DgjIcon } from 'dgj-design';
+import { Modal, Button, Space, Form, Input, vcTokens, VcIcon } from 'vc-design';
 
 export default function ModalDemo() {
   const [openBasic, setOpenBasic] = useState(false);
@@ -54,20 +54,20 @@ export default function ModalDemo() {
   };
 
   const sectionStyle = {
-    background: dgjTokens.color.neutral.background.layout,
-    borderRadius: dgjTokens.style.borderRadius.lg,
+    background: vcTokens.color.neutral.background.layout,
+    borderRadius: vcTokens.style.borderRadius.lg,
     padding: 24,
   };
   const h2Style = {
     fontSize: 16,
     marginBottom: 12,
-    color: dgjTokens.color.neutral.text.label,
+    color: vcTokens.color.neutral.text.label,
   };
 
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Modal 对话框</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         居中弹出的模态对话框，用于重要操作确认与信息展示。规范见 docs/modal-spec.md。
       </p>
 
@@ -83,7 +83,7 @@ export default function ModalDemo() {
             onOk={() => setOpenBasic(false)}
             onCancel={() => setOpenBasic(false)}
           >
-            <p style={{ color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ color: vcTokens.color.neutral.text.description }}>
               用于展示简单信息或进行基本确认操作。
             </p>
           </Modal>
@@ -104,9 +104,9 @@ export default function ModalDemo() {
             okText="删除"
             okType="primary"
             cancelText="取消"
-            closeIcon={<DgjIcon type="close" />}
+            closeIcon={<VcIcon type="close" />}
           >
-            <p style={{ color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ color: vcTokens.color.neutral.text.description }}>
               此操作无法撤销，请确认是否删除。
             </p>
           </Modal>
@@ -143,7 +143,7 @@ export default function ModalDemo() {
               </Space>
             }
           >
-            <p style={{ color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ color: vcTokens.color.neutral.text.description }}>
               通过 footer 传入自定义按钮，可隐藏默认的确定/取消。
             </p>
           </Modal>
@@ -161,7 +161,7 @@ export default function ModalDemo() {
             onOk={() => setOpenWidth(false)}
             onCancel={() => setOpenWidth(false)}
           >
-            <p style={{ color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ color: vcTokens.color.neutral.text.description }}>
               通过 width 指定宽度（如 640px），适合内容较多的场景。
             </p>
           </Modal>
@@ -207,7 +207,7 @@ export default function ModalDemo() {
             okText="提交"
             cancelText="取消"
           >
-            <p style={{ color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ color: vcTokens.color.neutral.text.description }}>
               onOk 返回 Promise 时，确定按钮会显示 loading，resolve 后关闭。
             </p>
           </Modal>
@@ -224,7 +224,7 @@ export default function ModalDemo() {
             footer={null}
             closable
           >
-            <p style={{ color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ color: vcTokens.color.neutral.text.description }}>
               不设置 title 且 footer 为 null 时，可做纯内容展示或自定义整块区域。
             </p>
           </Modal>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { InputNumber, Space, DgjIcon, dgjTokens } from 'dgj-design';
+import { InputNumber, Space, VcIcon, vcTokens } from 'vc-design';
 
 export default function InputNumberDemo() {
   const [value, setValue] = useState<number | null>(100);
@@ -7,25 +7,25 @@ export default function InputNumberDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>InputNumber 数字输入框</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         通过鼠标或键盘输入范围内的数值，支持步长、精度、格式化等。规范见 docs/input-number-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
           <Space direction="vertical">
             <InputNumber placeholder="请输入数字" />
             <InputNumber value={value} onChange={setValue} />
-            <p style={{ margin: 0, fontSize: 12, color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ margin: 0, fontSize: 12, color: vcTokens.color.neutral.text.description }}>
               当前值: {value ?? '-'}
             </p>
           </Space>
@@ -33,13 +33,13 @@ export default function InputNumberDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           尺寸与范围
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -52,13 +52,13 @@ export default function InputNumberDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           精度与格式化
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -74,18 +74,18 @@ export default function InputNumberDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           前缀/后缀与禁用
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
           <Space>
-            <InputNumber prefix={<DgjIcon type="wallet" />} defaultValue={0} />
+            <InputNumber prefix={<VcIcon type="wallet" />} defaultValue={0} />
             <InputNumber suffix="元" defaultValue={0} />
             <InputNumber disabled defaultValue={99} />
           </Space>
@@ -93,13 +93,13 @@ export default function InputNumberDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           状态
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

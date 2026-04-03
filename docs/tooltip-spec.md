@@ -1,6 +1,6 @@
-# Tooltip 组件规范（dgj-design）
+# Tooltip 组件规范（vc-design）
 
-基于 Ant Design 5 的 Tooltip，用于悬停或聚焦时展示简短说明，通过 DGJ Tokens 统一气泡样式。
+基于 Ant Design 5 的 Tooltip，用于悬停或聚焦时展示简短说明，通过 VC Tokens 统一气泡样式。
 
 ---
 
@@ -22,7 +22,7 @@
 | **right** / **rightTop** / **rightBottom** | 右侧 |
 
 - 默认 `top`；当空间不足时 antd 会自动调整（`autoAdjustOverflow`）。
-- 箭头与气泡间距、箭头大小由组件与主题控制，与 `dgjTokens.size.paddingXS` 等保持一致即可。
+- 箭头与气泡间距、箭头大小由组件与主题控制，与 `vcTokens.size.paddingXS` 等保持一致即可。
 
 ---
 
@@ -33,9 +33,9 @@
 | 气泡背景（默认深色） | 使用 antd 默认 dark 气泡时，由主题 token 控制 |
 | 气泡文字 | 对比色，保证可读 |
 | 箭头 | 与气泡同色，指向触发元素 |
-| 圆角 | `dgjTokens.style.borderRadius.sm`（4px）或 antd 默认 |
+| 圆角 | `vcTokens.style.borderRadius.sm`（4px）或 antd 默认 |
 
-- **color**：可传入预设色（如 `blue`、`green`），对应 `dgjTokens.color.primary.default`、`dgjTokens.color.success.default` 等，用于浅色气泡背景。
+- **color**：可传入预设色（如 `blue`、`green`），对应 `vcTokens.color.primary.default`、`vcTokens.color.success.default` 等，用于浅色气泡背景。
 
 ---
 
@@ -48,8 +48,8 @@
 
 ## 5. 与其它组件配合
 
-- 包裹 **Button**、**图标（DgjIcon）**、**Typography.Text** 等时，需保证触发区域可聚焦或可被鼠标覆盖（如禁用按钮需单独处理）。
-- 图标仅使用 **DgjIcon**；若 Tooltip 内需图标，同样使用 `DgjIcon`。
+- 包裹 **Button**、**图标（VcIcon）**、**Typography.Text** 等时，需保证触发区域可聚焦或可被鼠标覆盖（如禁用按钮需单独处理）。
+- 图标仅使用 **VcIcon**；若 Tooltip 内需图标，同样使用 `VcIcon`。
 
 ---
 

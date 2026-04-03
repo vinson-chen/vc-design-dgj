@@ -1,22 +1,22 @@
 import React from 'react';
-import { Result, Button, Space, dgjTokens } from 'dgj-design';
+import { Result, Button, Space, vcTokens } from 'vc-design';
 
 export default function ResultDemo() {
   const sectionStyle = {
-    background: dgjTokens.color.neutral.background.layout,
-    borderRadius: dgjTokens.style.borderRadius.lg,
+    background: vcTokens.color.neutral.background.layout,
+    borderRadius: vcTokens.style.borderRadius.lg,
     padding: 24,
   };
   const h2Style = {
     fontSize: 16,
     marginBottom: 12,
-    color: dgjTokens.color.neutral.text.label,
+    color: vcTokens.color.neutral.text.label,
   };
 
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Result 结果</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         展示操作结果或状态，包含图标/插图、标题、副标题与操作按钮。规范见 docs/result-spec.md。
       </p>
 
@@ -95,7 +95,7 @@ export default function ResultDemo() {
             subTitle="以下是本次处理的明细。"
             extra={<Button type="primary">继续操作</Button>}
           >
-            <div style={{ marginTop: 16, color: dgjTokens.color.neutral.text.description }}>
+            <div style={{ marginTop: 16, color: vcTokens.color.neutral.text.description }}>
               <p>• 已创建 3 条记录</p>
               <p>• 跳过 1 条重复记录</p>
             </div>

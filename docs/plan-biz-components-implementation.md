@@ -12,11 +12,11 @@
 
 | # | 问题 | 选项示例 |
 |---|------|----------|
-| A | 业务组件包位置 | 同仓 `packages/dgj-biz` monorepo / 独立仓库 |
+| A | 业务组件包位置 | 同仓 `packages/vc-biz` monorepo / 独立仓库 |
 | B | 列表页模板 | 纳入业务包 `ListPageShell` / 仅文档示例、不导出 |
 | C | 表格 v1 范围 | 仅当前自研壳能力 / 需虚拟滚动时间表 |
 
-若用户未指定，计划中的**默认假设**为：**同仓 `packages/dgj-biz`**、**先导出区块组件暂不导出整页模板**、**表格 v1 对齐当前 demo 能力**。
+若用户未指定，计划中的**默认假设**为：**同仓 `packages/vc-biz`**、**先导出区块组件暂不导出整页模板**、**表格 v1 对齐当前 demo 能力**。
 
 ---
 
@@ -46,12 +46,12 @@
 
 | 序号 | 任务 | 产出/备注 |
 |------|------|-----------|
-| 1.1 | 在仓库根配置 workspaces（若尚无），新增 `packages/dgj-biz`（名称以用户最终命名为准） | `package.json` + `tsconfig` |
-| 1.2 | 配置构建：`tsup` 或 `tsup`+`dts`，输出 `dist`、`.d.ts`，`main`/`module`/`types` | 与 `dgj-design` 构建方式尽量一致 |
-| 1.3 | 声明 `peerDependencies`：`react`、`react-dom`、`antd`、`dgj-design`（版本范围与根仓对齐） | 写入子包 `package.json` |
-| 1.4 | 子包 `src/index.ts` 先做**空导出或占位**，保证 `pnpm/npm install` + build 通过 | CI 可增量加 `build:dgj-biz` |
+| 1.1 | 在仓库根配置 workspaces（若尚无），新增 `packages/vc-biz`（名称以用户最终命名为准） | `package.json` + `tsconfig` |
+| 1.2 | 配置构建：`tsup` 或 `tsup`+`dts`，输出 `dist`、`.d.ts`，`main`/`module`/`types` | 与 `vc-design` 构建方式尽量一致 |
+| 1.3 | 声明 `peerDependencies`：`react`、`react-dom`、`antd`、`vc-design`（版本范围与根仓对齐） | 写入子包 `package.json` |
+| 1.4 | 子包 `src/index.ts` 先做**空导出或占位**，保证 `pnpm/npm install` + build 通过 | CI 可增量加 `build:vc-biz` |
 
-**阶段完成标准**：根目录可 `npm run build -w dgj-biz`（或等价命令）成功，无业务逻辑迁移。
+**阶段完成标准**：根目录可 `npm run build -w vc-biz`（或等价命令）成功，无业务逻辑迁移。
 
 ---
 
@@ -80,9 +80,9 @@
 - [ ] 无对 `demo/src` 的反向依赖  
 - [ ] 样式路径在包内可解析  
 - [ ] 导出类型公开且命名稳定  
-- [ ] `dgj-design` 仅作 peer，不打进 bundle（按构建配置验证）
+- [ ] `vc-design` 仅作 peer，不打进 bundle（按构建配置验证）
 
-**阶段完成标准**：子包导出所有约定区块组件；`demo` 全部从 `@xxx/dgj-biz`（或 `dgj-biz`）引用；设计 token 仍来自 `dgj-design`。
+**阶段完成标准**：子包导出所有约定区块组件；`demo` 全部从 `@xxx/vc-biz`（或 `vc-biz`）引用；设计 token 仍来自 `vc-design`。
 
 ---
 
@@ -93,7 +93,7 @@
 | 3.1 | `demo/package.json` 将 `file:../` 从指向根设计包扩展/改为同时依赖业务子包（依 workspaces 策略） |
 | 3.2 | 各 `*Demo.tsx` 仅保留：页面结构、h1/h2、假数据、`ConfigPanel`（若有） |
 | 3.3 | 在 `docs/` 或包内 `README.md` 增加：**安装、peer、最小示例、Figma 映射表 v0** |
-| 3.4 | 建立 `packages/dgj-biz/CHANGELOG.md` 模板与首条记录 |
+| 3.4 | 建立 `packages/vc-biz/CHANGELOG.md` 模板与首条记录 |
 
 **阶段完成标准**：新同学可按 README 在空项目中安装并渲染至少一个业务组件（可用最小 sandbox 验证）。
 
@@ -104,7 +104,7 @@
 | 序号 | 任务 |
 |------|------|
 | 4.1 | 在 `demo` 增加「列表页串联」路由或单页：筛选 + 切换 + 操作 + 表格壳（全用子包组件） |
-| 4.2 | 文档增加「版本矩阵」：已验证的 React/antd/dgj-design 组合 |
+| 4.2 | 文档增加「版本矩阵」：已验证的 React/antd/vc-design 组合 |
 | 4.3 | （若用户有第二仓库）按 checklist 做一轮试接入，记录摩擦点并回写 PRD/计划 |
 
 ---
@@ -114,7 +114,7 @@
 | 风险 | 应对 |
 |------|------|
 | SwitchTabs / Menu 依赖 demo 内图片路径 | 统一改为包内 `assets` 或公开 CDN，并在构建中复制 |
-| 循环依赖（biz ↔ design） | 业务包只 peer `dgj-design`，禁止 design 依赖 biz |
+| 循环依赖（biz ↔ design） | 业务包只 peer `vc-design`，禁止 design 依赖 biz |
 | 构建体积 | 业务包保持 external peer，不做整包打包 antd |
 
 回滚：保留迁移前 `demo/src/biz-components` 的 git 分支或 tag，子包可单独下线路由引用。
@@ -137,6 +137,6 @@
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | v0.1 | 2026-03-30 | 初稿，待用户确认后执行 |
-| v0.2 | 2026-03-30 | **阶段 1 已落地**：根目录 `workspaces: packages/*`，子包 `packages/dgj-biz`（tsup + 占位导出 + peer），脚本 `build:dgj-biz`；子包 `devDependencies` 含 `dgj-design: file:../..` 以满足本地安装 |
-| v0.3 | 2026-03-30 | **阶段 2 已落地**：业务组件迁入 `packages/dgj-biz/src`；店铺图标仅保留于 `packages/dgj-biz/assets/store_logo`，构建时生成 `storeLogoUrls`；Demo 依赖 `file:../packages/dgj-biz` 并引入 `dgj-biz/style.css`；根目录 `npm run demo` 会先 `build:dgj-biz` |
+| v0.2 | 2026-03-30 | **阶段 1 已落地**：根目录 `workspaces: packages/*`，子包 `packages/vc-biz`（tsup + 占位导出 + peer），脚本 `build:vc-biz`；子包 `devDependencies` 含 `vc-design: file:../..` 以满足本地安装 |
+| v0.3 | 2026-03-30 | **阶段 2 已落地**：业务组件迁入 `packages/vc-biz/src`；店铺图标仅保留于 `packages/vc-biz/assets/store_logo`，构建时生成 `storeLogoUrls`；Demo 依赖 `file:../packages/vc-biz` 并引入 `vc-biz/style.css`；根目录 `npm run demo` 会先 `build:vc-biz` |
 | v0.4 | 2026-03-30 | **阶段 4 已落地（阶段 4.1 + 4.2）**：新增 `ListPageShell 列表页串联` 页面，把筛选 + 切换 + 操作 + 表格壳串联；补充 `docs/version-matrix-v0.md` 用于集成验证口径。 |

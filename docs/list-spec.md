@@ -1,4 +1,4 @@
-# List 列表 组件规范（dgj-design）
+# List 列表 组件规范（vc-design）
 
 基于 Ant Design 5 的 List，最基础的列表展示，可承载文字、图片、段落。
 

@@ -1,6 +1,6 @@
-# Button 组件规范（dgj-design）
+# Button 组件规范（vc-design）
 
-基于 Ant Design 5 的 Button，通过 DGJ Tokens 统一外观与尺寸。
+基于 Ant Design 5 的 Button，通过 VC Tokens 统一外观与尺寸。
 
 ---
 
@@ -12,8 +12,8 @@
 | **Middle** | 32px | 15px | 14px | 6px | `controlHeight` / `borderRadius` |
 | **Small** | 24px | 7px | 12px | 4px | `controlHeightSM` / `borderRadiusSM` |
 
-- 高度来自：`dgjTokens.size.controlHeight.{lg | md | sm}`
-- 圆角来自：`dgjTokens.style.borderRadius.{lg | md | sm}`
+- 高度来自：`vcTokens.size.controlHeight.{lg | md | sm}`
+- 圆角来自：`vcTokens.style.borderRadius.{lg | md | sm}`
 
 ---
 
@@ -38,8 +38,8 @@
 | **Active** | 背景 `#077AE5` | 背景 `rgba(0,0,0,0.05)` |
 | **Disabled** | 背景与文字使用 disabled 透明度 | 边框与文字 `rgba(0,0,0,0.3)`，不可点击 |
 
-- 主色系来自：`dgjTokens.color.primary.*`
-- 中性色来自：`dgjTokens.color.neutral.*`
+- 主色系来自：`vcTokens.color.primary.*`
+- 中性色来自：`vcTokens.color.neutral.*`
 
 ---
 
@@ -66,4 +66,4 @@
 - `borderRadius` / `borderRadiusSM` / `borderRadiusLG` → 中/小/大圆角
 - `fontSize` / `fontSizeSM` / `fontSizeLG` → 中/小/大字号
 
-以上由 `buildAntdTheme(dgjTokens)` 注入到 Ant Design 的 `ConfigProvider.theme`，无需在 Button 上单独传样式即可生效。
+以上由 `buildAntdTheme(vcTokens)` 注入到 Ant Design 的 `ConfigProvider.theme`，无需在 Button 上单独传样式即可生效。

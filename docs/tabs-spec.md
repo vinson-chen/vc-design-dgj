@@ -1,4 +1,4 @@
-# Tabs 标签页 组件规范（dgj-design）
+# Tabs 标签页 组件规范（vc-design）
 
 基于 Ant Design 5 的 Tabs，选项卡切换组件。用于平级收纳与展示大块内容，保持界面整洁。
 
@@ -52,4 +52,4 @@
 
 ## 4. Token
 
-组件 Token：inkBarColor、itemColor、itemSelectedColor、cardBg、cardHeight 等，可由 theme.components.Tabs 覆盖，与 dgj 品牌色一致。
+组件 Token：inkBarColor、itemColor、itemSelectedColor、cardBg、cardHeight 等，可由 theme.components.Tabs 覆盖，与 vc-design 品牌色一致。

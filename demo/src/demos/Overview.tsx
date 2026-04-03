@@ -1,20 +1,20 @@
 import React from 'react';
-import { dgjTokens } from 'dgj-design';
+import { vcTokens } from 'vc-design';
 
 export default function Overview() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>组件总览</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
-        dgj-design 基于 Ant Design 5.x，通过 DGJ Tokens 统一颜色、间距、圆角与字体。左侧导航可切换到不同组件进行规范检验。
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
+        vc-design 基于 Ant Design 5.x，通过 VC Tokens（vcTokens）统一颜色、间距、圆角与字体。左侧导航可切换到不同组件进行规范检验。
       </p>
       <div
         style={{
-          background: dgjTokens.color.neutral.background.layout,
-          borderRadius: dgjTokens.style.borderRadius.lg,
+          background: vcTokens.color.neutral.background.layout,
+          borderRadius: vcTokens.style.borderRadius.lg,
           padding: 24,
           fontSize: 14,
-          color: dgjTokens.color.neutral.text.default,
+          color: vcTokens.color.neutral.text.default,
         }}
       >
         <p style={{ margin: '0 0 12px 0' }}>

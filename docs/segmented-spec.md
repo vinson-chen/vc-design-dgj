@@ -1,4 +1,4 @@
-# Segmented 分段控制器 组件规范（dgj-design）
+# Segmented 分段控制器 组件规范（vc-design）
 
 基于 Ant Design 5 的 Segmented，用于展示多个选项并允许用户选择其中单个选项。
 

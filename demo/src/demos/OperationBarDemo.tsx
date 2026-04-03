@@ -2,14 +2,14 @@ import React, { useMemo, useState } from 'react';
 import {
   Button,
   Checkbox,
-  DgjIcon,
+  VcIcon,
   Input,
   Pagination,
   Segmented,
-  dgjTokens,
+  vcTokens,
   message,
-} from 'dgj-design';
-import { OperationBar, OverflowActions, type OverflowActionItem } from 'dgj-biz';
+} from 'vc-design';
+import { OperationBar, OverflowActions, type OverflowActionItem } from 'vc-biz';
 
 const actionGapPx = 8;
 
@@ -64,18 +64,18 @@ export default function OperationBarDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>OperationBar 操作区</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         基于 Figma <code>operation_bar</code> 的左右插槽布局，在 demo 中给出 top / table / batch 三种实例。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           top_bar 实例
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -85,7 +85,7 @@ export default function OperationBarDemo() {
                 placeholder="请输入"
                 style={{ width: 320 }}
                 allowClear
-                enterButton={<Button icon={<DgjIcon type="search" fontSize={16} />} />}
+                enterButton={<Button icon={<VcIcon type="search" fontSize={16} />} />}
                 onSearch={(v) => message.info(`搜索：${v || '(空)'}`)}
               />
             }
@@ -99,13 +99,13 @@ export default function OperationBarDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           table_operation 实例
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -134,13 +134,13 @@ export default function OperationBarDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           batch_operation 实例
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -156,7 +156,7 @@ export default function OperationBarDemo() {
             minHeight: 48,
             padding: '8px 16px',
             boxSizing: 'border-box',
-            background: dgjTokens.color.neutral.background.container,
+            background: vcTokens.color.neutral.background.container,
             boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.08)',
           }}
         >

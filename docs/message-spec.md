@@ -1,6 +1,6 @@
-# Message 组件规范（dgj-design）
+# Message 组件规范（vc-design）
 
-基于 Ant Design 5 的 Message（全局提示），用于轻量级全局反馈，通过 DGJ Tokens 与主题统一类型色与层级。
+基于 Ant Design 5 的 Message（全局提示），用于轻量级全局反馈，通过 VC Tokens 与主题统一类型色与层级。
 
 ---
 
@@ -16,10 +16,10 @@
 
 | 类型      | 说明     | Token 映射                           |
 |-----------|----------|--------------------------------------|
-| **info**  | 信息提示 | `dgjTokens.color.info.default` 或主色 |
-| **success** | 成功提示 | `dgjTokens.color.success.default`     |
-| **warning** | 警告提示 | `dgjTokens.color.warning.default`     |
-| **error** | 错误提示 | `dgjTokens.color.error.default`       |
+| **info**  | 信息提示 | `vcTokens.color.info.default` 或主色 |
+| **success** | 成功提示 | `vcTokens.color.success.default`     |
+| **warning** | 警告提示 | `vcTokens.color.warning.default`     |
+| **error** | 错误提示 | `vcTokens.color.error.default`       |
 | **loading** | 加载中 | 与 info 类似，图标为 loading 态      |
 
 ---

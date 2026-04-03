@@ -1,4 +1,4 @@
-# TimePicker 时间选择框 组件规范（dgj-design）
+# TimePicker 时间选择框 组件规范（vc-design）
 
 基于 Ant Design 5 的 TimePicker，用于输入或选择时间。时间值使用 **dayjs**，需在项目中安装并配置 locale。
 
@@ -36,4 +36,4 @@
 
 ## 4. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

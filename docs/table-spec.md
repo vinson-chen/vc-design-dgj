@@ -1,4 +1,4 @@
-# Table 表格 组件规范（dgj-design）
+# Table 表格 组件规范（vc-design）
 
 基于 Ant Design 5 的 Table，展示行列数据。
 

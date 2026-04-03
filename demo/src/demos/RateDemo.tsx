@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Rate, Space, dgjTokens } from 'dgj-design';
+import { Rate, Space, vcTokens } from 'vc-design';
 
 const desc = ['很差', '较差', '一般', '较好', '很好'];
 
@@ -9,25 +9,25 @@ export default function RateDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Rate 评分</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         对事物进行评分操作，支持整星、半星、自定义字符与提示。规范见 docs/rate-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
           <Space direction="vertical">
             <Rate />
             <Rate value={value} onChange={setValue} />
-            <p style={{ margin: 0, fontSize: 12, color: dgjTokens.color.neutral.text.description }}>
+            <p style={{ margin: 0, fontSize: 12, color: vcTokens.color.neutral.text.description }}>
               当前: {value} 星
             </p>
           </Space>
@@ -35,13 +35,13 @@ export default function RateDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           半星与文案
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -49,7 +49,7 @@ export default function RateDemo() {
             <Rate allowHalf defaultValue={2.5} />
             <Space align="center">
               <Rate tooltips={desc} value={value} onChange={setValue} />
-              <span style={{ color: dgjTokens.color.neutral.text.description }}>
+              <span style={{ color: vcTokens.color.neutral.text.description }}>
                 {value ? desc[value - 1] : ''}
               </span>
             </Space>
@@ -58,13 +58,13 @@ export default function RateDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           清除与只读
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -77,13 +77,13 @@ export default function RateDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           自定义数量
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

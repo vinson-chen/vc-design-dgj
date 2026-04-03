@@ -1,6 +1,6 @@
-# Skeleton 组件规范（dgj-design）
+# Skeleton 组件规范（vc-design）
 
-基于 Ant Design 5 的 Skeleton（骨架屏），在内容加载时展示占位区块，通过 DGJ Tokens 与主题统一占位色与动画。
+基于 Ant Design 5 的 Skeleton（骨架屏），在内容加载时展示占位区块，通过 VC Tokens 与主题统一占位色与动画。
 
 ---
 
@@ -46,5 +46,5 @@
 
 ## 5. 样式与 Token
 
-- 占位背景色使用 `dgjTokens.color.neutral.fill.tertiary` 或主题默认 skeleton 色。
-- 动画与 antd 一致；圆角可用 `dgjTokens.style.borderRadius.sm`。
+- 占位背景色使用 `vcTokens.color.neutral.fill.tertiary` 或主题默认 skeleton 色。
+- 动画与 antd 一致；圆角可用 `vcTokens.style.borderRadius.sm`。

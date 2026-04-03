@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
-  DgjConfigProvider,
+  VcConfigProvider,
   Button,
   DatePicker,
   Select,
   Space,
-  DgjIcon,
-  dgjTokens,
-} from 'dgj-design';
+  VcIcon,
+  vcTokens,
+} from 'vc-design';
 import type { Locale } from 'antd/es/locale';
 import zhCN from 'antd/locale/zh_CN';
 import enUS from 'antd/locale/en_US';
@@ -19,24 +19,24 @@ export default function ConfigProviderDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>ConfigProvider 全局化配置</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         在应用根节点包裹一次，使主题（Token）、语言、尺寸对内部所有组件生效。规范见
         docs/config-provider-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
-          默认行为（当前页面已在根节点使用 DgjConfigProvider）
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
+          默认行为（当前页面已在根节点使用 VcConfigProvider）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
-          <p style={{ marginBottom: 16, fontSize: 13, color: dgjTokens.color.neutral.text.description }}>
-            下方按钮、选择器、日期框均使用 DGJ 主题与默认中文。
+          <p style={{ marginBottom: 16, fontSize: 13, color: vcTokens.color.neutral.text.description }}>
+            下方按钮、选择器、日期框均使用 VC 主题与默认中文。
           </p>
           <Space wrap>
             <Button type="primary">主按钮</Button>
@@ -45,7 +45,7 @@ export default function ConfigProviderDemo() {
               placeholder="请选择"
               style={{ width: 160 }}
               options={[{ value: 'a', label: '选项 A' }]}
-              suffixIcon={<DgjIcon type="chevron-down" />}
+              suffixIcon={<VcIcon type="chevron-down" />}
             />
             <DatePicker placeholder="选择日期" />
           </Space>
@@ -53,13 +53,13 @@ export default function ConfigProviderDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           全局尺寸（componentSize）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -70,24 +70,24 @@ export default function ConfigProviderDemo() {
               </Button>
             ))}
           </Space>
-          <DgjConfigProvider componentSize={size}>
+          <VcConfigProvider componentSize={size}>
             <Space wrap>
               <Button>Button</Button>
               <Select placeholder="Select" style={{ width: 120 }} options={[]} />
               <DatePicker placeholder="DatePicker" />
             </Space>
-          </DgjConfigProvider>
+          </VcConfigProvider>
         </div>
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           语言（locale）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -105,7 +105,7 @@ export default function ConfigProviderDemo() {
               English
             </Button>
           </Space>
-          <DgjConfigProvider locale={locale}>
+          <VcConfigProvider locale={locale}>
             <Space wrap>
               <DatePicker placeholder={locale === zhCN ? '选择日期' : 'Select date'} />
               <Select
@@ -114,7 +114,7 @@ export default function ConfigProviderDemo() {
                 options={[]}
               />
             </Space>
-          </DgjConfigProvider>
+          </VcConfigProvider>
         </div>
       </section>
     </>

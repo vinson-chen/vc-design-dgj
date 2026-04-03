@@ -1,4 +1,4 @@
-# Pagination 分页 组件规范（dgj-design）
+# Pagination 分页 组件规范（vc-design）
 
 基于 Ant Design 5 的 Pagination，用于分隔长列表，每次只加载一页。适用于数据量大、需切换页码浏览的场景。
 
@@ -37,4 +37,4 @@
 
 ## 3. Token
 
-组件 Token：itemBg、itemActiveBg、itemActiveColor、itemSize、itemSizeSM 等，可由 theme.components.Pagination 覆盖，与 dgj 品牌色一致。
+组件 Token：itemBg、itemActiveBg、itemActiveColor、itemSize、itemSizeSM 等，可由 theme.components.Pagination 覆盖，与 vc-design 品牌色一致。

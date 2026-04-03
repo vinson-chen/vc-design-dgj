@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { dgjTokens, message } from 'dgj-design';
-import { FilterGroup, type FilterFieldConfig } from 'dgj-biz';
+import { vcTokens, message } from 'vc-design';
+import { FilterGroup, type FilterFieldConfig } from 'vc-biz';
 
 const statusOptions = [
   { label: '全部', value: '' },
@@ -63,19 +63,19 @@ export default function FilterAreaDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>FilterArea 筛选区</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         基于 Figma <code>filter_group</code>：筛选项无前缀文案；筛选项宽度始终限制在 160~328px，
         占满时在筛选区可视宽度内等分栅格并自动换行；查询/重置按钮维持跟随/贴右规则。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基础三列
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -92,13 +92,13 @@ export default function FilterAreaDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           多筛选项换行
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -115,13 +115,13 @@ export default function FilterAreaDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           三行以上可折叠（demo）
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

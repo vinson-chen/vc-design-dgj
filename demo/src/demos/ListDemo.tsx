@@ -1,5 +1,5 @@
 import React from 'react';
-import { List, Avatar, Space, dgjTokens } from 'dgj-design';
+import { List, Avatar, Space, vcTokens } from 'vc-design';
 
 const data = [
   { id: '1', title: '标题一', desc: '描述内容一' },
@@ -13,18 +13,18 @@ export default function ListDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>List 列表</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         基础列表展示，支持 dataSource、Item.Meta、尺寸与分页。规范见 docs/list-spec.md。
       </p>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           基本
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -41,13 +41,13 @@ export default function ListDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           List.Item.Meta 与尺寸
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >
@@ -69,7 +69,7 @@ export default function ListDemo() {
               size="large"
               dataSource={data.slice(0, 2)}
               renderItem={(item) => (
-                <List.Item key={item.id} extra={<span style={{ color: dgjTokens.color.neutral.text.description }}>额外</span>}>
+                <List.Item key={item.id} extra={<span style={{ color: vcTokens.color.neutral.text.description }}>额外</span>}>
                   <List.Item.Meta title={item.title} description={item.desc} />
                 </List.Item>
               )}
@@ -79,13 +79,13 @@ export default function ListDemo() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: dgjTokens.color.neutral.text.label }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           竖排与操作
         </h2>
         <div
           style={{
-            background: dgjTokens.color.neutral.background.layout,
-            borderRadius: dgjTokens.style.borderRadius.lg,
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
             padding: 24,
           }}
         >

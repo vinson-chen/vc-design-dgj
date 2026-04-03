@@ -1,12 +1,12 @@
-# Icon 图标 组件规范（dgj-design）
+# Icon 图标 组件规范（vc-design）
 
-基于项目提供的 iconfont 图标库，通过 `DgjIcon` 组件统一使用。不依赖 `@ant-design/icons`，图标与 iconfont 项目一一对应。
+基于项目提供的 iconfont 图标库，通过 `VcIcon` 组件统一使用。不依赖 `@ant-design/icons`，图标与 iconfont 项目一一对应。
 
 ---
 
 ## 1. 组件与用法
 
-- **组件名**：`DgjIcon`（从 `dgj-design` 引入）。
+- **组件名**：`VcIcon`（从 `vc-design` 引入）。
 - **渲染方式**：`<i className="iconfont icon-{type}" />`，需在页面中已加载 iconfont 的 Font class 样式（含 `@font-face` 与 `.icon-xxx` 定义）。
 - **基本用法**：
   - `type`：必填，对应 iconfont 的 class 后缀。如 `type="search"` 渲染为 `icon-search`。
@@ -14,7 +14,7 @@
 
 ---
 
-## 2. API（DgjIconProps）
+## 2. API（VcIconProps）
 
 | 参数 | 说明 | 类型 | 默认值 |
 |------|------|------|--------|
@@ -29,7 +29,7 @@
 
 ## 3. 尺寸与颜色
 
-- **尺寸**：通过 `fontSize` 或 `style.fontSize` 控制，常用 14px、16px、20px 与文案对齐；亦可使用 `dgjTokens.style.font.size.base`（14）等。
+- **尺寸**：通过 `fontSize` 或 `style.fontSize` 控制，常用 14px、16px、20px 与文案对齐；亦可使用 `vcTokens.style.font.size.base`（14）等。
 - **颜色**：继承父级 `color`（`currentColor`），可通过父级或 `style.color` 设置；与 AntD 组件同用时由组件 token 控制。
 
 ---
@@ -45,11 +45,11 @@
 ## 5. Token 与主题
 
 - 图标不单独占用 Design Token；颜色、字号由使用场景（如 Button、Input）的 token 决定。
-- 中性场景下图标颜色可对应 `dgjTokens.color.neutral.text.icon`（rgba(0,0,0,0.5)），hover 对应 `color.neutral.text.iconHover`。
+- 中性场景下图标颜色可对应 `vcTokens.color.neutral.text.icon`（rgba(0,0,0,0.5)），hover 对应 `color.neutral.text.iconHover`。
 
 ---
 
 ## 6. 与 Ant Design Icon 的差异
 
-- AntD 使用 `@ant-design/icons`（SVG 组件）；dgj-design 使用 **DgjIcon + iconfont**，图标由字体渲染。
-- 业务中统一使用 `<DgjIcon type="xxx" />`，不再混用 `@ant-design/icons`，以保证风格与图标库一致。
+- AntD 使用 `@ant-design/icons`（SVG 组件）；vc-design 使用 **VcIcon + iconfont**，图标由字体渲染。
+- 业务中统一使用 `<VcIcon type="xxx" />`，不再混用 `@ant-design/icons`，以保证风格与图标库一致。

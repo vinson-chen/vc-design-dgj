@@ -1,4 +1,4 @@
-# Dropdown 下拉菜单 组件规范（dgj-design）
+# Dropdown 下拉菜单 组件规范（vc-design）
 
 基于 Ant Design 5 的 Dropdown，向下弹出的列表，用于收纳一组操作命令。与 Select 区别：Select 用于选择，Dropdown 用于命令集合。
 

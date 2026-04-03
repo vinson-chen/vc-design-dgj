@@ -1,6 +1,6 @@
-# Result 组件规范（dgj-design）
+# Result 组件规范（vc-design）
 
-基于 Ant Design 5 的 Result（结果），用于展示操作结果页或模块，包括图标/插图、标题、副标题与操作区，通过 DGJ Tokens 与主题统一语义色。
+基于 Ant Design 5 的 Result（结果），用于展示操作结果页或模块，包括图标/插图、标题、副标题与操作区，通过 VC Tokens 与主题统一语义色。
 
 ---
 
@@ -30,7 +30,7 @@
 | **extra** | 操作区，通常为一个或多个按钮（如「返回首页」「重新加载」） |
 | **children** | 可选，自由插入额外内容（如列表、表格等） |
 
-- 图标与标题颜色与语义色对应：success 使用 `dgjTokens.color.success.default`，error 使用 `dgjTokens.color.error.default` 等。
+- 图标与标题颜色与语义色对应：success 使用 `vcTokens.color.success.default`，error 使用 `vcTokens.color.error.default` 等。
 
 ---
 
@@ -43,8 +43,8 @@
 
 ## 4. 样式与 Token
 
-- 背景通常使用 `dgjTokens.color.neutral.background.layout` 或白色，保持与页面背景一致。
-- 标题文本使用 `dgjTokens.color.neutral.text.default`，副标题使用 `dgjTokens.color.neutral.text.description`。
+- 背景通常使用 `vcTokens.color.neutral.background.layout` 或白色，保持与页面背景一致。
+- 标题文本使用 `vcTokens.color.neutral.text.default`，副标题使用 `vcTokens.color.neutral.text.description`。
 - 可通过 `classNames` / `styles` 精细控制 `root`、`title`、`subTitle`、`extra` 区域样式。
 
 ---

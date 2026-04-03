@@ -1,6 +1,6 @@
-# Popconfirm 组件规范（dgj-design）
+# Popconfirm 组件规范（vc-design）
 
-基于 Ant Design 5 的 Popconfirm（气泡确认框），在点击触发元素后弹出确认气泡，用于二次确认操作，通过 DGJ Tokens 与主题统一样式。
+基于 Ant Design 5 的 Popconfirm（气泡确认框），在点击触发元素后弹出确认气泡，用于二次确认操作，通过 VC Tokens 与主题统一样式。
 
 ---
 
@@ -22,9 +22,9 @@
 | **cancelText** | 取消按钮文案，默认「取消」 |
 | **okType** | 确认按钮类型：`primary`、`default`、`dashed`、`link`、`text`，危险操作用 `danger` |
 | **showCancel** | 是否显示取消按钮，默认 `true` |
-| **icon** | 自定义气泡内图标，仅使用 **DgjIcon**（如警告用 `type="warning"`） |
+| **icon** | 自定义气泡内图标，仅使用 **VcIcon**（如警告用 `type="warning"`） |
 
-- 确认/取消按钮样式与 Button 组件一致，遵循 `dgjTokens.color.primary.default`、`color.error.default` 等。
+- 确认/取消按钮样式与 Button 组件一致，遵循 `vcTokens.color.primary.default`、`color.error.default` 等。
 
 ---
 
@@ -44,7 +44,7 @@
 ## 4. 位置与展示
 
 - **placement**：与 Tooltip/Popover 一致，如 `top`、`bottom`、`left`、`right` 及衍生（topLeft、bottomRight 等）。
-- 气泡圆角、内边距与 Popover 统一，使用 `dgjTokens.style.borderRadius.md` 等。
+- 气泡圆角、内边距与 Popover 统一，使用 `vcTokens.style.borderRadius.md` 等。
 
 ---
 

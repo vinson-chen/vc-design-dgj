@@ -1,4 +1,4 @@
-# Affix 组件规范（dgj-design）
+# Affix 组件规范（vc-design）
 
 基于 Ant Design 5 的 Affix（固钉），用于将元素固定在页面可视区域的指定位置（通常为顶部），在滚动时保持可见，通过偏移与目标容器控制行为。
 
@@ -34,5 +34,5 @@
 
 ## 4. Token 与样式
 
-- Affix 本身仅负责定位，不直接控制子内容样式；子内容的颜色、背景等由对应组件（如 Button、Card）及 `dgjTokens` 控制。
+- Affix 本身仅负责定位，不直接控制子内容样式；子内容的颜色、背景等由对应组件（如 Button、Card）及 `vcTokens` 控制。
 

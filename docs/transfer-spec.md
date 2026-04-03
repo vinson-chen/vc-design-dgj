@@ -1,4 +1,4 @@
-# Transfer 穿梭框 组件规范（dgj-design）
+# Transfer 穿梭框 组件规范（vc-design）
 
 基于 Ant Design 5 的 Transfer，双栏穿梭选择框。**仅支持受控使用**。
 
@@ -39,4 +39,4 @@ dataSource 每项需有 **key**（或通过 rowKey 指定主键），以满足 R
 
 ## 4. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

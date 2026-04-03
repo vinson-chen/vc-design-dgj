@@ -1,4 +1,4 @@
-# Badge 徽标数 组件规范（dgj-design）
+# Badge 徽标数 组件规范（vc-design）
 
 基于 Ant Design 5 的 Badge，图标或头像右上角的圆形徽标数字或状态点。
 

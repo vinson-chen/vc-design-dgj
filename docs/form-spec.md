@@ -1,4 +1,4 @@
-# Form 表单 组件规范（dgj-design）
+# Form 表单 组件规范（vc-design）
 
 基于 Ant Design 5 的 Form，高性能表单控件，自带数据域管理。包含数据录入、校验及对应样式。
 
@@ -54,7 +54,7 @@
 
 ---
 
-## 5. 与 dgj 约定
+## 5. 与 vc-design 约定
 
 - Checkbox / Switch 在 Form.Item 下须设置 `valuePropName="checked"`。
 - 默认值用 Form 的 `initialValues` 或 Item 的 `initialValue`，勿用控件的 `value`/`defaultValue` 设表单值。
@@ -63,4 +63,4 @@
 
 ## 6. Token
 
-使用全局/组件 Token，可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token，可由 theme 覆盖，与 vc-design 品牌色一致。

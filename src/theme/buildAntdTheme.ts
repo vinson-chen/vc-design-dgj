@@ -1,9 +1,9 @@
 import type { ThemeConfig } from 'antd';
-import { dgjTokens, type DgjTokens } from './dgjTokens';
+import { vcTokens, type VcTokens } from './vcTokens';
 
-export const baseDgjTheme: DgjTokens = dgjTokens;
+export const baseVcTheme: VcTokens = vcTokens;
 
-export function buildAntdTheme(tokens: DgjTokens = dgjTokens): ThemeConfig {
+export function buildAntdTheme(tokens: VcTokens = vcTokens): ThemeConfig {
   const { color, size, style } = tokens;
 
   const theme: ThemeConfig = {

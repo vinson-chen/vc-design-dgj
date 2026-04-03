@@ -1,17 +1,17 @@
 import React from 'react';
-import { Space, dgjTokens } from 'dgj-design';
-import { BizMenuItem } from 'dgj-biz';
+import { Space, vcTokens } from 'vc-design';
+import { BizMenuItem } from 'vc-biz';
 
 export default function BizMenuItemSpecDemo() {
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>导航区 · 第一步 .menu_item 规范</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 16 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 16 }}>
         left 用于展开导航（small:false），center 用于收起导航（small:true）。
       </p>
       <div
         style={{
-          background: dgjTokens.color.menu.navBackground,
+          background: vcTokens.color.menu.navBackground,
           borderRadius: 8,
           padding: 16,
           display: 'grid',
@@ -19,7 +19,7 @@ export default function BizMenuItemSpecDemo() {
         }}
       >
         <section>
-          <h3 style={{ color: dgjTokens.color.neutral.text.solid, margin: '0 0 8px' }}>
+          <h3 style={{ color: vcTokens.color.neutral.text.solid, margin: '0 0 8px' }}>
             left（展开）
           </h3>
           <Space wrap size={8}>
@@ -29,7 +29,7 @@ export default function BizMenuItemSpecDemo() {
           </Space>
         </section>
         <section>
-          <h3 style={{ color: dgjTokens.color.neutral.text.solid, margin: '0 0 8px' }}>
+          <h3 style={{ color: vcTokens.color.neutral.text.solid, margin: '0 0 8px' }}>
             center（收起）
           </h3>
           <Space wrap size={8}>

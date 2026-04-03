@@ -1,4 +1,4 @@
-# Watermark 组件规范（dgj-design）
+# Watermark 组件规范（vc-design）
 
 基于 Ant Design 5 的 Watermark（水印），用于在页面或容器上添加文字/图片水印，通过配置旋转角度、间距与字体样式统一品牌展示与防泄露效果。
 
@@ -19,7 +19,7 @@
 | **image** | 图片地址，与 `content` 互斥，优先使用图片 |
 | **font** | 文本样式配置，包括 `color`、`fontSize`、`fontWeight`、`fontStyle`、`fontFamily`、`textAlign` |
 
-- 文本颜色、字号建议与品牌规范保持一致，可结合 `dgjTokens` 中的文本色和字号 token 进行设计（在主题中统一配置）。\n+
+- 文本颜色、字号建议与品牌规范保持一致，可结合 `vcTokens` 中的文本色和字号 token 进行设计（在主题中统一配置）。\n+
 
 ---
 

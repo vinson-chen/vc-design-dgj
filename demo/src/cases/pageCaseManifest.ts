@@ -12,7 +12,7 @@ export interface PageCaseColorItem {
 
 export interface PageCaseIconItem {
   figmaName: string;
-  dgjIconType: string;
+  vcIconType: string;
   fallback: boolean;
 }
 
@@ -31,7 +31,7 @@ export interface PageCaseManifest {
 export const pageCaseManifest: PageCaseManifest = {
   source: {
     figmaLink:
-      'https://www.figma.com/design/a4w8JupybLqnEXPkxRs4wL/DGJ-Design?node-id=663-11500&t=GbwvUkmgYHG3vmT3-1',
+      'https://www.figma.com/design/a4w8JupybLqnEXPkxRs4wL/VC-Design?node-id=663-11500&t=GbwvUkmgYHG3vmT3-1',
     nodeId: '663:11500',
     generatedAt: '2026-03-24T08:34:18.535Z',
   },
@@ -56,25 +56,25 @@ export const pageCaseManifest: PageCaseManifest = {
     { component: 'Modal', variant: 'default', interaction: '点击新建打开对话框（案例页已实现）' },
   ],
   colors: [
-    { role: '主操作按钮/高亮', tokenPath: 'dgjTokens.color.primary.default', hex: '#0888FF' },
-    { role: '页面底色', tokenPath: 'dgjTokens.color.neutral.background.layout', hex: '#F0F1F2' },
-    { role: '容器背景', tokenPath: 'dgjTokens.color.neutral.background.container', hex: '#FFFFFF' },
-    { role: '深色导航底', tokenPath: 'dgjTokens.color.neutral.text.default（近似深色背景）', hex: '#424A57' },
-    { role: '边框线', tokenPath: 'dgjTokens.color.neutral.border.default', hex: '#E1E2E4' },
-    { role: '信息提示背景', tokenPath: 'dgjTokens.color.info.bg', hex: '#ECF6FF' },
-    { role: '危险态文本', tokenPath: 'dgjTokens.color.error.default', hex: '#EA572E' },
-    { role: '危险态背景', tokenPath: 'dgjTokens.color.error.bg', hex: '#FEF2EF' },
-    { role: '成功态', tokenPath: 'dgjTokens.color.success.default', hex: '#73AC1F' },
+    { role: '主操作按钮/高亮', tokenPath: 'vcTokens.color.primary.default', hex: '#0888FF' },
+    { role: '页面底色', tokenPath: 'vcTokens.color.neutral.background.layout', hex: '#F0F1F2' },
+    { role: '容器背景', tokenPath: 'vcTokens.color.neutral.background.container', hex: '#FFFFFF' },
+    { role: '深色导航底', tokenPath: 'vcTokens.color.neutral.text.default（近似深色背景）', hex: '#424A57' },
+    { role: '边框线', tokenPath: 'vcTokens.color.neutral.border.default', hex: '#E1E2E4' },
+    { role: '信息提示背景', tokenPath: 'vcTokens.color.info.bg', hex: '#ECF6FF' },
+    { role: '危险态文本', tokenPath: 'vcTokens.color.error.default', hex: '#EA572E' },
+    { role: '危险态背景', tokenPath: 'vcTokens.color.error.bg', hex: '#FEF2EF' },
+    { role: '成功态', tokenPath: 'vcTokens.color.success.default', hex: '#73AC1F' },
   ],
   icons: [
-    { figmaName: 'search', dgjIconType: 'search', fallback: false },
-    { figmaName: 'add', dgjIconType: 'add', fallback: false },
-    { figmaName: 'close', dgjIconType: 'close', fallback: false },
-    { figmaName: 'edit', dgjIconType: 'edit', fallback: false },
-    { figmaName: 'delete', dgjIconType: 'delete', fallback: false },
-    { figmaName: 'chevron-down', dgjIconType: 'chevron-down', fallback: false },
-    { figmaName: 'chevron-left', dgjIconType: 'chevron-left', fallback: false },
-    { figmaName: 'chevron-right', dgjIconType: 'chevron-right', fallback: false },
-    { figmaName: '🎰 icon / icon（语义不明确）', dgjIconType: 'help-circle', fallback: true },
+    { figmaName: 'search', vcIconType: 'search', fallback: false },
+    { figmaName: 'add', vcIconType: 'add', fallback: false },
+    { figmaName: 'close', vcIconType: 'close', fallback: false },
+    { figmaName: 'edit', vcIconType: 'edit', fallback: false },
+    { figmaName: 'delete', vcIconType: 'delete', fallback: false },
+    { figmaName: 'chevron-down', vcIconType: 'chevron-down', fallback: false },
+    { figmaName: 'chevron-left', vcIconType: 'chevron-left', fallback: false },
+    { figmaName: 'chevron-right', vcIconType: 'chevron-right', fallback: false },
+    { figmaName: '🎰 icon / icon（语义不明确）', vcIconType: 'help-circle', fallback: true },
   ],
 };

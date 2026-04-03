@@ -8,8 +8,8 @@
 |---|---|
 | React | `18.3.1` |
 | antd | `^5.22.0`（实际安装以 lock 文件为准） |
-| dgj-design | `file:..`（本仓版本） |
-| dgj-biz | `file:../packages/dgj-biz`（`0.1.0`） |
+| vc-design | `file:..`（本仓版本） |
+| vc-biz | `file:../packages/vc-biz`（`1.0.0`） |
 | dayjs | `^1.11.11` |
 | Vite | `^6.0.3`（实际构建以 lock 为准） |
 

@@ -1,22 +1,22 @@
 import React from 'react';
-import { Watermark, Card, dgjTokens } from 'dgj-design';
+import { Watermark, Card, vcTokens } from 'vc-design';
 
 export default function WatermarkDemo() {
   const sectionStyle = {
-    background: dgjTokens.color.neutral.background.layout,
-    borderRadius: dgjTokens.style.borderRadius.lg,
+    background: vcTokens.color.neutral.background.layout,
+    borderRadius: vcTokens.style.borderRadius.lg,
     padding: 24,
   };
   const h2Style = {
     fontSize: 16,
     marginBottom: 12,
-    color: dgjTokens.color.neutral.text.label,
+    color: vcTokens.color.neutral.text.label,
   };
 
   return (
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>Watermark 水印</h1>
-      <p style={{ color: dgjTokens.color.neutral.text.description, marginBottom: 24 }}>
+      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         在页面或容器上添加文字/图片水印，常用于环境标识与防泄露。规范见 docs/watermark-spec.md。
       </p>
 
@@ -28,11 +28,11 @@ export default function WatermarkDemo() {
               style={{
                 height: 180,
                 background: '#fff',
-                borderRadius: dgjTokens.style.borderRadius.md,
+                borderRadius: vcTokens.style.borderRadius.md,
                 padding: 24,
               }}
             >
-              <p style={{ margin: 0, color: dgjTokens.color.neutral.text.description }}>
+              <p style={{ margin: 0, color: vcTokens.color.neutral.text.description }}>
                 该区域内容将叠加「内部测试」文字水印。
               </p>
             </div>
@@ -57,11 +57,11 @@ export default function WatermarkDemo() {
               style={{
                 height: 200,
                 background: '#fff',
-                borderRadius: dgjTokens.style.borderRadius.md,
+                borderRadius: vcTokens.style.borderRadius.md,
                 padding: 24,
               }}
             >
-              <p style={{ margin: 0, color: dgjTokens.color.neutral.text.description }}>
+              <p style={{ margin: 0, color: vcTokens.color.neutral.text.description }}>
                 多行文本水印，适用于强调保密的预览页面。
               </p>
             </div>
@@ -73,7 +73,7 @@ export default function WatermarkDemo() {
         <h2 style={h2Style}>调整间距与偏移</h2>
         <div style={sectionStyle}>
           <Watermark
-            content="DGJ"
+            content="VC"
             gap={[80, 80]}
             offset={[40, 40]}
             rotate={-30}
@@ -82,11 +82,11 @@ export default function WatermarkDemo() {
               style={{
                 height: 180,
                 background: '#fff',
-                borderRadius: dgjTokens.style.borderRadius.md,
+                borderRadius: vcTokens.style.borderRadius.md,
                 padding: 24,
               }}
             >
-              <p style={{ margin: 0, color: dgjTokens.color.neutral.text.description }}>
+              <p style={{ margin: 0, color: vcTokens.color.neutral.text.description }}>
                 通过 gap 与 offset 控制水印密度与起始位置。
               </p>
             </div>
@@ -105,7 +105,7 @@ export default function WatermarkDemo() {
                 minHeight: 160,
               }}
             >
-              <p style={{ color: dgjTokens.color.neutral.text.description }}>
+              <p style={{ color: vcTokens.color.neutral.text.description }}>
                 整个 Card 区域都叠加了水印，适合场景环境标识。
               </p>
             </Card>

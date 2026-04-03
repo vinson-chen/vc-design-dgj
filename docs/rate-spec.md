@@ -1,4 +1,4 @@
-# Rate 评分 组件规范（dgj-design）
+# Rate 评分 组件规范（vc-design）
 
 基于 Ant Design 5 的 Rate，用于对事物进行评分操作。
 
@@ -29,4 +29,4 @@
 
 ## 3. Token
 
-使用全局/组件 Token（starBg、starColor、starSize 等），可由 theme 覆盖，与 dgj 品牌色一致。
+使用全局/组件 Token（starBg、starColor、starSize 等），可由 theme 覆盖，与 vc-design 品牌色一致。

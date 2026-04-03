@@ -1,4 +1,4 @@
-# Menu 导航菜单 组件规范（dgj-design）
+# Menu 导航菜单 组件规范（vc-design）
 
 基于 Ant Design 5 的 Menu，为页面和功能提供导航的菜单列表。支持顶部导航、侧边导航与内嵌模式。
 
@@ -47,12 +47,12 @@
 ## 4. 使用方式
 
 ```ts
-import { Menu } from 'dgj-design';
+import { Menu } from 'vc-design';
 
 <Menu
   mode="inline"
   items={[
-    { key: '1', label: '选项 1', icon: <DgjIcon type="home" /> },
+    { key: '1', label: '选项 1', icon: <VcIcon type="home" /> },
     { key: '2', label: '选项 2', children: [{ key: '2-1', label: '子项' }] },
   ]}
 />
@@ -62,4 +62,4 @@ import { Menu } from 'dgj-design';
 
 ## 5. Token
 
-组件 Token 众多（itemBg、itemColor、itemSelectedBg、darkItemBg 等），可由 theme.components.Menu 覆盖，与 dgj 规范一致。
+组件 Token 众多（itemBg、itemColor、itemSelectedBg、darkItemBg 等），可由 theme.components.Menu 覆盖，与 vc-design 规范一致。

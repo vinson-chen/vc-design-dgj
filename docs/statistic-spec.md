@@ -1,4 +1,4 @@
-# Statistic 统计数值 组件规范（dgj-design）
+# Statistic 统计数值 组件规范（vc-design）
 
 基于 Ant Design 5 的 Statistic，展示统计数值。
 

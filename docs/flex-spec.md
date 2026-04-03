@@ -1,4 +1,4 @@
-# Flex 弹性布局 组件规范（dgj-design）
+# Flex 弹性布局 组件规范（vc-design）
 
 基于 Ant Design 5 的 Flex，用于对齐的弹性布局容器。适用于设置元素间距与水平/垂直对齐（与 Space 区别：Flex 为块级、不包裹子元素，控制力更强）。
 
@@ -39,7 +39,7 @@
 
 | 值 | 说明 |
 |----|------|
-| **small** \| **middle** \| **large** | 预设尺寸，与 dgj/antd 间距体系一致 |
+| **small** \| **middle** \| **large** | 预设尺寸，与 vc-design/antd 间距体系一致 |
 | string \| number | 自定义（如 `8`、`'16px'`） |
 
 ---
@@ -56,4 +56,4 @@
 
 ## 7. Token
 
-Flex 使用 AntD 通用间距 token（如 marginXS、marginSM、margin 等）用于 gap 预设，由 `buildAntdTheme(dgjTokens)` 全局注入，无需单独覆盖。
+Flex 使用 AntD 通用间距 token（如 marginXS、marginSM、margin 等）用于 gap 预设，由 `buildAntdTheme(vcTokens)` 全局注入，无需单独覆盖。

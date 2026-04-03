@@ -1,4 +1,4 @@
-import { dgjTokens } from './dgjTokens';
+import { vcTokens } from './vcTokens';
 
 /**
  * 与 Figma / 设计稿侧「引用场景」对齐：先按场景过滤 token，再按数值匹配，减少同名异义冲突。
@@ -164,7 +164,7 @@ function colorValuesEqual(a: string, b: string): boolean {
   return normalizeColorValue(a) === normalizeColorValue(b);
 }
 
-const ALL_FLAT = (): FlatLeaf[] => flattenTokens(dgjTokens, '');
+const ALL_FLAT = (): FlatLeaf[] => flattenTokens(vcTokens, '');
 
 let cacheFlat: FlatLeaf[] | null = null;
 
@@ -176,7 +176,7 @@ function getFlatLeaves(): FlatLeaf[] {
 }
 
 /**
- * 按「引用场景」+ 色值，在 dgjTokens 中查找可能对应的 token 路径（同值可能多条）。
+ * 按「引用场景」+ 色值，在 vcTokens 中查找可能对应的 token 路径（同值可能多条）。
  * @param figmaColor Figma 解析出的颜色字符串，如 #FFFFFF、rgba(0,0,0,0.1)
  * @param role 当前节点在设计语义下的用途（fill / stroke / 文本等）
  */
@@ -190,7 +190,7 @@ export function resolveColorTokenByValue(
     if (!value.startsWith('#') && !value.startsWith('rgb')) continue;
     if (!tokenPathMatchesRole(path, role)) continue;
     if (!colorValuesEqual(value, figmaColor)) continue;
-    out.push({ path: `dgjTokens.${path}`, value });
+    out.push({ path: `vcTokens.${path}`, value });
   }
   out.sort((a, b) => a.path.localeCompare(b.path));
   return out;
@@ -208,7 +208,7 @@ export function resolveNumericTokenByValue(
     if (typeof value !== 'number') continue;
     if (value !== n) continue;
     if (!tokenPathMatchesRole(path, role)) continue;
-    out.push({ path: `dgjTokens.${path}`, value });
+    out.push({ path: `vcTokens.${path}`, value });
   }
   out.sort((a, b) => a.path.localeCompare(b.path));
   return out;

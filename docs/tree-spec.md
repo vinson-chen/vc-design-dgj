@@ -1,6 +1,6 @@
-# Tree 组件规范（dgj-design）
+# Tree 组件规范（vc-design）
 
-基于 Ant Design 5 的 Tree（树形控件），用于展示层级数据、支持展开/选择/勾选，通过 DGJ Tokens 与主题保持样式一致。
+基于 Ant Design 5 的 Tree（树形控件），用于展示层级数据、支持展开/选择/勾选，通过 VC Tokens 与主题保持样式一致。
 
 ---
 
@@ -17,7 +17,7 @@
 | 属性 | 说明 |
 |------|------|
 | **showLine** | 是否显示连接线，可配 `showLeafIcon` 在叶子节点显示图标 |
-| **showIcon** | 是否在节点前显示图标，图标仅用 **DgjIcon** |
+| **showIcon** | 是否在节点前显示图标，图标仅用 **VcIcon** |
 | **checkable** | 是否显示复选框，受控用 `checkedKeys` + `onCheck` |
 | **selectable** | 是否可选中节点（默认 true），受控用 `selectedKeys` + `onSelect` |
 | **multiple** | 与 checkable 配合时是否允许多选 |
@@ -39,8 +39,8 @@
 ## 4. 样式与 Token
 
 - 节点高度、缩进、连接线颜色与 antd 主题一致；可选在 `src/theme/buildAntdTheme.ts` 中配置 `Tree` 的 component token。
-- 选中/悬停背景：`dgjTokens.color.primary.background`（选中）、`dgjTokens.color.neutral.fill.secondary`（悬停）。
-- 节点图标（如 `icon`、`switcherIcon`、`showLeafIcon`）仅使用 **DgjIcon**。
+- 选中/悬停背景：`vcTokens.color.primary.background`（选中）、`vcTokens.color.neutral.fill.secondary`（悬停）。
+- 节点图标（如 `icon`、`switcherIcon`、`showLeafIcon`）仅使用 **VcIcon**。
 
 ---
 
