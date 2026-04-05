@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { BodyRowSelectionStore } from './bodyRowSelectionStore';
 import TableRows from './TableRows';
 import type { TableRowsProps } from './tableGridTypes';
 
@@ -17,8 +18,12 @@ function createTableRowsProps(overrides: Partial<TableRowsProps> = {}): TableRow
       colCount * (enableInsertRowCol ? 160 : minTextColWidth) +
       (enableInsertRowCol ? narrowWidth : 0);
 
+  const rowCount = overrides.rowCount ?? 3;
+  const store = overrides.bodyRowSelectionStore ?? new BodyRowSelectionStore();
+  store.setBodyRowCount(Math.max(0, rowCount - 1));
+
   return {
-    rowCount: 3,
+    rowCount,
     colCount,
     enableInsertRowCol,
     enableEditMode: false,
@@ -29,15 +34,10 @@ function createTableRowsProps(overrides: Partial<TableRowsProps> = {}): TableRow
     enableVerticalCenter: true,
     enableFreezeFirstCol: false,
     enableFreezeLastCol: false,
+    enableFreezeLastRow: false,
     enableBodyCellRightBorder: false,
     enableShowRowIndex: false,
-    hoveredRowIndex: null,
-    setHoveredRowIndex: vi.fn(),
-    checkedByBodyRow: {},
-    setCheckedByBodyRow: vi.fn(),
-    headerAllChecked: false,
-    headerIndeterminate: false,
-    toggleAllHeader: vi.fn(),
+    bodyRowSelectionStore: store,
     colWidths: Array.from({ length: COL_WIDTHS_SLOTS }, () => null),
     onColumnResizeStart: () => () => {},
     onInsertRow: vi.fn(),
@@ -52,10 +52,26 @@ describe('TableRows smoke', () => {
     render(<TableRows {...createTableRowsProps()} />);
 
     const rows = screen.getAllByRole('row');
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(4);
 
     const headerRow = rows[0];
     expect(within(headerRow).getByRole('checkbox')).toBeInTheDocument();
+  });
+
+  it('mounts with body virtual scroll (header shares rowMinWidth with body)', () => {
+    render(
+      <TableRows
+        {...createTableRowsProps({
+          rowCount: 12,
+          bodyScrollMaxHeight: 200,
+        })}
+      />
+    );
+
+    expect(screen.getByText('列 1')).toBeInTheDocument();
+    expect(screen.getByText('列 2')).toBeInTheDocument();
+    const rows = screen.getAllByRole('row');
+    expect(rows.length).toBeGreaterThanOrEqual(1);
   });
 
   it('mounts insert-row placeholder when enableInsertRowCol is true', () => {
@@ -96,6 +112,6 @@ describe.skipIf(!perfEnabled)('TableRows perf smoke (opt-in)', () => {
       />
     );
 
-    expect(container.querySelectorAll('[role="row"]')).toHaveLength(bodyRows + 1);
+    expect(container.querySelectorAll('[role="row"]')).toHaveLength(bodyRows + 2);
   });
 });

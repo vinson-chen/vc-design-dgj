@@ -1,21 +1,10 @@
-/* Iconfont base font-face from provided snippet */
-@font-face {
-  font-family: 'iconfont';
-  /* Project id 5131978 */
-  src: url('//at.alicdn.com/t/c/font_5131978_3p97qib57p7.woff2?t=1774582587615&v=20260327b') format('woff2'),
-    url('//at.alicdn.com/t/c/font_5131978_3p97qib57p7.woff?t=1774582587615&v=20260327b') format('woff'),
-    url('//at.alicdn.com/t/c/font_5131978_3p97qib57p7.ttf?t=1774582587615&v=20260327b') format('truetype'),
-    url('//at.alicdn.com/t/c/font_5131978_3p97qib57p7.svg?t=1774582587615&v=20260327b#iconfont') format('svg');
-}
+/**
+ * 全量使用 iconfont 项目（5131978）样式表，保证 VcIcon 各类名（含 add）均有 :before codepoint，
+ * 避免在仓库内对单个业务图标重复维护映射。
+ */
+@import url('https://at.alicdn.com/t/c/font_5131978_3p97qib57p7.css');
 
-.iconfont {
-  font-family: 'iconfont' !important;
-  font-style: normal;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* force edit icons use latest iconfont codepoints */
+/* 与最新字模对齐时的覆盖（与 alicdn 默认一致时可删） */
 .icon-edit:before,
 .icon-edit-filled:before {
   font-family: 'iconfont' !important;
@@ -33,4 +22,3 @@
 .icon-edit-filled:before {
   content: '\e776' !important;
 }
-

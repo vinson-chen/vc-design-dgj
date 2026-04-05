@@ -1,9 +1,10 @@
 import React from 'react';
-import { vcTokens } from 'vc-design';
+import { Collapse, vcTokens } from 'vc-design';
 import {
   TableAreaConfigPanel,
   TableAreaTableInstance,
   useTableAreaDemoState,
+  useTableBodyScrollMaxHeight,
 } from 'vc-biz';
 
 const sectionBox: React.CSSProperties = {
@@ -13,29 +14,61 @@ const sectionBox: React.CSSProperties = {
 };
 
 export default function BizTableDemo() {
-  const demo = useTableAreaDemoState();
+  const { hostRef, bodyScrollMaxHeight } = useTableBodyScrollMaxHeight();
+  const demo = useTableAreaDemoState({
+    bodyScrollMaxHeight,
+    /** 首屏优先表格高度，快捷键说明收进配置或文档即可 */
+    showEditKeyboardHints: false,
+  });
 
   return (
-    <>
-      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>BizTable 表格区</h1>
-      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
-        demo 以你定义的 <code>cell / row / column</code> 规范做可交互还原：每行 1 个 checkbox、表头列支持拖拽列宽、
-        hover/active 为整行触发；列数与行数可在 2～20 间调整。
-      </p>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        flex: 1,
+        minHeight: 0,
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+      }}
+    >
+      <h1 style={{ margin: 0, flexShrink: 0, fontWeight: 600 }}>BizTable 表格区</h1>
 
-      <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>配置项</h2>
-        <div style={sectionBox}>
-          <TableAreaConfigPanel {...demo} />
-        </div>
-      </section>
+      <Collapse
+        bordered={false}
+        style={{
+          flexShrink: 0,
+          background: vcTokens.color.neutral.background.layout,
+        }}
+        defaultActiveKey={[]}
+        items={[
+          {
+            key: 'config',
+            label: '配置项',
+            children: (
+              <div style={{ ...sectionBox, marginBottom: 0 }}>
+                <TableAreaConfigPanel {...demo} />
+              </div>
+            ),
+          },
+        ]}
+      />
 
-      <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>表格实例</h2>
-        <div style={sectionBox}>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          ...sectionBox,
+          padding: 16,
+        }}
+      >
+        <div ref={hostRef} style={{ flex: 1, minHeight: 0, width: '100%' }}>
           <TableAreaTableInstance {...demo} />
         </div>
-      </section>
-    </>
+      </div>
+    </div>
   );
 }

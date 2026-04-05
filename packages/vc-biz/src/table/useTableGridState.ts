@@ -1,38 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
-
-export function useRowSelection(bodyRowCount: number) {
-  const [checkedByBodyRow, setCheckedByBodyRow] = useState<Record<number, boolean>>({});
-
-  const checkedCount = useMemo(() => {
-    let acc = 0;
-    for (let i = 0; i < bodyRowCount; i += 1) {
-      if (checkedByBodyRow[i]) acc += 1;
-    }
-    return acc;
-  }, [bodyRowCount, checkedByBodyRow]);
-
-  const headerAllChecked = bodyRowCount > 0 && checkedCount === bodyRowCount;
-  const headerIndeterminate = bodyRowCount > 0 && checkedCount > 0 && checkedCount < bodyRowCount;
-
-  const toggleAllHeader = useCallback(
-    (checked: boolean) => {
-      setCheckedByBodyRow((prev) => {
-        const next: Record<number, boolean> = { ...prev };
-        for (let i = 0; i < bodyRowCount; i += 1) next[i] = checked;
-        return next;
-      });
-    },
-    [bodyRowCount]
-  );
-
-  return {
-    checkedByBodyRow,
-    setCheckedByBodyRow,
-    headerAllChecked,
-    headerIndeterminate,
-    toggleAllHeader,
-  };
-}
+import { useCallback, useState } from 'react';
 
 export function useColumnResize(gridMax: number, minTextColW: number) {
   const [colWidths, setColWidths] = useState<Array<number | null>>(

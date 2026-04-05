@@ -1,14 +1,7 @@
 import type { Dispatch, MutableRefObject, RefObject, SetStateAction } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cellKey } from './tableGridConstants';
-
-function getNativeTextareaFromAntdRef(
-  ref: RefObject<{
-    resizableTextArea?: { textArea?: HTMLTextAreaElement | null };
-  } | null>
-): HTMLTextAreaElement | null {
-  return ref.current?.resizableTextArea?.textArea ?? null;
-}
+import { focusAntdTextareaWithoutScroll, getNativeTextareaFromAntdRef } from './tableGridFocus';
 
 export type TableGridEditingState = {
   selectedCell: { r: number; c: number } | null;
@@ -17,6 +10,7 @@ export type TableGridEditingState = {
   setHoverLockedCell: Dispatch<SetStateAction<{ r: number; c: number } | null>>;
   editingCell: { r: number; c: number } | null;
   setEditingCell: Dispatch<SetStateAction<{ r: number; c: number } | null>>;
+  /** 与 DOM 同步；勿放入 Context，否则每键入一字会扫全表 selector */
   editingDraft: string;
   setEditingDraft: Dispatch<SetStateAction<string>>;
   valueByCell: Record<string, string>;
@@ -27,49 +21,140 @@ export type TableGridEditingState = {
   } | null>;
   editingDraftRef: MutableRefObject<string>;
   getEditingValueForSave: () => string;
+  /**
+   * 程序化结束编辑后 blur 可能触发多次；用「格键」忽略期内所有 onBlur 写入，勿用单次 bool（第二次 blur 会误提交空串）。
+   */
+  pendingBlurIgnoreCellKeyRef: MutableRefObject<string | null>;
+  /** 与 pendingBlurIgnoreCellKeyRef 配套，在两次 rAF 后清除忽略键与 duplicate 抑制 */
+  scheduleClearEditCommitGuards: () => void;
+  /**
+   * pointerdown 已 exit 并写入上一格后，同一击的 click 仍会跑「切格前保存」；
+   * 此时 getEditingValueForSave 常为空，应用此方法跳过重复写入。
+   */
+  consumeDuplicatePrevCellClickSave: () => boolean;
+  suppressDuplicatePrevCellClickSaveRef: MutableRefObject<boolean>;
+  /** 与 useTableGridEditing 的 onKeyboardNavigateCell 一致，供单元格内提交后联动滚动 */
+  onKeyboardNavigateCell?: (p: { r: number; c: number; key: string }) => void;
   removeColumnAt: (colIndex: number) => void;
   removeBodyRowAt: (bodyRowIndex: number) => void;
 };
 
-export function useTableGridEditing(enableEditMode: boolean): TableGridEditingState {
+export type UseTableGridEditingOptions = Readonly<{
+  initialValueByCell?: Record<string, string>;
+  valueByCell?: Record<string, string>;
+  onValueByCellChange?: Dispatch<SetStateAction<Record<string, string>>>;
+  /** 锁定态方向键导航：可编辑区 body 最大行下标（含）；无表体时 -1 */
+  maxBodyRowIndex?: number;
+  /** 锁定态方向键导航：文本列最大列下标（含）；无列时 -1 */
+  maxColIndex?: number;
+  /** 方向键切换单元格后回调（如联动滚动条使格完整可见） */
+  onKeyboardNavigateCell?: (p: { r: number; c: number; key: string }) => void;
+}>;
+
+function stepLockedCell(
+  r: number,
+  c: number,
+  key: string,
+  maxR: number,
+  maxC: number
+): { r: number; c: number } {
+  switch (key) {
+    case 'ArrowUp':
+      return { r: Math.max(0, r - 1), c };
+    case 'ArrowDown':
+      return { r: Math.min(maxR, r + 1), c };
+    case 'ArrowLeft':
+      return { r, c: Math.max(0, c - 1) };
+    case 'ArrowRight':
+      return { r, c: Math.min(maxC, c + 1) };
+    default:
+      return { r, c };
+  }
+}
+
+export function useTableGridEditing(
+  enableEditMode: boolean,
+  options?: UseTableGridEditingOptions
+): TableGridEditingState {
   const [selectedCell, setSelectedCell] = useState<{ r: number; c: number } | null>(null);
   const [hoverLockedCell, setHoverLockedCell] = useState<{ r: number; c: number } | null>(null);
   const [editingCell, setEditingCell] = useState<{ r: number; c: number } | null>(null);
   const editingCellRef = useRef(editingCell);
   editingCellRef.current = editingCell;
-  const [editingDraft, setEditingDraft] = useState('');
-  const [valueByCell, setValueByCell] = useState<Record<string, string>>({});
+  const isControlled =
+    options?.valueByCell !== undefined && options?.onValueByCellChange !== undefined;
+  const [internalValueByCell, setInternalValueByCell] = useState<Record<string, string>>(() => ({
+    ...(options?.initialValueByCell ?? {}),
+  }));
+  const valueByCell = isControlled ? options!.valueByCell! : internalValueByCell;
+  const setValueByCell = isControlled
+    ? options!.onValueByCellChange!
+    : setInternalValueByCell;
   const editTextAreaRef = useRef<{
     resizableTextArea?: { textArea?: HTMLTextAreaElement | null };
     focus?: (options?: { preventScroll?: boolean }) => void;
   } | null>(null);
   const pendingFocusAfterKeyboardOpenRef = useRef(false);
   const editingDraftRef = useRef('');
+  const pendingBlurIgnoreCellKeyRef = useRef<string | null>(null);
+  const suppressDuplicatePrevCellClickSaveRef = useRef(false);
   const valueByCellRef = useRef(valueByCell);
-  editingDraftRef.current = editingDraft;
   valueByCellRef.current = valueByCell;
+
+  const maxBodyRowIndex = options?.maxBodyRowIndex ?? -1;
+  const maxColIndex = options?.maxColIndex ?? -1;
+
+  const setEditingDraft = useCallback((action: SetStateAction<string>) => {
+    editingDraftRef.current =
+      typeof action === 'function'
+        ? (action as (prev: string) => string)(editingDraftRef.current)
+        : action;
+  }, []);
 
   const getEditingValueForSave = useCallback(() => {
     const ta = getNativeTextareaFromAntdRef(editTextAreaRef);
     return ta?.value ?? editingDraftRef.current;
   }, []);
 
+  const consumeDuplicatePrevCellClickSave = useCallback(() => {
+    if (suppressDuplicatePrevCellClickSaveRef.current) {
+      suppressDuplicatePrevCellClickSaveRef.current = false;
+      return true;
+    }
+    return false;
+  }, []);
+
+  const scheduleClearEditCommitGuards = useCallback(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        pendingBlurIgnoreCellKeyRef.current = null;
+        suppressDuplicatePrevCellClickSaveRef.current = false;
+      });
+    });
+  }, []);
+
   const exitEditingLikeEscape = useCallback(() => {
     const ec = editingCellRef.current;
     if (!ec) return;
     const k = cellKey(ec.r, ec.c);
-    setValueByCell((prev) => ({ ...prev, [k]: getEditingValueForSave() }));
+    /** 必须同步读出：updater 若延后执行，此时 ref/草稿可能已被下一格覆盖，会存成空串 */
+    const valueToSave = getEditingValueForSave();
+    /** 程序化收尾后可能多次 blur，整段窗口内忽略该格的 onBlur 提交 */
+    pendingBlurIgnoreCellKeyRef.current = k;
+    suppressDuplicatePrevCellClickSaveRef.current = true;
+    scheduleClearEditCommitGuards();
+    setValueByCell((prev) => ({ ...prev, [k]: valueToSave }));
     setSelectedCell({ r: ec.r, c: ec.c });
+    /** 与选中态一致：表格外 pointerdown 会先清 hover，此处需恢复，否则出现「失焦输入框样式但无锁定悬停高亮」 */
+    setHoverLockedCell({ r: ec.r, c: ec.c });
     setEditingCell(null);
     editingDraftRef.current = '';
-    setEditingDraft('');
-  }, [getEditingValueForSave]);
+  }, [getEditingValueForSave, scheduleClearEditCommitGuards]);
 
   const removeColumnAt = useCallback((colIndex: number) => {
     const ec = editingCellRef.current;
     if (ec?.c === colIndex) {
       editingDraftRef.current = '';
-      setEditingDraft('');
     }
     setValueByCell((prev) => {
       const next: Record<string, string> = {};
@@ -109,7 +194,6 @@ export function useTableGridEditing(enableEditMode: boolean): TableGridEditingSt
     const ec = editingCellRef.current;
     if (ec?.r === bodyRowIndex) {
       editingDraftRef.current = '';
-      setEditingDraft('');
     }
     setValueByCell((prev) => {
       const next: Record<string, string> = {};
@@ -151,7 +235,6 @@ export function useTableGridEditing(enableEditMode: boolean): TableGridEditingSt
       setEditingCell(null);
       setHoverLockedCell(null);
       editingDraftRef.current = '';
-      setEditingDraft('');
     }
   }, [enableEditMode]);
 
@@ -169,18 +252,22 @@ export function useTableGridEditing(enableEditMode: boolean): TableGridEditingSt
         const c = Number(cell.getAttribute('data-col'));
         if (!Number.isNaN(r) && !Number.isNaN(c) && r === locked.r && c === locked.c) return;
       }
+      const wasEditing = editingCellRef.current != null;
       setHoverLockedCell(null);
       exitEditingLikeEscape();
+      if (!wasEditing) {
+        setSelectedCell(null);
+      }
     };
     document.addEventListener('pointerdown', onPointerDown, true);
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [hoverLockedCell, exitEditingLikeEscape]);
+  }, [hoverLockedCell, exitEditingLikeEscape, setSelectedCell]);
 
   useEffect(() => {
     if (!editingCell || !pendingFocusAfterKeyboardOpenRef.current) return;
     pendingFocusAfterKeyboardOpenRef.current = false;
     const id = requestAnimationFrame(() => {
-      editTextAreaRef.current?.focus?.({ preventScroll: true });
+      focusAntdTextareaWithoutScroll(editTextAreaRef);
     });
     return () => cancelAnimationFrame(id);
   }, [editingCell]);
@@ -189,10 +276,129 @@ export function useTableGridEditing(enableEditMode: boolean): TableGridEditingSt
     if (!enableEditMode) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
+      const isArrow =
+        e.key === 'ArrowUp' ||
+        e.key === 'ArrowDown' ||
+        e.key === 'ArrowLeft' ||
+        e.key === 'ArrowRight';
+
+      if (
+        maxBodyRowIndex >= 0 &&
+        maxColIndex >= 0 &&
+        hoverLockedCell &&
+        isArrow &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.isComposing
+      ) {
+        const taFocused = getNativeTextareaFromAntdRef(editTextAreaRef);
+        if (taFocused && document.activeElement === taFocused) {
+          return;
+        }
+        const from = editingCell ?? selectedCell ?? hoverLockedCell;
+        e.preventDefault();
+        if (editingCell) {
+          exitEditingLikeEscape();
+        }
+        const next = stepLockedCell(from.r, from.c, e.key, maxBodyRowIndex, maxColIndex);
+        setHoverLockedCell(next);
+        setSelectedCell(next);
+        options?.onKeyboardNavigateCell?.({ r: next.r, c: next.c, key: e.key });
+        return;
+      }
+
+      // Mac 笔记本主键盘「删除」多为 Backspace；Fn+Delete 常为 Delete。非编辑态下 Backspace 与 Delete 均整格清空。
+      const isClearLockedCellKey =
+        e.key === 'Delete' || (e.key === 'Backspace' && !editingCell);
+      const activeEl = document.activeElement;
+      const clearBlockedByExternalFocus =
+        activeEl instanceof HTMLElement &&
+        activeEl !== document.body &&
+        !activeEl.closest('[data-hover-lock-cell]') &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.tagName === 'SELECT' ||
+          activeEl.hasAttribute('contenteditable'));
+
+      if (
+        hoverLockedCell &&
+        isClearLockedCellKey &&
+        !clearBlockedByExternalFocus &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.isComposing
+      ) {
+        e.preventDefault();
+        const { r, c } = hoverLockedCell;
+        const k = cellKey(r, c);
+        setValueByCell((prev) => ({ ...prev, [k]: '' }));
+        if (editingCell?.r === r && editingCell?.c === c) {
+          editingDraftRef.current = '';
+          const ta = getNativeTextareaFromAntdRef(editTextAreaRef);
+          if (ta) {
+            ta.value = '';
+          }
+        }
+        return;
+      }
+
       const native = getNativeTextareaFromAntdRef(editTextAreaRef);
 
       if (native && document.activeElement === native) {
         return;
+      }
+
+      const mod = (e.ctrlKey || e.metaKey) && !e.altKey;
+      const keyOne = e.key.length === 1 ? e.key.toLowerCase() : '';
+      if (mod && (keyOne === 'c' || keyOne === 'v') && !e.isComposing) {
+        const hasCellContext =
+          editingCell != null || selectedCell != null || hoverLockedCell != null;
+        if (hasCellContext) {
+          if (keyOne === 'c') {
+            e.preventDefault();
+            if (editingCell != null) {
+              void navigator.clipboard.writeText(getEditingValueForSave());
+            } else {
+              const cell = selectedCell ?? hoverLockedCell;
+              if (cell) {
+                void navigator.clipboard.writeText(
+                  valueByCellRef.current[cellKey(cell.r, cell.c)] ?? ''
+                );
+              }
+            }
+            return;
+          }
+          const pasteTarget = selectedCell ?? hoverLockedCell ?? editingCell;
+          if (pasteTarget && keyOne === 'v') {
+            e.preventDefault();
+            const ck = cellKey(pasteTarget.r, pasteTarget.c);
+            void navigator.clipboard.readText().then((t) => {
+              setValueByCell((prev) => ({ ...prev, [ck]: t }));
+              const ec = editingCellRef.current;
+              if (ec?.r === pasteTarget.r && ec?.c === pasteTarget.c) {
+                editingDraftRef.current = t;
+                const ta = getNativeTextareaFromAntdRef(editTextAreaRef);
+                if (ta) {
+                  ta.value = t;
+                  requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                      try {
+                        const len = ta.value.length;
+                        ta.focus({ preventScroll: true });
+                        ta.setSelectionRange(len, len);
+                      } catch {
+                        /* 节点未就绪 */
+                      }
+                    });
+                  });
+                }
+              }
+            });
+            return;
+          }
+        }
       }
 
       const isOtherFieldFocused = () => {
@@ -209,12 +415,7 @@ export function useTableGridEditing(enableEditMode: boolean): TableGridEditingSt
 
       if (e.key === 'Escape' && editingCell) {
         e.preventDefault();
-        const k = cellKey(editingCell.r, editingCell.c);
-        setValueByCell((prev) => ({ ...prev, [k]: getEditingValueForSave() }));
-        setSelectedCell({ r: editingCell.r, c: editingCell.c });
-        setEditingCell(null);
-        editingDraftRef.current = '';
-        setEditingDraft('');
+        exitEditingLikeEscape();
         return;
       }
 
@@ -224,19 +425,20 @@ export function useTableGridEditing(enableEditMode: boolean): TableGridEditingSt
       if (editingCell) {
         if (e.key.length === 1) {
           e.preventDefault();
-          setEditingDraft((prev) => {
-            const next = prev + e.key;
-            editingDraftRef.current = next;
-            return next;
-          });
-          requestAnimationFrame(() => {
+          const ta = getNativeTextareaFromAntdRef(editTextAreaRef);
+          if (ta) {
+            ta.value += e.key;
+            editingDraftRef.current = ta.value;
             requestAnimationFrame(() => {
-              const ta = getNativeTextareaFromAntdRef(editTextAreaRef);
-              const len = ta?.value.length ?? 0;
-              ta?.focus({ preventScroll: true });
-              ta?.setSelectionRange(len, len);
+              requestAnimationFrame(() => {
+                const len = ta.value.length;
+                ta.focus({ preventScroll: true });
+                ta.setSelectionRange(len, len);
+              });
             });
-          });
+          } else {
+            editingDraftRef.current += e.key;
+          }
         }
         return;
       }
@@ -244,47 +446,68 @@ export function useTableGridEditing(enableEditMode: boolean): TableGridEditingSt
       if (selectedCell && e.key.length === 1) {
         e.preventDefault();
         const k = cellKey(selectedCell.r, selectedCell.c);
-        const displayText =
-          valueByCellRef.current[k] ?? `R${selectedCell.r + 1} C${selectedCell.c + 1}`;
+        const displayText = valueByCellRef.current[k] ?? '';
         pendingFocusAfterKeyboardOpenRef.current = true;
-        setEditingCell({ r: selectedCell.r, c: selectedCell.c });
         const next = displayText + e.key;
         editingDraftRef.current = next;
-        setEditingDraft(next);
+        setEditingCell({ r: selectedCell.r, c: selectedCell.c });
       }
     };
 
     window.addEventListener('keydown', onKeyDown, true);
     return () => window.removeEventListener('keydown', onKeyDown, true);
-  }, [enableEditMode, selectedCell, editingCell, getEditingValueForSave]);
+  }, [
+    enableEditMode,
+    selectedCell,
+    editingCell,
+    hoverLockedCell,
+    maxBodyRowIndex,
+    maxColIndex,
+    getEditingValueForSave,
+    setEditingDraft,
+    exitEditingLikeEscape,
+    options?.onKeyboardNavigateCell,
+  ]);
 
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    const api = {
       selectedCell,
       setSelectedCell,
       hoverLockedCell,
       setHoverLockedCell,
       editingCell,
       setEditingCell,
-      editingDraft,
       setEditingDraft,
       valueByCell,
       setValueByCell,
       editTextAreaRef,
       editingDraftRef,
       getEditingValueForSave,
+      pendingBlurIgnoreCellKeyRef,
+      scheduleClearEditCommitGuards,
+      consumeDuplicatePrevCellClickSave,
+      suppressDuplicatePrevCellClickSaveRef,
+      onKeyboardNavigateCell: options?.onKeyboardNavigateCell,
       removeColumnAt,
       removeBodyRowAt,
-    }),
-    [
-      selectedCell,
-      hoverLockedCell,
-      editingCell,
-      editingDraft,
-      valueByCell,
-      getEditingValueForSave,
-      removeColumnAt,
-      removeBodyRowAt,
-    ]
-  );
+    };
+    Object.defineProperty(api, 'editingDraft', {
+      enumerable: true,
+      configurable: true,
+      get: () => editingDraftRef.current,
+    });
+    return api as TableGridEditingState;
+  }, [
+    selectedCell,
+    hoverLockedCell,
+    editingCell,
+    valueByCell,
+    getEditingValueForSave,
+    scheduleClearEditCommitGuards,
+    consumeDuplicatePrevCellClickSave,
+    removeColumnAt,
+    removeBodyRowAt,
+    setEditingDraft,
+    options?.onKeyboardNavigateCell,
+  ]);
 }

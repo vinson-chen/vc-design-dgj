@@ -1,17 +1,11 @@
 import React, { useMemo, useState } from 'react';
+import { vcTokens, message } from 'vc-design';
 import {
-  Button,
-  Checkbox,
-  VcIcon,
-  Input,
-  Pagination,
-  Segmented,
-  vcTokens,
-  message,
-} from 'vc-design';
-import { OperationBar, OverflowActions, type OverflowActionItem } from 'vc-biz';
-
-const actionGapPx = 8;
+  BatchOperationBar,
+  TableOperationBar,
+  TopOperationBar,
+  type OverflowActionItem,
+} from 'vc-biz';
 
 const topBarActions = [
   { key: 'notify', label: '通知', icon: 'notification' },
@@ -63,129 +57,61 @@ export default function OperationBarDemo() {
 
   return (
     <>
-      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>OperationBar 操作区</h1>
+      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>
+        TopOperationBar · TableOperationBar · BatchOperationBar
+      </h1>
       <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
-        基于 Figma <code>operation_bar</code> 的左右插槽布局，在 demo 中给出 top / table / batch 三种实例。
+        本页演示 <code>TopOperationBar</code>、<code>TableOperationBar</code>、<code>BatchOperationBar</code>；
+        底层左右插槽为 <code>OperationBar</code>，右侧溢出按钮行为来自 <code>OverflowActions</code>。
+        设计对齐 Figma <code>operation_bar</code>（top / table / batch 三种形态）。
       </p>
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
-          top_bar 实例
+          TopOperationBar
         </h2>
-        <div
-          style={{
-            background: vcTokens.color.neutral.background.layout,
-            borderRadius: vcTokens.style.borderRadius.lg,
-            padding: 24,
-          }}
-        >
-          <OperationBar
-            left={
-              <Input.Search
-                placeholder="请输入"
-                style={{ width: 320 }}
-                allowClear
-                enterButton={<Button icon={<VcIcon type="search" fontSize={16} />} />}
-                onSearch={(v) => message.info(`搜索：${v || '(空)'}`)}
-              />
-            }
-            right={
-              <div style={{ minWidth: 0, width: '100%' }}>
-                <OverflowActions items={topRightItems} iconOnlyMore />
-              </div>
-            }
-          />
-        </div>
+        <TopOperationBar
+          items={topRightItems}
+          onSearch={(v) => message.info(`搜索：${v || '(空)'}`)}
+        />
       </section>
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
-          table_operation 实例
+          TableOperationBar
         </h2>
-        <div
-          style={{
-            background: vcTokens.color.neutral.background.layout,
-            borderRadius: vcTokens.style.borderRadius.lg,
-            padding: 24,
-          }}
-        >
-          <OperationBar
-            style={{ borderBottom: 'none' }}
-            left={
-              <Segmented
-                options={['全部', '进行中', '已完成', '已关闭']}
-                value={segValue}
-                onChange={(v) => setSegValue(String(v))}
-              />
-            }
-            right={
-              <div style={{ minWidth: 0, width: '100%' }}>
-                <OverflowActions
-                  items={tablePrimaryItems}
-                  menuOnlyItems={tableMenuOnlyItems}
-                  maxVisibleWithMore={3}
-                  iconOnlyMore
-                  align="right"
-                />
-              </div>
-            }
-          />
-        </div>
+        <TableOperationBar
+          segmentedOptions={['全部', '进行中', '已完成', '已关闭']}
+          value={segValue}
+          onChange={(v) => setSegValue(v)}
+          primaryItems={tablePrimaryItems}
+          menuOnlyItems={tableMenuOnlyItems}
+          maxVisibleWithMore={3}
+        />
       </section>
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
-          batch_operation 实例
+          BatchOperationBar
         </h2>
-        <div
-          style={{
-            background: vcTokens.color.neutral.background.layout,
-            borderRadius: vcTokens.style.borderRadius.lg,
-            padding: 24,
+        <BatchOperationBar
+          checked={batchChecked}
+          indeterminate={false}
+          selectedCount={batchChecked ? 20 : 0}
+          onCheckedChange={(next) => setBatchChecked(next)}
+          items={batchItems}
+          maxVisibleWithMore={4}
+          paginationProps={{
+            current: page,
+            pageSize,
+            total: 500,
+            onChange: (p, ps) => {
+              setPage(p);
+              setPageSize(ps);
+              message.info(`分页：第 ${p} 页 / ${ps} 条每页`);
+            },
           }}
-        >
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            minWidth: 400,
-            rowGap: 8,
-            columnGap: 16,
-            minHeight: 48,
-            padding: '8px 16px',
-            boxSizing: 'border-box',
-            background: vcTokens.color.neutral.background.container,
-            boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.08)',
-          }}
-        >
-          <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: actionGapPx, flex: '1 1 auto' }}>
-            <Checkbox
-              checked={batchChecked}
-              onChange={(e) => setBatchChecked(e.target.checked)}
-            >
-              已选 {batchChecked ? 20 : 0} 条
-            </Checkbox>
-            <div style={{ minWidth: 0, flex: '0 1 auto' }}>
-              <OverflowActions items={batchItems} maxVisibleWithMore={4} iconOnlyMore align="left" />
-            </div>
-          </div>
-          <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>
-            <Pagination
-              simple
-              current={page}
-              pageSize={pageSize}
-              total={500}
-              onChange={(p, ps) => {
-                setPage(p);
-                setPageSize(ps);
-                message.info(`分页：第 ${p} 页 / ${ps} 条每页`);
-              }}
-            />
-          </div>
-        </div>
-        </div>
+        />
       </section>
     </>
   );

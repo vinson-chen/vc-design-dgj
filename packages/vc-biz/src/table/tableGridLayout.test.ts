@@ -1,24 +1,42 @@
 import { describe, expect, it } from 'vitest';
-import { getFreezeDividerStyle, getTextColWrapStyle } from './tableGridLayout';
+import {
+  getFreezeDividerStyle,
+  getTableRowGridTemplateColumns,
+  getTextColGridItemShellStyle,
+} from './tableGridLayout';
 
 describe('tableGridLayout', () => {
-  it('getTextColWrapStyle uses equal-split flex when width unset', () => {
-    const s = getTextColWrapStyle(null, 100, 40, 2, 8, false, false, 0);
-    expect(s.flex).toBe('1 0 100px');
-    expect(s.minWidth).toBe(100);
-    expect(s.display).toBe('flex');
+  it('getTableRowGridTemplateColumns uses minmax 1fr for equal columns', () => {
+    const g = getTableRowGridTemplateColumns({
+      narrowWidth: 40,
+      colCount: 3,
+      enableInsertRowCol: false,
+      minTextColWidth: 100,
+      colWidths: [],
+      insertLayoutTextColPx: null,
+      enableColumnResize: false,
+    });
+    expect(g).toBe('40px minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr)');
   });
 
-  it('getTextColWrapStyle uses fixed flex when width set', () => {
-    const s = getTextColWrapStyle(160, 100, 40, 0, 5, false, false, 0);
-    expect(s.flex).toBe('0 0 160px');
-    expect(s.minWidth).toBe(160);
+  it('getTableRowGridTemplateColumns appends narrow insert column', () => {
+    const g = getTableRowGridTemplateColumns({
+      narrowWidth: 40,
+      colCount: 2,
+      enableInsertRowCol: true,
+      minTextColWidth: 100,
+      colWidths: [],
+      insertLayoutTextColPx: 160,
+      enableColumnResize: false,
+    });
+    expect(g).toBe('40px minmax(160px, 1fr) minmax(160px, 1fr) 40px');
   });
 
-  it('getTextColWrapStyle sticks first column', () => {
-    const s = getTextColWrapStyle(120, 100, 40, 0, 4, true, false, 0);
+  it('getTextColGridItemShellStyle sticks first column', () => {
+    const s = getTextColGridItemShellStyle(40, 0, 4, true, false, 0);
     expect(s.position).toBe('sticky');
     expect(s.left).toBe(40);
+    expect(s.minWidth).toBe(0);
   });
 
   it('getFreezeDividerStyle sets vertical line', () => {

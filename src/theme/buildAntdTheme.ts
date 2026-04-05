@@ -73,7 +73,9 @@ export function buildAntdTheme(tokens: VcTokens = vcTokens): ThemeConfig {
       paddingSM: size.padding.sm,
       padding: size.padding.md,
       paddingLG: size.padding.lg,
-      paddingXL: size.padding.xl
+      paddingXL: size.padding.xl,
+
+      boxShadowSecondary: style.boxShadowSecondary
     },
     components: {
       Input: {

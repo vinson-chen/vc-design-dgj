@@ -1,42 +1,99 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Slider, Switch, Typography, vcTokens } from 'vc-design';
-import { useColumnResize, useRowSelection } from './table/useTableGridState';
+import { BodyRowSelectionStore } from './table/bodyRowSelectionStore';
+import { BIZ_TABLE_EDIT_KEYBOARD_HINT_LINES } from './table/tableEditKeyboardHelp';
+import { useColumnResize } from './table/useTableGridState';
 import TableRows from './table/TableRows';
 
 const GRID_MIN = 2;
-const GRID_MAX = 20;
+/** 文本列（含表头行内的列数）上限 */
+const GRID_MAX_COL = 20;
+/** 表格行数（含表头）上限（1001 行时可显示表体序号至 1000） */
+const GRID_MAX_ROW = 1001;
 const MIN_TEXT_COL_W = 100;
-const NARROW_W = 40; // 左侧 checkbox 窄格
+/** checkbox / 序号 / 插入列等窄格统一宽度（与 padding 0 下四位序号对齐，避免开关「显示序号」时列宽抖动） */
+const NARROW_W = 40;
 /** 开启「插入行列」时：文本列固定默认宽度（不等分总宽）；插入列/checkbox 列仍为 NARROW_W */
 const INSERT_MODE_TEXT_COL_PX = 160;
 
-export function useTableAreaDemoState() {
-  const [rowCount, setRowCount] = useState(20);
-  const [colCount, setColCount] = useState(10);
-  const [enableColumnResize, setEnableColumnResize] = useState(true);
-  const [enableVerticalCenter, setEnableVerticalCenter] = useState(true);
-  const [enableFreezeFirstCol, setEnableFreezeFirstCol] = useState(false);
-  const [enableFreezeLastCol, setEnableFreezeLastCol] = useState(false);
-  const [enableBodyCellRightBorder, setEnableBodyCellRightBorder] = useState(false);
-  const [enableShowRowIndex, setEnableShowRowIndex] = useState(false);
-  const [enableInsertRowCol, setEnableInsertRowCol] = useState(false);
-  const [enableEditMode, setEnableEditMode] = useState(false);
-  const [hoveredRowIndex, setHoveredRowIndex] = useState<number | null>(null);
+export type TableAreaDemoOptions = Readonly<{
+  initialRowCount?: number;
+  initialColCount?: number;
+  initialEnableColumnResize?: boolean;
+  initialEnableVerticalCenter?: boolean;
+  initialEnableFreezeFirstCol?: boolean;
+  initialEnableFreezeLastCol?: boolean;
+  initialEnableFreezeLastRow?: boolean;
+  initialEnableBodyCellRightBorder?: boolean;
+  initialEnableShowRowIndex?: boolean;
+  initialEnableInsertRowCol?: boolean;
+  initialEnableEditMode?: boolean;
+  /** 常规字号（14/22）；默认 true；false 为紧凑 12/20 */
+  initialEnableRegularTableFont?: boolean;
+  /** 与 TableRows 一致：header-{c} / r-c */
+  initialValueByCell?: Record<string, string>;
+  /** 表格可视区高度（px），启用垂直虚拟滚动（表头为虚拟第 0 行并 sticky）；缺省 520；传 0 则全量挂载 */
+  bodyScrollMaxHeight?: number;
+  /** 为 true 时由 TableAreaTableInstance / BizTable 在表格外展示编辑模式快捷键说明 */
+  showEditKeyboardHints?: boolean;
+}>;
+
+export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
+  const bodyScrollMaxHeight =
+    options?.bodyScrollMaxHeight === undefined ? 520 : options.bodyScrollMaxHeight;
+  const showEditKeyboardHints = options?.showEditKeyboardHints ?? false;
+
+  const [rowCount, setRowCount] = useState(options?.initialRowCount ?? 20);
+  const [colCount, setColCount] = useState(options?.initialColCount ?? 10);
+  const [enableColumnResize, setEnableColumnResize] = useState(
+    options?.initialEnableColumnResize ?? true
+  );
+  const [enableVerticalCenter, setEnableVerticalCenter] = useState(
+    options?.initialEnableVerticalCenter ?? true
+  );
+  const [enableFreezeFirstCol, setEnableFreezeFirstCol] = useState(
+    options?.initialEnableFreezeFirstCol ?? true
+  );
+  const [enableFreezeLastCol, setEnableFreezeLastCol] = useState(
+    options?.initialEnableFreezeLastCol ?? true
+  );
+  const [enableFreezeLastRow, setEnableFreezeLastRow] = useState(
+    options?.initialEnableFreezeLastRow ?? true
+  );
+  const [enableBodyCellRightBorder, setEnableBodyCellRightBorder] = useState(
+    options?.initialEnableBodyCellRightBorder ?? true
+  );
+  const [enableShowRowIndex, setEnableShowRowIndex] = useState(
+    options?.initialEnableShowRowIndex ?? true
+  );
+  const [enableInsertRowCol, setEnableInsertRowCol] = useState(
+    options?.initialEnableInsertRowCol ?? true
+  );
+  const [enableEditMode, setEnableEditMode] = useState(
+    options?.initialEnableEditMode ?? true
+  );
+  const [enableRegularTableFont, setEnableRegularTableFont] = useState(
+    options?.initialEnableRegularTableFont ?? true
+  );
+  const [valueByCell, setValueByCell] = useState<Record<string, string>>(() => ({
+    ...(options?.initialValueByCell ?? {}),
+  }));
 
   const colCountRef = useRef(colCount);
   const rowCountRef = useRef(rowCount);
   colCountRef.current = colCount;
   rowCountRef.current = rowCount;
 
-  const { colWidths, onColumnResizeStart, removeColumnWidthAt } = useColumnResize(GRID_MAX, MIN_TEXT_COL_W);
-  const bodyRowCount = Math.max(0, rowCount - 1);
-  const {
-    checkedByBodyRow,
-    setCheckedByBodyRow,
-    headerAllChecked,
-    headerIndeterminate,
-    toggleAllHeader,
-  } = useRowSelection(bodyRowCount);
+  const { colWidths, onColumnResizeStart, removeColumnWidthAt } = useColumnResize(GRID_MAX_COL, MIN_TEXT_COL_W);
+  const bodyRowSelectionStoreRef = useRef<BodyRowSelectionStore | null>(null);
+  if (bodyRowSelectionStoreRef.current == null) {
+    bodyRowSelectionStoreRef.current = new BodyRowSelectionStore();
+  }
+  const bodyRowSelectionStore = bodyRowSelectionStoreRef.current;
+
+  useLayoutEffect(() => {
+    bodyRowSelectionStore.setBodyRowCount(Math.max(0, rowCount - 1));
+  }, [bodyRowSelectionStore, rowCount]);
 
   const rowMinWidth = useMemo(() => {
     if (!enableInsertRowCol) {
@@ -54,11 +111,11 @@ export function useTableAreaDemoState() {
   }, [colCount, colWidths, enableColumnResize, enableInsertRowCol]);
 
   const insertRow = useCallback(() => {
-    setRowCount((prev) => Math.min(GRID_MAX, prev + 1));
+    setRowCount((prev) => Math.min(GRID_MAX_ROW, prev + 1));
   }, []);
 
   const insertColumn = useCallback(() => {
-    setColCount((prev) => Math.min(GRID_MAX, prev + 1));
+    setColCount((prev) => Math.min(GRID_MAX_COL, prev + 1));
   }, []);
 
   const deleteColumn = useCallback(
@@ -72,18 +129,9 @@ export function useTableAreaDemoState() {
 
   const deleteBodyRow = useCallback((bodyRowIndex: number) => {
     if (rowCountRef.current <= GRID_MIN) return;
+    bodyRowSelectionStore.remapAfterDeleteBodyRow(bodyRowIndex);
     setRowCount((r) => r - 1);
-    setCheckedByBodyRow((prev) => {
-      const next: Record<number, boolean> = {};
-      for (const [ks, v] of Object.entries(prev)) {
-        const i = Number(ks);
-        if (Number.isNaN(i)) continue;
-        if (i < bodyRowIndex) next[i] = v;
-        else if (i > bodyRowIndex) next[i - 1] = v;
-      }
-      return next;
-    });
-  }, []);
+  }, [bodyRowSelectionStore]);
 
   return {
     rowCount,
@@ -98,6 +146,8 @@ export function useTableAreaDemoState() {
     setEnableFreezeFirstCol,
     enableFreezeLastCol,
     setEnableFreezeLastCol,
+    enableFreezeLastRow,
+    setEnableFreezeLastRow,
     enableBodyCellRightBorder,
     setEnableBodyCellRightBorder,
     enableShowRowIndex,
@@ -106,22 +156,22 @@ export function useTableAreaDemoState() {
     setEnableInsertRowCol,
     enableEditMode,
     setEnableEditMode,
+    enableRegularTableFont,
+    setEnableRegularTableFont,
     insertRow,
     insertColumn,
     deleteColumn,
     deleteBodyRow,
-    hoveredRowIndex,
-    setHoveredRowIndex,
-    checkedByBodyRow,
-    setCheckedByBodyRow,
-    headerAllChecked,
-    headerIndeterminate,
-    toggleAllHeader,
+    bodyRowSelectionStore,
     colWidths,
     onColumnResizeStart,
     rowMinWidth,
     narrowWidth: NARROW_W,
     minTextColWidth: MIN_TEXT_COL_W,
+    valueByCell,
+    setValueByCell,
+    bodyScrollMaxHeight,
+    showEditKeyboardHints,
   };
 }
 
@@ -141,6 +191,8 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
     setEnableFreezeFirstCol,
     enableFreezeLastCol,
     setEnableFreezeLastCol,
+    enableFreezeLastRow,
+    setEnableFreezeLastRow,
     enableBodyCellRightBorder,
     setEnableBodyCellRightBorder,
     enableShowRowIndex,
@@ -149,6 +201,8 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
     setEnableInsertRowCol,
     enableEditMode,
     setEnableEditMode,
+    enableRegularTableFont,
+    setEnableRegularTableFont,
   } = model;
 
   return (
@@ -157,7 +211,7 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
         <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>列数（文本列） {colCount}</Typography.Text>
         <Slider
           min={GRID_MIN}
-          max={GRID_MAX}
+          max={GRID_MAX_COL}
           step={1}
           marks={{ 2: '2', 5: '5', 10: '10', 15: '15', 20: '20' }}
           value={colCount}
@@ -172,9 +226,15 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
         </div>
         <Slider
           min={GRID_MIN}
-          max={GRID_MAX}
+          max={GRID_MAX_ROW}
           step={1}
-          marks={{ 2: '2', 5: '5', 10: '10', 15: '15', 20: '20' }}
+          marks={{
+            2: '2',
+            250: '250',
+            500: '500',
+            750: '750',
+            1001: '1001',
+          }}
           value={rowCount}
           onChange={(v) => setRowCount(v as number)}
           style={{ maxWidth: 360 }}
@@ -200,6 +260,10 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
             <Switch size="small" checked={enableFreezeLastCol} onChange={setEnableFreezeLastCol} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>冻结末行</Typography.Text>
+            <Switch size="small" checked={enableFreezeLastRow} onChange={setEnableFreezeLastRow} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>右侧描边</Typography.Text>
             <Switch size="small" checked={enableBodyCellRightBorder} onChange={setEnableBodyCellRightBorder} />
           </div>
@@ -214,6 +278,10 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>编辑模式</Typography.Text>
             <Switch size="small" checked={enableEditMode} onChange={setEnableEditMode} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>常规字号</Typography.Text>
+            <Switch size="small" checked={enableRegularTableFont} onChange={setEnableRegularTableFont} />
           </div>
         </div>
       </div>
@@ -232,24 +300,27 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     enableVerticalCenter,
     enableFreezeFirstCol,
     enableFreezeLastCol,
+    enableFreezeLastRow,
     enableBodyCellRightBorder,
     enableShowRowIndex,
     enableInsertRowCol,
     enableEditMode,
-    hoveredRowIndex,
-    setHoveredRowIndex,
-    checkedByBodyRow,
-    setCheckedByBodyRow,
-    headerAllChecked,
-    headerIndeterminate,
-    toggleAllHeader,
+    enableRegularTableFont,
+    bodyRowSelectionStore,
     colWidths,
     onColumnResizeStart,
     insertRow,
     insertColumn,
     deleteColumn,
     deleteBodyRow,
+    valueByCell,
+    setValueByCell,
+    bodyScrollMaxHeight,
+    showEditKeyboardHints,
   } = model;
+
+  const scrollsInsideTable = bodyScrollMaxHeight != null && bodyScrollMaxHeight > 0;
+  const tableOuterScrollRef = useRef<HTMLDivElement | null>(null);
 
   const rows = (
     <TableRows
@@ -262,17 +333,13 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
       enableVerticalCenter={enableVerticalCenter}
       enableFreezeFirstCol={enableFreezeFirstCol}
       enableFreezeLastCol={enableFreezeLastCol}
+      enableFreezeLastRow={enableFreezeLastRow}
       enableBodyCellRightBorder={enableBodyCellRightBorder}
       enableShowRowIndex={enableShowRowIndex}
       enableInsertRowCol={enableInsertRowCol}
       enableEditMode={enableEditMode}
-      hoveredRowIndex={hoveredRowIndex}
-      setHoveredRowIndex={setHoveredRowIndex}
-      checkedByBodyRow={checkedByBodyRow}
-      setCheckedByBodyRow={setCheckedByBodyRow}
-      headerAllChecked={headerAllChecked}
-      headerIndeterminate={headerIndeterminate}
-      toggleAllHeader={toggleAllHeader}
+      enableRegularTableFont={enableRegularTableFont}
+      bodyRowSelectionStore={bodyRowSelectionStore}
       colWidths={colWidths}
       onColumnResizeStart={onColumnResizeStart}
       onInsertRow={insertRow}
@@ -281,6 +348,10 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
       gridMinCount={GRID_MIN}
       onDeleteColumn={deleteColumn}
       onDeleteBodyRow={deleteBodyRow}
+      valueByCell={valueByCell}
+      onValueByCellChange={setValueByCell}
+      bodyScrollMaxHeight={bodyScrollMaxHeight > 0 ? bodyScrollMaxHeight : undefined}
+      tableOuterScrollRef={scrollsInsideTable ? undefined : tableOuterScrollRef}
     />
   );
 
@@ -288,28 +359,47 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     boxSizing: 'border-box',
     border: `1px solid ${vcTokens.color.neutral.border.default}`,
     borderRadius: vcTokens.style.borderRadius.md,
-    overflowX: 'auto',
+    // 虚拟列表时横纵滚只在 TableRows 内层：外层再 overflow 会多一条轴、滚轮容易被拆到两层
+    ...(scrollsInsideTable
+      ? { overflow: 'hidden' }
+      : { overflowX: 'auto' }),
     background: vcTokens.color.neutral.background.container,
   };
 
   return (
-    <div
-      style={{
-        ...frame,
-        ...(enableInsertRowCol
-          ? {
-              display: 'inline-block',
-              verticalAlign: 'top',
-              maxWidth: '100%',
-            }
-          : { width: '100%' }),
-      }}
-    >
-      {enableInsertRowCol ? (
-        <div style={{ width: 'max-content', minWidth: rowMinWidth, boxSizing: 'border-box' }}>{rows}</div>
-      ) : (
-        rows
-      )}
+    <div style={{ width: '100%' }}>
+      <div
+        ref={scrollsInsideTable ? undefined : tableOuterScrollRef}
+        className={scrollsInsideTable ? undefined : 'vc-biz-table-scrollport'}
+        style={{
+          ...frame,
+          width: '100%',
+        }}
+      >
+        {rows}
+      </div>
+      {enableEditMode && showEditKeyboardHints ? (
+        <div style={{ marginTop: 10, paddingLeft: 2, paddingRight: 2 }}>
+          <Typography.Text strong style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
+            编辑快捷键
+          </Typography.Text>
+          <ul
+            style={{
+              margin: 0,
+              paddingLeft: 18,
+              fontSize: 12,
+              color: vcTokens.color.neutral.text.description,
+              lineHeight: 1.55,
+            }}
+          >
+            {BIZ_TABLE_EDIT_KEYBOARD_HINT_LINES.map((line) => (
+              <li key={line} style={{ marginBottom: 4 }}>
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }

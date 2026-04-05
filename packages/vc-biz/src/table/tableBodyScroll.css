@@ -1,0 +1,34 @@
+/**
+ * BizTable / TableRows 滚动容器：细轨道、低对比 thumb，弱化系统默认粗滚动条。
+ * Firefox: scrollbar-width / scrollbar-color；WebKit: -webkit-scrollbar*
+ */
+.vc-biz-table-scrollport {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
+  /* 触控板 / 触摸：允许同一次手势同时横纵平移，接近飞书多维表式二维视口 */
+  touch-action: pan-x pan-y;
+  /* contain 仍会向父级传递边界感；none 去掉边缘橡皮筋/弹性拉伸，表格更稳 */
+  overscroll-behavior: none;
+}
+
+.vc-biz-table-scrollport::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.vc-biz-table-scrollport::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vc-biz-table-scrollport::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+}
+
+.vc-biz-table-scrollport::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.22);
+}
+
+.vc-biz-table-scrollport::-webkit-scrollbar-corner {
+  background: transparent;
+}

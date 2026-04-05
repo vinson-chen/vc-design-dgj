@@ -143,6 +143,9 @@ export const vcTokens = {
       sm: 4,
       xs: 2
     },
+    /** 与 Ant Design `token.boxShadowSecondary` 一致，用于对话输入区等抬升层次 */
+    boxShadowSecondary:
+      '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
     font: {
       family: {
         primary: 'PingFang SC',

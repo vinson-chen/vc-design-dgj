@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Button, Drawer, vcTokens } from 'vc-design';
-import { SwitchTabs, type SwitchTabItemData } from 'vc-biz';
+import { StateTabs, StoreTabs, type SwitchTabItemData } from 'vc-biz';
 
 export default function SwitchAreaDemo() {
   const [storeActiveKey, setStoreActiveKey] = useState('精选平台');
@@ -42,56 +42,33 @@ export default function SwitchAreaDemo() {
 
   return (
     <>
-      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>SwitchArea 切换区</h1>
+      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>StoreTabs · StateTabs</h1>
       <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
-        基于 Figma <code>tabs + .tab_item + store_tabs + state_tabs</code>：active 下划线与横向切换动效沿用现有 Tabs，
-        tab_item 补齐 hover/pressed 交互态，并支持 svg 与图片图标两种来源。
+        本页分别演示 <code>StoreTabs</code>（Figma <code>store_tabs</code>，带图标）与 <code>StateTabs</code>（Figma{' '}
+        <code>state_tabs</code>，无图标）；底层导航与动效来自 <code>SwitchTabs</code>。
+        设计对齐 <code>tabs + .tab_item</code>：active 下划线与横向切换、tab_item 的 hover/pressed，并支持 svg 与图片图标。
       </p>
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
-          store_tabs（带图标）
+          StoreTabs（带图标）
         </h2>
-        <div
-          style={{
-            background: vcTokens.color.neutral.background.layout,
-            borderRadius: vcTokens.style.borderRadius.lg,
-            padding: 24,
-          }}
-        >
-          <div style={{ background: vcTokens.color.neutral.background.container }}>
-            <SwitchTabs
-              items={storeItems}
-              activeKey={storeActiveKey}
-              onChange={handleStoreChange}
-              showIcon
-              showPanel={false}
-            />
-          </div>
-        </div>
+        <StoreTabs
+          items={storeItems}
+          activeKey={storeActiveKey}
+          onChange={handleStoreChange}
+        />
       </section>
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
-          state_tabs（无图标）
+          StateTabs（无图标）
         </h2>
-        <div
-          style={{
-            background: vcTokens.color.neutral.background.layout,
-            borderRadius: vcTokens.style.borderRadius.lg,
-            padding: 24,
-          }}
-        >
-          <div style={{ background: vcTokens.color.neutral.background.container }}>
-            <SwitchTabs
-              items={stateItems}
-              activeKey={stateActiveKey}
-              onChange={setStateActiveKey}
-              showIcon={false}
-              showPanel={false}
-            />
-          </div>
-        </div>
+        <StateTabs
+          items={stateItems}
+          activeKey={stateActiveKey}
+          onChange={setStateActiveKey}
+        />
       </section>
 
       <Drawer

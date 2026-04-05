@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { vcTokens, message } from 'vc-design';
-import { FilterGroup, type FilterFieldConfig } from 'vc-biz';
+import { FilterArea, type FilterFieldConfig } from 'vc-biz';
 
 const statusOptions = [
   { label: '全部', value: '' },
@@ -62,80 +62,56 @@ export default function FilterAreaDemo() {
 
   return (
     <>
-      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>FilterArea 筛选区</h1>
+      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>FilterArea</h1>
       <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
-        基于 Figma <code>filter_group</code>：筛选项无前缀文案；筛选项宽度始终限制在 160~328px，
-        占满时在筛选区可视宽度内等分栅格并自动换行；查询/重置按钮维持跟随/贴右规则。
+        <code>FilterArea</code> 在外层提供 demo 布局容器，筛选项与查询/重置由内部 <code>FilterGroup</code> 实现。
+        设计对齐 Figma <code>filter_group</code>：筛选项无前缀文案；宽度 160~328px，可视宽度内等分栅格并换行；按钮跟随/贴右。
       </p>
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
-          基础三列
+          FilterArea · 少量筛选项
         </h2>
-        <div
-          style={{
-            background: vcTokens.color.neutral.background.layout,
-            borderRadius: vcTokens.style.borderRadius.lg,
-            padding: 24,
+        <FilterArea
+          fields={fieldsBasic}
+          value={valueBasic}
+          onChange={setValueBasic}
+          onSearch={() => {
+            message.info(`查询：${JSON.stringify(valueBasic)}`);
           }}
-        >
-          <FilterGroup
-            fields={fieldsBasic}
-            value={valueBasic}
-            onChange={setValueBasic}
-            onSearch={() => {
-              message.info(`查询：${JSON.stringify(valueBasic)}`);
-            }}
-            onReset={() => setValueBasic({})}
-          />
-        </div>
+          onReset={() => setValueBasic({})}
+        />
       </section>
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
-          多筛选项换行
+          FilterArea · 多筛选项换行
         </h2>
-        <div
-          style={{
-            background: vcTokens.color.neutral.background.layout,
-            borderRadius: vcTokens.style.borderRadius.lg,
-            padding: 24,
+        <FilterArea
+          fields={fieldsDense}
+          value={valueDense}
+          onChange={setValueDense}
+          onSearch={() => {
+            message.info(`查询：${JSON.stringify(valueDense)}`);
           }}
-        >
-          <FilterGroup
-            fields={fieldsDense}
-            value={valueDense}
-            onChange={setValueDense}
-            onSearch={() => {
-              message.info(`查询：${JSON.stringify(valueDense)}`);
-            }}
-            onReset={() => setValueDense({})}
-          />
-        </div>
+          onReset={() => setValueDense({})}
+        />
       </section>
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
-          三行以上可折叠（demo）
+          FilterArea · collapsible 多行折叠
         </h2>
-        <div
-          style={{
-            background: vcTokens.color.neutral.background.layout,
-            borderRadius: vcTokens.style.borderRadius.lg,
-            padding: 24,
+        <FilterArea
+          fields={fieldsCollapseCase}
+          value={valueCollapse}
+          onChange={setValueCollapse}
+          collapsible={{ maxRows: 3, defaultCollapsed: false }}
+          onSearch={() => {
+            message.info(`查询：${JSON.stringify(valueCollapse)}`);
           }}
-        >
-          <FilterGroup
-            fields={fieldsCollapseCase}
-            value={valueCollapse}
-            onChange={setValueCollapse}
-            collapsible={{ maxRows: 3, defaultCollapsed: false }}
-            onSearch={() => {
-              message.info(`查询：${JSON.stringify(valueCollapse)}`);
-            }}
-            onReset={() => setValueCollapse({})}
-          />
-        </div>
+          onReset={() => setValueCollapse({})}
+        />
       </section>
     </>
   );

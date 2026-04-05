@@ -38,6 +38,9 @@ export default function App() {
     window.location.hash = key;
   }, []);
 
+  /** BizTable：主栏不滚动，仅表格内滚动；需固定高度链才能 flex 吃满剩余视口 */
+  const mainContentFillViewport = resolvedSelectedKey === 'biz-table';
+
   return (
     <VcConfigProvider>
       <div
@@ -128,13 +131,23 @@ export default function App() {
           style={{
             flex: 1,
             minHeight: 0,
-            overflowY: 'auto',
+            overflowY: mainContentFillViewport ? 'hidden' : 'auto',
             background: vcTokens.color.neutral.background.layout,
           }}
         >
           <div
             style={{
               padding: 24,
+              boxSizing: 'border-box',
+              ...(mainContentFillViewport
+                ? {
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 0,
+                    overflow: 'hidden',
+                  }
+                : {}),
               maxWidth:
                 resolvedSelectedKey === 'dispatch-filter-area' ||
                 resolvedSelectedKey === 'switch-area' ||

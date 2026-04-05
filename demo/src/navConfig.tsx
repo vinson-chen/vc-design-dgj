@@ -124,12 +124,13 @@ export const navGroups: NavGroup[] = [
   {
     category: '业务组件',
     items: [
-      { key: 'dispatch-sider-nav', label: 'DispatchSiderNav 导航区' },
+      { key: 'dispatch-sider-nav', label: 'BizMenu 导航区' },
       { key: 'dispatch-filter-area', label: 'FilterArea 筛选区' },
-      { key: 'switch-area', label: 'SwitchArea 切换区' },
-      { key: 'operation-bar', label: 'OperationBar 操作区' },
+      { key: 'switch-area', label: 'StoreTabs / StateTabs 切换区' },
+      { key: 'operation-bar', label: 'TopOperationBar 等操作区' },
       { key: 'biz-table', label: 'BizTable 表格区' },
-      { key: 'list-page-shell', label: 'ListPageShell 列表页串联' },
+      { key: 'vcell-table', label: 'VcellTable 高自由度表格' },
+      { key: 'list-page-shell', label: '列表页串联（多组件）' },
     ],
   },
 ];

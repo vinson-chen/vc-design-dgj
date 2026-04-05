@@ -1,14 +1,12 @@
-import React, { createContext, useContext } from 'react';
-import type { TableGridConfigValue } from './tableGridTypes';
+import { createContext, useContextSelector } from 'use-context-selector';
+import type { TableGridStaticConfig } from './tableGridTypes';
 
-const TableGridConfigContext = createContext<TableGridConfigValue | null>(null);
+export const TableGridConfigContext = createContext<TableGridStaticConfig | null>(null);
 
-export function useTableGridConfigContext(): TableGridConfigValue {
-  const v = useContext(TableGridConfigContext);
+export function useTableGridConfigContext(): TableGridStaticConfig {
+  const v = useContextSelector(TableGridConfigContext, (c) => c);
   if (v == null) {
     throw new Error('useTableGridConfigContext must be used within TableRows');
   }
   return v;
 }
-
-export const TableGridConfigContextProvider = TableGridConfigContext.Provider;

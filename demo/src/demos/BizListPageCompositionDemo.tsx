@@ -1,12 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useSyncExternalStore } from 'react';
 import { Checkbox, Pagination, Segmented, vcTokens, message } from 'vc-design';
 import {
-  FilterGroup,
+  FilterArea,
   type FilterFieldConfig,
   SwitchTabs,
   type SwitchTabItemData,
-  OperationBar,
-  OverflowActions,
+  TableOperationBar,
+  BatchOperationBar,
   type OverflowActionItem,
   TableAreaTableInstance,
   useTableAreaDemoState,
@@ -86,14 +86,13 @@ export default function BizListPageCompositionDemo() {
   );
 
   const tableDemo = useTableAreaDemoState();
-  const [batchChecked, setBatchChecked] = useState(false);
   const bodyRowCount = Math.max(0, tableDemo.rowCount - 1);
 
-  const checkedCount = useMemo(() => {
-    let c = 0;
-    for (let i = 0; i < bodyRowCount; i += 1) if (tableDemo.checkedByBodyRow[i]) c += 1;
-    return c;
-  }, [bodyRowCount, tableDemo.checkedByBodyRow]);
+  const checkedCount = useSyncExternalStore(
+    (cb) => tableDemo.bodyRowSelectionStore.subscribeSelection(cb),
+    () => tableDemo.bodyRowSelectionStore.getCheckedCount(),
+    () => 0
+  );
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -108,19 +107,15 @@ export default function BizListPageCompositionDemo() {
   );
 
   const handleBatchCheckedChange = (next: boolean) => {
-    setBatchChecked(next);
-    tableDemo.setCheckedByBodyRow((prev) => {
-      const nextMap: Record<number, boolean> = { ...prev };
-      for (let i = 0; i < bodyRowCount; i += 1) nextMap[i] = next;
-      return nextMap;
-    });
+    tableDemo.bodyRowSelectionStore.toggleAll(next);
   };
 
   return (
     <>
-      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>ListPageShell 列表页串联</h1>
+      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>列表页串联（多组件）</h1>
       <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
-        本例将业务组件按常见列表页顺序串联：`SwitchTabs` + `FilterGroup` + `OperationBar(table)` + `BizTable` + `OperationBar(batch)`。
+        按常见列表页顺序串联：<code>SwitchTabs</code> → <code>FilterArea</code> → <code>TableOperationBar</code> →{' '}
+        <code>TableAreaTableInstance</code>（表格区 demo 状态）→ <code>BatchOperationBar</code>。
         用于验证区块级复用与组件间视觉/间距一致。
       </p>
 
@@ -140,37 +135,26 @@ export default function BizListPageCompositionDemo() {
         </section>
 
         <section>
-          <div style={pageBoxStyle}>
-            <FilterGroup
-              fields={filterFields}
-              value={filterValue}
-              onChange={setFilterValue}
-              onSearch={() => message.info(`查询：${JSON.stringify(filterValue)}`)}
-              onReset={() => setFilterValue({})}
-            />
-          </div>
+          <FilterArea
+            fields={filterFields}
+            value={filterValue}
+            onChange={setFilterValue}
+            onSearch={() => message.info(`查询：${JSON.stringify(filterValue)}`)}
+            onReset={() => setFilterValue({})}
+          />
         </section>
 
         <section>
           <div style={pageBoxStyle}>
-            <OperationBar
-              style={{ borderBottom: 'none' }}
-              left={
-                <Segmented
-                  options={stateItems.map((i) => i.key)}
-                  value={opSegValue}
-                  onChange={(v) => {
-                    const next = String(v);
-                    setOpSegValue(next);
-                    setStateActiveKey(next);
-                  }}
-                />
-              }
-              right={
-                <div style={{ minWidth: 0, width: '100%' }}>
-                  <OverflowActions items={actionItems} iconOnlyMore align="right" />
-                </div>
-              }
+            <TableOperationBar
+              segmentedOptions={stateItems.map((i) => i.key)}
+              value={opSegValue}
+              onChange={(next) => {
+                setOpSegValue(next);
+                setStateActiveKey(next);
+              }}
+              primaryItems={actionItems}
+              maxVisibleWithMore={2}
             />
           </div>
         </section>
@@ -183,49 +167,24 @@ export default function BizListPageCompositionDemo() {
 
         <section>
           <div style={pageBoxStyle}>
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                minWidth: 400,
-                rowGap: 8,
-                columnGap: 16,
-                minHeight: 48,
-                padding: '8px 16px',
-                boxSizing: 'border-box',
-                background: vcTokens.color.neutral.background.container,
-                boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.08)',
+            <BatchOperationBar
+              checked={checkedCount > 0 && checkedCount === bodyRowCount}
+              indeterminate={checkedCount > 0 && checkedCount < bodyRowCount}
+              selectedCount={checkedCount}
+              onCheckedChange={handleBatchCheckedChange}
+              items={batchItems}
+              maxVisibleWithMore={4}
+              paginationProps={{
+                current: page,
+                pageSize,
+                total: 500,
+                onChange: (p, ps) => {
+                  setPage(p);
+                  setPageSize(ps);
+                  message.info(`分页：第 ${p} 页 / ${ps} 条每页`);
+                },
               }}
-            >
-              <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto' }}>
-                <Checkbox
-                  checked={checkedCount > 0 && checkedCount === bodyRowCount}
-                  indeterminate={checkedCount > 0 && checkedCount < bodyRowCount}
-                  onChange={(e) => handleBatchCheckedChange(e.target.checked)}
-                >
-                  已选 {checkedCount} 条
-                </Checkbox>
-                <div style={{ minWidth: 0, flex: '0 1 auto' }}>
-                  <OverflowActions items={batchItems} maxVisibleWithMore={4} iconOnlyMore align="left" />
-                </div>
-              </div>
-
-              <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>
-                <Pagination
-                  simple
-                  current={page}
-                  pageSize={pageSize}
-                  total={500}
-                  onChange={(p, ps) => {
-                    setPage(p);
-                    setPageSize(ps);
-                    message.info(`分页：第 ${p} 页 / ${ps} 条每页`);
-                  }}
-                />
-              </div>
-            </div>
+            />
           </div>
         </section>
       </div>

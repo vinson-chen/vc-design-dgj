@@ -1,22 +1,35 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import type { MenuProps } from 'antd';
-import { Dropdown, VcIcon, Input, Typography, vcTokens } from 'vc-design';
+import { Dropdown, Input, Typography, VcIcon, vcTokens } from 'vc-design';
+import { useBodyRowSelectionStore } from './bodyRowSelectionStoreContext';
 import { BizTableCell } from './BizTableCell';
+import { useTableGridEditingDispatchersRef } from './tableGridEditingDispatchersRefContext';
+import { useTableGridEditingStateSelector } from './tableGridEditingStateContext';
 import { useTableGridConfigContext } from './tableGridConfigContext';
-import { useTableGridEditingContext } from './tableGridEditingContext';
-import {
-  BODY_CELL_PADDING_X,
-  BODY_CELL_PADDING_Y,
-  cellKey,
-  DISPLAY_CELL_MAX_HEIGHT_PX,
-  DISPLAY_TEXT_MAX_HEIGHT_PX,
-  EDIT_CELL_EDGE_PADDING,
-  EDIT_CELL_MAX_HEIGHT_PX,
-  EDIT_TEXTAREA_MAX_ROWS,
-  tableTextClampNStyle,
-  tableTextStyle,
-} from './tableGridConstants';
-import { getFreezeDividerStyle, getTextColWrapStyle } from './tableGridLayout';
+import { cellKey, EDIT_TEXTAREA_MAX_ROWS } from './tableGridConstants';
+import { tableTextClampNStyleFromMetrics } from './tableGridTypography';
+import { focusAntdTextareaWithoutScroll, getNativeTextareaFromAntdRef } from './tableGridFocus';
+import { getFreezeDividerStyle, getTextColGridItemShellStyle } from './tableGridLayout';
+
+/** 表体编辑/选中失焦态共用：白底 + 与 Ant Input 一致的描边（由组件默认边框呈现） */
+const INSERT_TAIL_STATS_SSR: { total: number; selected: number } = { total: 0, selected: 0 };
+
+function useInsertTailFooterStats(enabled: boolean) {
+  const store = useBodyRowSelectionStore();
+  return useSyncExternalStore(
+    (cb) => {
+      if (!enabled) return () => {};
+      const u1 = store.subscribeSelection(cb);
+      const u2 = store.subscribeHeader(cb);
+      return () => {
+        u1();
+        u2();
+      };
+    },
+    () => (enabled ? store.getFooterStatsSnapshot() : INSERT_TAIL_STATS_SSR),
+    () => INSERT_TAIL_STATS_SSR
+  );
+}
 
 export type TableGridTextCellProps = Readonly<{
   rowIndex: number;
@@ -29,7 +42,7 @@ export type TableGridTextCellProps = Readonly<{
   isInsertRowPlaceholder: boolean;
 }>;
 
-export default function TableGridTextCell({
+function TableGridTextCellInner({
   rowIndex,
   colIndex,
   bodyRowIndex,
@@ -40,20 +53,42 @@ export default function TableGridTextCell({
   isInsertRowPlaceholder,
 }: TableGridTextCellProps) {
   const cfg = useTableGridConfigContext();
-  const ed = useTableGridEditingContext();
+  const m = cfg.typography;
+  const edRef = useTableGridEditingDispatchersRef();
+  const key = cellKey(bodyRowIndex, colIndex);
 
-  const insertColWidth = cfg.narrowWidth;
+  const bodyCellTextareaStyles = useMemo(
+    () => ({
+      affixWrapper: {
+        transition: 'none' as const,
+        borderRadius: 0,
+      },
+      textarea: {
+        fontSize: m.fontSizePx,
+        lineHeight: `${m.lineHeightPx}px` as const,
+        paddingLeft: m.bodyCellTextareaContentPadX,
+        paddingRight: m.bodyCellTextareaContentPadX,
+        boxSizing: 'border-box' as const,
+        transition: 'none' as const,
+        borderRadius: 0,
+        backgroundColor: vcTokens.color.neutral.background.container,
+      },
+    }),
+    [m.bodyCellTextareaContentPadX, m.fontSizePx, m.lineHeightPx]
+  );
+
+  const isInsertTailCol1Footer =
+    isInsertRowPlaceholder && !isHeader && colIndex === 0;
+  const { total: footerTotal, selected: footerSelected } =
+    useInsertTailFooterStats(isInsertTailCol1Footer);
+
   const isInsertColPlaceholder = cfg.enableInsertRowCol && colIndex === cfg.colCount;
   const isInsertRowTextClickable =
-    isInsertRowPlaceholder && !isInsertColPlaceholder && !isHeader && colIndex < cfg.colCount;
-
-  const storedW = cfg.enableColumnResize ? cfg.colWidths[colIndex] ?? null : null;
-  const layoutW: number | null =
-    cfg.insertLayoutTextColPx != null
-      ? storedW != null
-        ? storedW
-        : cfg.insertLayoutTextColPx
-      : storedW;
+    cfg.enableInsertRowCol &&
+    isInsertRowPlaceholder &&
+    !isInsertColPlaceholder &&
+    !isHeader &&
+    colIndex < cfg.colCount;
 
   const isLastTextColBeforeInsert =
     cfg.enableInsertRowCol && !isHeader && colIndex === cfg.colCount - 1;
@@ -87,24 +122,67 @@ export default function TableGridTextCell({
     !isInsertRowPlaceholder &&
     colIndex < cfg.colCount &&
     !isInsertColPlaceholder;
-  const isEditing =
-    isEditableBodyCell &&
-    !!ed.editingCell &&
-    ed.editingCell.r === bodyRowIndex &&
-    ed.editingCell.c === colIndex;
-  const key = cellKey(bodyRowIndex, colIndex);
-  const displayText = ed.valueByCell[key] ?? `R${bodyRowIndex + 1} C${colIndex + 1}`;
+
+  const isActiveEditCell = useTableGridEditingStateSelector(
+    (s) =>
+      !!s.editingCell && s.editingCell.r === bodyRowIndex && s.editingCell.c === colIndex
+  );
+  const isEditing = isEditableBodyCell && isActiveEditCell;
+
+  const isSelectedMatch = useTableGridEditingStateSelector((s) => {
+    if (!s.selectedCell) return false;
+    return s.selectedCell.r === bodyRowIndex && s.selectedCell.c === colIndex;
+  });
+  /** 单击选中、尚未第二次点击进入编辑：用真实 Input 呈现失焦输入框样式 */
+  const isSelectedIdle = isEditableBodyCell && isSelectedMatch && !isEditing;
+
+  useEffect(() => {
+    if (!isEditing) return;
+    const id = requestAnimationFrame(() => {
+      const ed = edRef.current;
+      if (!ed) return;
+      const placeCaretEnd = () => {
+        const ta = getNativeTextareaFromAntdRef(ed.editTextAreaRef);
+        if (!ta) return;
+        ta.focus({ preventScroll: true });
+        const len = ta.value.length;
+        try {
+          ta.setSelectionRange(len, len);
+        } catch {
+          /* 节点未就绪 */
+        }
+      };
+      placeCaretEnd();
+      /** autoSize 布局后光标可能被重置到开头，再对齐一次到末尾 */
+      requestAnimationFrame(placeCaretEnd);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isEditing, bodyRowIndex, colIndex]);
+
+  const displayText = useTableGridEditingStateSelector((s) =>
+    isHeader ? '' : (s.valueByCell[key] ?? '')
+  );
+
+  const headerStored = useTableGridEditingStateSelector((s) =>
+    isHeader && !isInsertColPlaceholder ? s.valueByCell[`header-${colIndex}`] : undefined
+  );
+
+  const isHoverLocked = useTableGridEditingStateSelector((s) => {
+    if (
+      !cfg.enableEditMode ||
+      !isBody ||
+      isInsertRowPlaceholder ||
+      isInsertColPlaceholder ||
+      colIndex >= cfg.colCount
+    ) {
+      return false;
+    }
+    return s.hoverLockedCell?.r === bodyRowIndex && s.hoverLockedCell?.c === colIndex;
+  });
+
   const cellActive = isInsertColPlaceholder ? false : active;
   const isEditableBodyDisplayCell =
     isBody && !isInsertRowPlaceholder && !isInsertColPlaceholder && colIndex < cfg.colCount;
-  const isHoverLocked =
-    cfg.enableEditMode &&
-    isBody &&
-    !isInsertRowPlaceholder &&
-    !isInsertColPlaceholder &&
-    colIndex < cfg.colCount &&
-    ed.hoverLockedCell?.r === bodyRowIndex &&
-    ed.hoverLockedCell?.c === colIndex;
 
   const gridMin = cfg.gridMinCount ?? 2;
   const insertModeHeaderContextMenu =
@@ -158,16 +236,41 @@ export default function TableGridTextCell({
     gridMin,
   ]);
 
+  /** 末行「插入行」占位：冻结列 1px span 与网格线叠出多余描边，本行不渲染 */
   const freezeDividers = (
     <>
-      {cfg.enableFreezeFirstCol && colIndex === 0 ? (
+      {!isInsertRowPlaceholder && cfg.enableFreezeFirstCol && colIndex === 0 ? (
         <span aria-hidden="true" style={getFreezeDividerStyle('right')} />
       ) : null}
-      {cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1 ? (
+      {!isInsertRowPlaceholder && cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1 ? (
         <span aria-hidden="true" style={getFreezeDividerStyle('left')} />
       ) : null}
     </>
   );
+
+  const displayColCount = cfg.colCount + (cfg.enableInsertRowCol ? 1 : 0);
+  /** 冻结末行：顶线在首列外壳 + 各文本格；仅「插入列」开启时跳过最右 + 列，避免与插入区叠线 */
+  const freezeTailRowTopBorder =
+    isInsertRowPlaceholder &&
+    cfg.enableFreezeLastRow &&
+    (!cfg.enableInsertRowCol || colIndex < displayColCount - 1);
+  const freezeTailRowTopStyle = freezeTailRowTopBorder
+    ? {
+        borderTop: `1px solid ${vcTokens.color.neutral.border.default}`,
+        boxSizing: 'border-box' as const,
+      }
+    : undefined;
+
+  const suppressBottomBeforeFrozenTail =
+    cfg.enableFreezeLastRow &&
+    !isInsertRowPlaceholder &&
+    !isHeader &&
+    rowIndex === cfg.rowCount - 1;
+
+  const ed = edRef.current;
+  if (ed == null) {
+    throw new Error('TableGridTextCell: editing dispatchers ref not set');
+  }
 
   const tableCell = (
     <BizTableCell
@@ -178,7 +281,9 @@ export default function TableGridTextCell({
       zoom={canResizeHeaderTextCol}
       onColumnResizeStart={canResizeHeaderTextCol ? cfg.onColumnResizeStart(colIndex) : undefined}
       isLastRow={isLastRow}
-      suppressBottomBorder={isInsertColPlaceholder && !isHeader}
+      suppressBottomBorder={
+        (isInsertColPlaceholder && !isHeader) || suppressBottomBeforeFrozenTail
+      }
       isFrozen={
         (cfg.enableFreezeFirstCol && colIndex === 0) ||
         (cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1) ||
@@ -186,18 +291,34 @@ export default function TableGridTextCell({
       }
       showRightBorder={showTextColRightBorder}
       compactVerticalContent={isInsertColPlaceholder && isHeader}
-      contentPaddingY={isHeader ? 8 : isEditing ? EDIT_CELL_EDGE_PADDING : BODY_CELL_PADDING_Y}
-      contentPaddingX={isHeader ? 12 : isEditing ? EDIT_CELL_EDGE_PADDING : BODY_CELL_PADDING_X}
+      theadMinHeightPx={isHeader ? m.theadCellMinHeightPx : undefined}
+      contentPaddingY={
+        isHeader
+          ? m.headerCellPaddingY
+          : isEditing || isSelectedIdle
+            ? m.editCellEdgePadding
+            : m.bodyCellPaddingY
+      }
+      contentPaddingX={
+        isInsertColPlaceholder
+          ? 0
+          : isHeader
+            ? m.bodyCellPaddingX
+            : isEditing || isSelectedIdle
+              ? m.editCellEdgePadding
+              : m.bodyCellPaddingX
+      }
+      contentAlignX={isInsertTailCol1Footer ? 'flex-start' : undefined}
       contentAlignY={!isHeader && !cfg.enableVerticalCenter ? 'flex-start' : 'center'}
       style={
-        isEditing
+        isEditing || isSelectedIdle
           ? {
-              maxHeight: EDIT_CELL_MAX_HEIGHT_PX,
-              overflow: 'hidden',
+              maxHeight: m.editCellMaxHeightPx,
+              overflow: 'auto',
             }
           : isEditableBodyDisplayCell
             ? {
-                maxHeight: DISPLAY_CELL_MAX_HEIGHT_PX,
+                maxHeight: m.displayCellMaxHeightPx,
                 overflow: 'hidden',
               }
             : undefined
@@ -216,35 +337,86 @@ export default function TableGridTextCell({
             }}
           />
         ) : (
-          <Typography.Text style={{ ...tableTextStyle, fontWeight: 500 }}>
-            列 {colIndex + 1}
+          <Typography.Text style={{ ...m.tableTextStyle, fontWeight: 500 }}>
+            {headerStored ?? `列 ${colIndex + 1}`}
           </Typography.Text>
         )
-      ) : isInsertColPlaceholder ? null : isInsertRowPlaceholder ? null : isEditing ? (
+      ) : isInsertColPlaceholder ? null : isInsertTailCol1Footer ? (
+        <Typography.Text
+          type="secondary"
+          aria-live="polite"
+          style={{
+            ...m.tableTextStyle,
+            whiteSpace: 'nowrap',
+            width: '100%',
+            justifyContent: 'flex-start',
+            userSelect: 'none',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {footerSelected > 0
+            ? `${footerSelected}/${footerTotal} 条数据`
+            : `${footerTotal} 条数据`}
+        </Typography.Text>
+      ) : isInsertRowPlaceholder ? null : isEditing ? (
         <Input.TextArea
+          key={`edit-${bodyRowIndex}-${colIndex}`}
           ref={ed.editTextAreaRef}
           autoFocus={false}
           autoSize={{ minRows: 1, maxRows: EDIT_TEXTAREA_MAX_ROWS }}
-          value={ed.editingDraft}
+          defaultValue={ed.editingDraftRef.current}
           onChange={(ev) => {
-            const v = ev.target.value;
-            ed.editingDraftRef.current = v;
-            ed.setEditingDraft(v);
+            ed.editingDraftRef.current = ev.target.value;
           }}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onBlur={() => {
-            ed.setValueByCell((prev) => ({ ...prev, [key]: ed.getEditingValueForSave() }));
+            const api = edRef.current;
+            if (!api) return;
+            if (api.pendingBlurIgnoreCellKeyRef.current === key) {
+              return;
+            }
+            const v = api.getEditingValueForSave();
+            api.setValueByCell((prev) => ({ ...prev, [key]: v }));
           }}
           onKeyDown={(e) => {
+            if (
+              e.key === 'Enter' &&
+              !e.shiftKey &&
+              !e.ctrlKey &&
+              !e.metaKey &&
+              !e.altKey &&
+              !(e.nativeEvent as KeyboardEvent & { isComposing?: boolean }).isComposing
+            ) {
+              e.preventDefault();
+              const v = ed.getEditingValueForSave();
+              ed.setValueByCell((prev) => ({ ...prev, [key]: v }));
+              ed.pendingBlurIgnoreCellKeyRef.current = key;
+              ed.suppressDuplicatePrevCellClickSaveRef.current = true;
+              ed.scheduleClearEditCommitGuards();
+              ed.setEditingCell(null);
+              ed.editingDraftRef.current = '';
+
+              const maxBodyR = cfg.rowCount >= 2 ? cfg.rowCount - 2 : 0;
+              const nextR = Math.min(maxBodyR, bodyRowIndex + 1);
+              const next = { r: nextR, c: colIndex };
+              ed.setSelectedCell(next);
+              ed.setHoverLockedCell(next);
+              ed.onKeyboardNavigateCell?.({ r: next.r, c: next.c, key: 'ArrowDown' });
+              return;
+            }
+
             const exit = e.key === 'Escape' || (e.key === 'Enter' && (e.metaKey || e.ctrlKey));
             if (!exit) return;
             e.preventDefault();
-            ed.setValueByCell((prev) => ({ ...prev, [key]: ed.getEditingValueForSave() }));
+            const v = ed.getEditingValueForSave();
+            ed.setValueByCell((prev) => ({ ...prev, [key]: v }));
+            ed.pendingBlurIgnoreCellKeyRef.current = key;
+            ed.scheduleClearEditCommitGuards();
             ed.setSelectedCell({ r: bodyRowIndex, c: colIndex });
             ed.setEditingCell(null);
             ed.editingDraftRef.current = '';
-            ed.setEditingDraft('');
           }}
           style={{
             width: '100%',
@@ -252,150 +424,172 @@ export default function TableGridTextCell({
             transition: 'none',
             borderRadius: 0,
           }}
-          styles={{
-            affixWrapper: {
-              transition: 'none',
-              borderRadius: 0,
-            },
-            textarea: {
-              fontSize: 12,
-              lineHeight: '20px',
-              paddingLeft: 8,
-              paddingRight: 8,
-              boxSizing: 'border-box',
-              transition: 'none',
-              borderRadius: 0,
-            },
+          styles={bodyCellTextareaStyles}
+        />
+      ) : isSelectedIdle ? (
+        <Input.TextArea
+          key={`sel-idle-${bodyRowIndex}-${colIndex}`}
+          readOnly
+          tabIndex={-1}
+          value={displayText}
+          autoSize={{ minRows: 1, maxRows: EDIT_TEXTAREA_MAX_ROWS }}
+          onMouseDown={(e) => {
+            /** 避免抢走焦点，保持「失焦态」描边样式；点击仍会冒泡到单元格以进入编辑 */
+            e.preventDefault();
           }}
+          onFocus={(e) => e.currentTarget.blur()}
+          style={{
+            width: '100%',
+            resize: 'none',
+            cursor: 'default',
+            transition: 'none',
+            borderRadius: 0,
+          }}
+          styles={bodyCellTextareaStyles}
         />
       ) : (
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'column',
+            ...tableTextClampNStyleFromMetrics(EDIT_TEXTAREA_MAX_ROWS, m),
             width: '100%',
             minWidth: 0,
-            height: '100%',
-            justifyContent: cfg.enableVerticalCenter ? 'center' : 'flex-start',
           }}
         >
-          <div
-            style={{
-              ...tableTextClampNStyle(EDIT_TEXTAREA_MAX_ROWS),
-              maxHeight: DISPLAY_TEXT_MAX_HEIGHT_PX,
-            }}
-          >
-            {displayText}
-          </div>
+          {displayText}
         </div>
       )}
     </BizTableCell>
   );
 
-  return (
-    <div
-      data-insert-col-placeholder={isInsertColPlaceholder && !isHeader ? 'true' : undefined}
-      data-hover-lock-cell={isEditableBodyDisplayCell && cfg.enableEditMode ? '' : undefined}
-      data-body-row={isEditableBodyDisplayCell ? bodyRowIndex : undefined}
-      data-col={isEditableBodyDisplayCell ? colIndex : undefined}
-      onClick={(e) => {
-        if (!isHeader && isInsertColPlaceholder) {
-          e.stopPropagation();
-          return;
-        }
-        if (isHeader && isInsertColPlaceholder) {
-          e.stopPropagation();
-          cfg.onInsertColumn();
-          return;
-        }
-        if (
-          cfg.enableEditMode &&
-          isBody &&
-          !isInsertRowPlaceholder &&
-          !isInsertColPlaceholder &&
-          colIndex < cfg.colCount
-        ) {
-          ed.setHoverLockedCell({ r: bodyRowIndex, c: colIndex });
-        }
-        if (isEditableBodyCell) {
-          e.stopPropagation();
-          ed.setSelectedCell(null);
-          if (ed.editingCell?.r === bodyRowIndex && ed.editingCell?.c === colIndex) {
-            return;
-          }
-          if (ed.editingCell && (ed.editingCell.r !== bodyRowIndex || ed.editingCell.c !== colIndex)) {
-            const prevKey = cellKey(ed.editingCell.r, ed.editingCell.c);
-            ed.setValueByCell((v) => ({ ...v, [prevKey]: ed.getEditingValueForSave() }));
-          }
-          ed.setEditingCell({ r: bodyRowIndex, c: colIndex });
-          ed.editingDraftRef.current = displayText;
-          ed.setEditingDraft(displayText);
-          return;
-        }
-        if (!isInsertRowTextClickable) return;
-        e.stopPropagation();
-        cfg.onInsertRow();
-      }}
-      style={
-        isInsertColPlaceholder
-          ? {
-              flex: `0 0 ${insertColWidth}px`,
-              minWidth: insertColWidth,
-              display: 'flex',
-              position:
-                cfg.enableFreezeLastCol && cfg.enableInsertRowCol
-                  ? 'sticky'
-                  : cfg.enableFreezeFirstCol && colIndex === 0
-                    ? 'sticky'
-                    : undefined,
-              left: cfg.enableFreezeFirstCol && colIndex === 0 ? cfg.narrowWidth : undefined,
-              right: cfg.enableFreezeLastCol && cfg.enableInsertRowCol ? 0 : undefined,
-              zIndex: cfg.enableFreezeLastCol && cfg.enableInsertRowCol ? 5 : undefined,
-              cursor: isHeader ? 'pointer' : 'default',
-            }
-          : {
-              ...getTextColWrapStyle(
-                layoutW,
-                cfg.minTextColWidth,
-                cfg.narrowWidth,
-                colIndex,
-                cfg.colCount,
-                cfg.enableFreezeFirstCol,
-                cfg.enableFreezeLastCol,
-                cfg.enableInsertRowCol && cfg.enableFreezeLastCol ? cfg.narrowWidth : 0
-              ),
-              cursor:
-                isInsertRowTextClickable || (isHeader && isInsertColPlaceholder)
-                  ? 'pointer'
-                  : isEditableBodyCell
-                    ? 'default'
-                    : undefined,
-            }
+  const shellBaseStyle: React.CSSProperties = isInsertColPlaceholder
+    ? {
+        display: 'flex',
+        minWidth: 0,
+        position:
+          cfg.enableFreezeLastCol && cfg.enableInsertRowCol
+            ? 'sticky'
+            : cfg.enableFreezeFirstCol && colIndex === 0
+              ? 'sticky'
+              : undefined,
+        left: cfg.enableFreezeFirstCol && colIndex === 0 ? cfg.narrowWidth : undefined,
+        right: cfg.enableFreezeLastCol && cfg.enableInsertRowCol ? 0 : undefined,
+        zIndex: cfg.enableFreezeLastCol && cfg.enableInsertRowCol ? 5 : undefined,
+        cursor: isHeader ? 'pointer' : 'default',
+        ...freezeTailRowTopStyle,
       }
-    >
-      {contextMenuItems != null ? (
-        <Dropdown menu={{ items: contextMenuItems }} trigger={['contextMenu']}>
-          <div
-            role="presentation"
-            style={{
-              display: 'flex',
-              flex: 1,
-              width: '100%',
-              minWidth: 0,
-              alignSelf: 'stretch',
-              minHeight: '100%',
-            }}
-          >
-            {freezeDividers}
-            {tableCell}
-          </div>
-        </Dropdown>
-      ) : (
-        <>
-          {freezeDividers}
-          {tableCell}
-        </>
-      )}
-    </div>
+    : {
+        ...getTextColGridItemShellStyle(
+          cfg.narrowWidth,
+          colIndex,
+          cfg.colCount,
+          cfg.enableFreezeFirstCol,
+          cfg.enableFreezeLastCol,
+          cfg.enableInsertRowCol && cfg.enableFreezeLastCol ? cfg.narrowWidth : 0
+        ),
+        cursor:
+          isInsertRowTextClickable || (isHeader && isInsertColPlaceholder)
+            ? 'pointer'
+            : isEditableBodyCell
+              ? 'default'
+              : undefined,
+        ...freezeTailRowTopStyle,
+      };
+
+  /** 右键菜单时 Dropdown 需要单一子节点；原先多一层 presentation，现与外壳合并 */
+  const shellStyle: React.CSSProperties =
+    contextMenuItems != null
+      ? {
+          ...shellBaseStyle,
+          flex: 1,
+          width: '100%',
+          alignSelf: 'stretch',
+          minHeight: '100%',
+        }
+      : shellBaseStyle;
+
+  const shellProps = {
+    'data-insert-col-placeholder':
+      isInsertColPlaceholder && !isHeader ? ('true' as const) : undefined,
+    'data-hover-lock-cell': isEditableBodyDisplayCell && cfg.enableEditMode ? ('' as const) : undefined,
+    'data-body-row': isEditableBodyDisplayCell ? bodyRowIndex : undefined,
+    'data-col': isEditableBodyDisplayCell ? colIndex : undefined,
+    onClick: (e: React.MouseEvent) => {
+      if (!isHeader && isInsertColPlaceholder) {
+        e.stopPropagation();
+        return;
+      }
+      if (isHeader && isInsertColPlaceholder) {
+        e.stopPropagation();
+        cfg.onInsertColumn();
+        return;
+      }
+      if (
+        cfg.enableEditMode &&
+        isBody &&
+        !isInsertRowPlaceholder &&
+        !isInsertColPlaceholder &&
+        colIndex < cfg.colCount
+      ) {
+        ed.setHoverLockedCell({ r: bodyRowIndex, c: colIndex });
+      }
+      if (isEditableBodyCell) {
+        e.stopPropagation();
+        const api = edRef.current;
+        if (!api) return;
+
+        if (api.editingCell?.r === bodyRowIndex && api.editingCell?.c === colIndex) {
+          return;
+        }
+
+        if (
+          api.editingCell &&
+          (api.editingCell.r !== bodyRowIndex || api.editingCell.c !== colIndex)
+        ) {
+          if (!api.consumeDuplicatePrevCellClickSave()) {
+            const prevKey = cellKey(api.editingCell.r, api.editingCell.c);
+            const valueToSave = api.getEditingValueForSave();
+            api.setValueByCell((v) => ({ ...v, [prevKey]: valueToSave }));
+          }
+          api.setEditingCell(null);
+          api.editingDraftRef.current = '';
+        }
+
+        const sameAsSelected =
+          api.selectedCell?.r === bodyRowIndex && api.selectedCell?.c === colIndex;
+
+        if (sameAsSelected) {
+          api.setEditingCell({ r: bodyRowIndex, c: colIndex });
+          api.editingDraftRef.current = displayText;
+          return;
+        }
+
+        api.setSelectedCell({ r: bodyRowIndex, c: colIndex });
+        api.setEditingCell(null);
+        api.editingDraftRef.current = '';
+        return;
+      }
+      if (!isInsertRowTextClickable) return;
+      e.stopPropagation();
+      cfg.onInsertRow();
+    },
+    style: shellStyle,
+  };
+
+  const shellInner = (
+    <>
+      {freezeDividers}
+      {tableCell}
+    </>
+  );
+
+  return contextMenuItems != null ? (
+    <Dropdown menu={{ items: contextMenuItems }} trigger={['contextMenu']}>
+      <div {...shellProps}>{shellInner}</div>
+    </Dropdown>
+  ) : (
+    <div {...shellProps}>{shellInner}</div>
   );
 }
+
+const TableGridTextCell = React.memo(TableGridTextCellInner);
+export default TableGridTextCell;
