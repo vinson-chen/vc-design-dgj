@@ -7,6 +7,8 @@ import { createContext, useContextSelector } from 'use-context-selector';
 export type TableGridEditingStateSlice = Readonly<{
   editingCell: { r: number; c: number } | null;
   selectedCell: { r: number; c: number } | null;
+  selectedCells: ReadonlySet<string>;
+  selectionAnchor: { r: number; c: number } | null;
   valueByCell: Record<string, string>;
   hoverLockedCell: { r: number; c: number } | null;
 }>;

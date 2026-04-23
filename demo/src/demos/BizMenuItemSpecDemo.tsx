@@ -1,6 +1,6 @@
 import React from 'react';
 import { Space, vcTokens } from 'vc-design';
-import { BizMenuItem } from 'vc-biz';
+import { VMenuItem } from 'vc-biz';
 
 export default function BizMenuItemSpecDemo() {
   return (
@@ -23,9 +23,9 @@ export default function BizMenuItemSpecDemo() {
             left（展开）
           </h3>
           <Space wrap size={8}>
-            <BizMenuItem dark align="left" state="default" label="导航名称" />
-            <BizMenuItem dark align="left" state="hover" label="导航名称" />
-            <BizMenuItem dark align="left" state="active" label="导航名称" />
+            <VMenuItem dark align="left" state="default" label="导航名称" />
+            <VMenuItem dark align="left" state="hover" label="导航名称" />
+            <VMenuItem dark align="left" state="active" label="导航名称" />
           </Space>
         </section>
         <section>
@@ -33,9 +33,9 @@ export default function BizMenuItemSpecDemo() {
             center（收起）
           </h3>
           <Space wrap size={8}>
-            <BizMenuItem dark align="center" state="default" label="导航" />
-            <BizMenuItem dark align="center" state="hover" label="导航" />
-            <BizMenuItem dark align="center" state="active" label="导航" />
+            <VMenuItem dark align="center" state="default" label="导航" />
+            <VMenuItem dark align="center" state="hover" label="导航" />
+            <VMenuItem dark align="center" state="active" label="导航" />
           </Space>
         </section>
       </div>

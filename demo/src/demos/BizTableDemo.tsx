@@ -33,21 +33,30 @@ export default function BizTableDemo() {
         boxSizing: 'border-box',
       }}
     >
-      <h1 style={{ margin: 0, flexShrink: 0, fontWeight: 600 }}>BizTable 表格区</h1>
-
       <Collapse
         bordered={false}
         style={{
-          flexShrink: 0,
           background: vcTokens.color.neutral.background.layout,
+          borderRadius: vcTokens.style.borderRadius.lg,
         }}
         defaultActiveKey={[]}
+        expandIconPosition="end"
         items={[
           {
             key: 'config',
-            label: '配置项',
+            label: (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                paddingRight: 32,
+              }}>
+                <h1 style={{ margin: 0, fontWeight: 600, fontSize: 18 }}>VTable 表格区</h1>
+              </div>
+            ),
             children: (
-              <div style={{ ...sectionBox, marginBottom: 0 }}>
+              <div style={{ ...sectionBox, marginBottom: 0, paddingTop: 0 }}>
                 <TableAreaConfigPanel {...demo} />
               </div>
             ),

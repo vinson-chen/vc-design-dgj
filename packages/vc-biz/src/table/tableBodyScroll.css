@@ -32,3 +32,10 @@
 .vc-biz-table-scrollport::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* 列宽拖拽进行中：全局保持 col-resize，避免离开 8px 热区后光标闪回箭头 */
+.vc-biz-col-resizing,
+.vc-biz-col-resizing * {
+  cursor: col-resize !important;
+}
+

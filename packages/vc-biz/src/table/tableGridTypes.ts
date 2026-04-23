@@ -1,6 +1,9 @@
 import type React from 'react';
 import type { BodyRowSelectionStore } from './bodyRowSelectionStore';
+import type { CellSelectionStore } from './cellSelectionStore';
 import type { TableGridTypographyMetrics } from './tableGridTypography';
+
+export type TableColumnFieldKind = 'text' | 'image';
 
 export type TableRowsProps = Readonly<{
   rowCount: number;
@@ -9,7 +12,12 @@ export type TableRowsProps = Readonly<{
   enableEditMode: boolean;
   rowMinWidth: number;
   narrowWidth: number;
+  /** @deprecated 使用 `minResizableTextColWidth`，此字段仅为兼容保留 */
   minTextColWidth: number;
+  /** 文本列拖拽最小宽度 */
+  minResizableTextColWidth?: number;
+  /** 默认文本列宽（不含 checkbox/插入列） */
+  defaultTextColWidth: number;
   enableColumnResize: boolean;
   enableVerticalCenter: boolean;
   enableFreezeFirstCol: boolean;
@@ -17,6 +25,8 @@ export type TableRowsProps = Readonly<{
   /** 冻结底部「末行」（插入行占位行）：sticky 在可视区底，顶部分割线与冻结列一致 */
   enableFreezeLastRow: boolean;
   enableBodyCellRightBorder: boolean;
+  /** 批量选择：控制左侧 checkbox 列；默认 true；关闭时依赖「显示序号」与「插入行列」决定是否保留首列窄轨 */
+  enableBatchSelection?: boolean;
   enableShowRowIndex: boolean;
   /** 表体勾选（按行订阅，大表勿再传整表 Record 到 Context） */
   bodyRowSelectionStore: BodyRowSelectionStore;
@@ -24,7 +34,6 @@ export type TableRowsProps = Readonly<{
   onColumnResizeStart: (colIndex: number) => (e: React.MouseEvent) => void;
   onInsertRow: () => void;
   onInsertColumn: () => void;
-  insertLayoutTextColPx: number | null;
   /** 删除列/行时下限（与 demo 的 GRID_MIN 一致），用于禁用右键菜单项 */
   gridMinCount?: number;
   onDeleteColumn?: (colIndex: number) => void;
@@ -39,15 +48,36 @@ export type TableRowsProps = Readonly<{
    */
   bodyScrollMaxHeight?: number;
   /**
-   * 非虚拟列表时，横滚所在的外层 overflow 容器（与 TableArea 表格外框一致），用于插入列后滚到最右侧。
-   * 虚拟列表时不必传，由 TableRows 内部 scrollport 处理。
+   * @deprecated 已统一由 TableRows 内部 `scrollport` 承担横纵滚，传入无效。保留仅为类型兼容。
    */
   tableOuterScrollRef?: React.RefObject<HTMLDivElement | null>;
+  /** 表格可视区宽度变化（用于列宽拖拽边界约束） */
+  onViewportClientWidthChange?: (width: number) => void;
   /**
    * 常规字号：vc `font.size.base` / `lineHeight.base`（默认 14/22）；false 为紧凑 sm（12/20）。
    * 缺省为 true。
    */
   enableRegularTableFont?: boolean;
+  /** 与 `useTableAreaDemoState` 撤销配合：删除列/行前 `start`，后 `end`，合并为一步 */
+  startUndoBatch?: () => void;
+  endUndoBatch?: () => void;
+  /** 撤销/重做应用快照后递增，用于清空单元格编辑与选中 */
+  undoRedoNonce?: number;
+  /** 供 `useTableGridEditing` 注册 ⌘Z / Shift+⌘Z */
+  tableUndoRedo?: Readonly<{
+    undo: () => void;
+    redo: () => void;
+    canUndo: () => boolean;
+    canRedo: () => boolean;
+  }>;
+  /** 隐藏列索引集合：右键选择面板控制显示/隐藏 */
+  hiddenColSet?: ReadonlySet<number>;
+  /** 设置单列显隐 */
+  setColumnHidden?: (colIndex: number, hidden: boolean) => void;
+  /** 批量设置显隐（仅作用于当前总列数范围） */
+  setAllColumnsHidden?: (nextHiddenCols: ReadonlySet<number>) => void;
+  /** 单元格选中状态 store 回调：TableRows 内部创建后传出 */
+  onCellSelectionStore?: (store: CellSelectionStore) => void;
 }>;
 
 export type TableGridConfigValue = TableRowsProps & {
@@ -64,8 +94,25 @@ export type TableGridStaticConfig = Omit<
   | 'onValueByCellChange'
   | 'enableRegularTableFont'
   | 'tableOuterScrollRef'
+  | 'onViewportClientWidthChange'
 > & {
   /** 表体在垂直虚拟列表内：关闭 content-visibility，并与 measureElement 配合 */
   bodyVirtualized?: boolean;
   typography: TableGridTypographyMetrics;
+  visibleColIndexes: ReadonlyArray<number>;
+  /**
+   * 插入列后横滚等操作递增；表头 `hoverByCell` 在下一帧绘制前清空，避免滚动导致指针误挂邻格出现悬停闪动。
+   */
+  pointerHoverResetNonce: number;
+  /** 首列窄轨宽度：0 表示不渲染 checkbox/序号/插入行+ 列 */
+  narrowLeadWidth: number;
+  /** 常规字号（true=14/22；false=12/20） */
+  regularTableFont: boolean;
+  /** 列字段类型（默认 text） */
+  columnFieldKindByCol: Readonly<Record<number, TableColumnFieldKind>>;
+  setColumnFieldKind: (colIndex: number, kind: TableColumnFieldKind) => void;
+  /** 图片列：表体格内图片预览 URL 列表（key 形如 `${bodyRow}-${col}`） */
+  imageUrlsByCell: Readonly<Record<string, ReadonlyArray<string>>>;
+  appendImageFilesToCell: (bodyRowIndex: number, colIndex: number, files: readonly File[]) => void;
+  removeImageAtCell: (bodyRowIndex: number, colIndex: number, imageIndex: number) => void;
 };

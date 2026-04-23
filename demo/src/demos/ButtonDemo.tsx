@@ -38,6 +38,9 @@ export default function ButtonDemo() {
             <strong>尺寸：</strong> Large 40px / Middle 32px / Small 24px；圆角 8px / 6px / 4px；字号 16 / 14 / 12px。
           </p>
           <p style={{ margin: '0 0 8px 0' }}>
+            <strong>特例：</strong> 纯图标描边按钮可使用 32px × 32px（如 VTable 图片列 add）。
+          </p>
+          <p style={{ margin: '0 0 8px 0' }}>
             <strong>类型：</strong> primary（#0888FF）、default、dashed、link、text。
           </p>
           <p style={{ margin: 0 }}>
@@ -110,6 +113,23 @@ export default function ButtonDemo() {
           <Button type="primary" icon={<VcIcon type="search" />}>搜索</Button>
           <Button icon={<VcIcon type="search" />}>默认带图标</Button>
           <Button type="primary" icon={<VcIcon type="search" />} loading>搜索 Loading</Button>
+        </div>
+        <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+          <Button
+            type="default"
+            aria-label="纯图标描边 32"
+            icon={<VcIcon type="add" fontSize={16} />}
+            style={{
+              width: 32,
+              minWidth: 32,
+              height: 32,
+              padding: 0,
+              background: vcTokens.color.neutral.background.container,
+            }}
+          />
+          <span style={{ fontSize: 12, color: vcTokens.color.neutral.text.description }}>
+            纯图标描边按钮特例：32px × 32px（VTable 图片列 add）
+          </span>
         </div>
       </section>
 

@@ -54,8 +54,9 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.23",
-    "use-context-selector": "^2.0.0"
+    "rc-motion": "^2.9.5",
+    "use-context-selector": "^2.0.0",
+    "xlsx": "^0.18.5"
   }
 }

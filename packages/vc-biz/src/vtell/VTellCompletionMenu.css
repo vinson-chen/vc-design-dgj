@@ -1,0 +1,20 @@
+/* L0 句式补全菜单样式 */
+.vc-biz-vtell-completion-menu .ant-dropdown-menu {
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.vc-biz-vtell-completion-menu .ant-dropdown-menu-item {
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 20px;
+  border-radius: 6px;
+}
+
+.vc-biz-vtell-completion-menu .ant-dropdown-menu-item-selected {
+  background: var(--vc-color-primary-bg, #ecf6ff);
+}
+
+.vc-biz-vtell-completion-menu .ant-dropdown-menu-item:hover {
+  background: var(--vc-color-primary-bg-hover, #d7ecff);
+}

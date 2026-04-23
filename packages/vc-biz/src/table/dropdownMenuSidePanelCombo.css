@@ -1,0 +1,95 @@
+/**
+ * 根浮层：仅包裹主 Menu；SubMenu 子弹层由 rc-menu/rc-trigger 默认挂到 body（勿挂到本节点，
+ * 否则 absolute + 视口对齐的 left/top 会相对错误容器，出现叠在主项上）。
+ */
+.vc-biz-dropdown-menu-side-panel-root {
+  position: relative;
+}
+
+.vc-biz-dropdown-menu-side-panel__menu-wrap {
+  position: relative;
+}
+
+/** 主菜单收起后仅展示侧栏时：与 __menu-wrap 一致承担卡片外观（primaryMenuStyle） */
+.vc-biz-dropdown-menu-side-panel__side-only-root {
+  position: relative;
+  box-sizing: border-box;
+}
+
+/**
+ * 主菜单的卡片外观由 primaryMenuStyle（包裹层）提供，
+ * 这里清掉 antd Menu 默认底色/阴影，避免出现“双层投影”。
+ */
+.vc-biz-dropdown-menu-side-panel__menu-wrap > .ant-menu,
+.vc-biz-dropdown-menu-side-panel__menu-wrap > .ant-dropdown-menu {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/**
+ * SubMenu 子弹层：与 antd dropdown 阴影一致；宽度由场景类名（如表头/Tab）覆盖。
+ * 宽度用 max-content 收窄，避免 ul 在部分布局下被拉成整屏灰条。
+ */
+.vc-biz-dropdown-side-panel-submenu-popup.ant-menu-submenu-popup,
+.vc-biz-dropdown-side-panel-submenu-popup.ant-dropdown-menu-submenu-popup {
+  padding: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  z-index: 1061 !important;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  min-width: 0;
+}
+
+.vc-biz-dropdown-side-panel-submenu-popup .ant-menu,
+.vc-biz-dropdown-side-panel-submenu-popup .ant-dropdown-menu {
+  width: max-content !important;
+  min-width: 0 !important;
+  max-width: calc(100vw - 16px);
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/** 去掉为箭头预留的 extra inline padding（expandIcon 已关） */
+.vc-biz-dropdown-side-panel-submenu-trigger.ant-menu-submenu > .ant-menu-submenu-title,
+.vc-biz-dropdown-side-panel-submenu-trigger.ant-dropdown-menu-submenu > .ant-dropdown-menu-submenu-title {
+  padding-inline-end: 12px;
+}
+
+.vc-biz-dropdown-side-panel-submenu-trigger.ant-menu-submenu
+  > .ant-menu-submenu-title
+  > .ant-menu-submenu-expand-icon,
+.vc-biz-dropdown-side-panel-submenu-trigger.ant-dropdown-menu-submenu
+  > .ant-dropdown-menu-submenu-title
+  > .ant-dropdown-menu-submenu-expand-icon {
+  display: none !important;
+}
+
+/** 承载自定义面板的禁用菜单项：去掉默认行高/内边距，避免裁切宽面板 */
+.vc-biz-dropdown-side-panel-submenu-slot-item.ant-menu-item-disabled,
+.vc-biz-dropdown-side-panel-submenu-slot-item.ant-dropdown-menu-item-disabled {
+  opacity: 1;
+  cursor: default;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  width: max-content;
+  max-width: 100%;
+}
+
+.vc-biz-dropdown-side-panel-submenu-slot-item.ant-menu-item-disabled .ant-menu-title-content,
+.vc-biz-dropdown-side-panel-submenu-slot-item.ant-dropdown-menu-item-disabled .ant-dropdown-menu-title-content {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+}
+
+.vc-biz-dropdown-side-panel-submenu-slot-inner {
+  box-sizing: border-box;
+  max-height: none;
+  overflow: visible;
+}

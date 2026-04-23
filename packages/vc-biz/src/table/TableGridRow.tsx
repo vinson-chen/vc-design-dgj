@@ -3,7 +3,7 @@ import type { CSSProperties, MouseEvent } from 'react';
 import { useContextSelector } from 'use-context-selector';
 import { Checkbox, Typography, VcIcon, vcTokens } from 'vc-design';
 import { useBodyRowSelectionStore } from './bodyRowSelectionStoreContext';
-import { BizTableCell } from './BizTableCell';
+import { VTableCell } from './VTableCell';
 import TableGridTextCell from './TableGridTextCell';
 import { TableGridConfigContext, useTableGridConfigContext } from './tableGridConfigContext';
 import { useTableRowHoverStore } from './tableRowHoverStoreContext';
@@ -37,8 +37,8 @@ function tableBodyRowGridBase(
     | 'narrowWidth'
     | 'colCount'
     | 'minTextColWidth'
+    | 'minResizableTextColWidth'
     | 'colWidths'
-    | 'insertLayoutTextColPx'
     | 'enableColumnResize'
     | 'typography'
   >,
@@ -61,24 +61,30 @@ function tableBodyRowGridBase(
 
 function useRowGridTemplateColumns(): string {
   const cfg = useTableGridConfigContext();
+  const effectiveMinResizableTextColWidth =
+    cfg.minResizableTextColWidth ?? cfg.minTextColWidth;
   return useMemo(
     () =>
       getTableRowGridTemplateColumns({
         narrowWidth: cfg.narrowWidth,
+        showNarrowLeadColumn: cfg.narrowLeadWidth > 0,
         colCount: cfg.colCount,
+        visibleColIndexes: cfg.visibleColIndexes,
         enableInsertRowCol: cfg.enableInsertRowCol,
-        minTextColWidth: cfg.minTextColWidth,
+        minTextColWidth: effectiveMinResizableTextColWidth,
+        defaultTextColWidth: cfg.defaultTextColWidth,
         colWidths: cfg.colWidths,
-        insertLayoutTextColPx: cfg.insertLayoutTextColPx,
         enableColumnResize: cfg.enableColumnResize,
       }),
     [
       cfg.narrowWidth,
+      cfg.narrowLeadWidth,
       cfg.colCount,
+      cfg.visibleColIndexes,
       cfg.enableInsertRowCol,
-      cfg.minTextColWidth,
+      effectiveMinResizableTextColWidth,
+      cfg.defaultTextColWidth,
       cfg.colWidths,
-      cfg.insertLayoutTextColPx,
       cfg.enableColumnResize,
     ]
   );
@@ -95,11 +101,18 @@ function useRowHovered(rowIndex: number): boolean {
   );
 }
 
+function isColumnResizeDragging(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.documentElement.classList.contains('vc-biz-col-resizing');
+}
+
 function TableGridHeaderRow() {
   const cfg = useTableGridConfigContext();
   const gridTemplateColumns = useRowGridTemplateColumns();
   const hoverStore = useTableRowHoverStore();
   const hovered = useRowHovered(0);
+  const hoverSuppressed = isColumnResizeDragging();
+  const rowHovered = !hoverSuppressed && hovered;
   const selectionStore = useBodyRowSelectionStore();
   const headerFp = useSyncExternalStore(
     (cb) => selectionStore.subscribeHeader(cb),
@@ -110,13 +123,21 @@ function TableGridHeaderRow() {
   const headerIndeterminate = headerFp === 3;
 
   const displayRowCount = cfg.rowCount + 1;
-  const displayColCount = cfg.colCount + (cfg.enableInsertRowCol ? 1 : 0);
+  const visibleTextColCount = cfg.visibleColIndexes.length;
+  const displayColCount = visibleTextColCount + (cfg.enableInsertRowCol ? 1 : 0);
+  const showNarrowLead = cfg.narrowLeadWidth > 0;
+  const showFreezeFirstDivider =
+    cfg.enableFreezeFirstCol && visibleTextColCount > 2 && showNarrowLead;
   const isLastRow = displayRowCount === 1;
 
   return (
     <div
       role="row"
       onMouseEnter={(e) => {
+        if (hoverSuppressed) {
+          hoverStore.setHoveredRowIndex(null);
+          return;
+        }
         if (isEventFromInsertColPlaceholder(e, cfg.enableInsertRowCol)) {
           hoverStore.setHoveredRowIndex(null);
           return;
@@ -133,60 +154,93 @@ function TableGridHeaderRow() {
         cursor: 'default',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          minWidth: 0,
-          alignItems: 'stretch',
-          position: cfg.enableFreezeFirstCol ? 'sticky' : undefined,
-          left: cfg.enableFreezeFirstCol ? 0 : undefined,
-          zIndex: cfg.enableFreezeFirstCol ? 4 : undefined,
-          boxSizing: 'border-box',
-        }}
-      >
-        <BizTableCell
-          variant="thead"
-          hovered={hovered}
-          hoverByCell
-          active={false}
-          isLastRow={isLastRow}
-          isFrozen={cfg.enableFreezeFirstCol}
-          showRightBorder={false}
-          contentPaddingX={NARROW_COL_PADDING_X}
-          contentPaddingY={cfg.typography.headerCellPaddingY}
-          contentAlignX="center"
-          contentAlignY="center"
-          theadMinHeightPx={cfg.typography.theadCellMinHeightPx}
+      {showNarrowLead ? (
+        <div
+          style={{
+            display: 'flex',
+            minWidth: 0,
+            alignItems: 'stretch',
+            position: cfg.enableFreezeFirstCol ? 'sticky' : undefined,
+            left: cfg.enableFreezeFirstCol ? 0 : undefined,
+            zIndex: cfg.enableFreezeFirstCol ? 4 : undefined,
+            boxSizing: 'border-box',
+          }}
         >
-          <Checkbox
-            checked={headerAllChecked}
-            indeterminate={headerIndeterminate}
-            onChange={(e) => {
-              e.stopPropagation();
-              selectionStore.toggleAll(e.target.checked);
-            }}
-            onClick={(e) => e.stopPropagation()}
-            style={checkboxInCellStyle(cfg.typography.lineHeightPx)}
-          />
-        </BizTableCell>
-        {cfg.enableFreezeFirstCol ? (
-          <span aria-hidden="true" style={getFreezeDividerStyle('right')} />
-        ) : null}
-      </div>
+          <VTableCell
+            variant="thead"
+            hovered={rowHovered}
+            hoverByCell
+            pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+            active={false}
+            isLastRow={isLastRow}
+            isFrozen={cfg.enableFreezeFirstCol}
+            showRightBorder={cfg.enableBodyCellRightBorder}
+            contentPaddingX={NARROW_COL_PADDING_X}
+            contentPaddingY={cfg.typography.headerCellPaddingY}
+            contentAlignX="center"
+            contentAlignY="center"
+            theadMinHeightPx={cfg.typography.theadCellMinHeightPx}
+          >
+            {cfg.enableBatchSelection ? (
+              <Checkbox
+                checked={headerAllChecked}
+                indeterminate={headerIndeterminate}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  selectionStore.toggleAll(e.target.checked);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                style={checkboxInCellStyle(cfg.typography.lineHeightPx)}
+              />
+            ) : cfg.enableShowRowIndex ? (
+              <Typography.Text
+                style={{
+                  ...cfg.typography.tableTextStyle,
+                  color: vcTokens.color.neutral.text.placeholder,
+                  whiteSpace: 'nowrap',
+                  width: '100%',
+                  justifyContent: 'center',
+                  userSelect: 'none',
+                }}
+              >
+                #
+              </Typography.Text>
+            ) : null}
+          </VTableCell>
+          {showFreezeFirstDivider ? (
+            <span aria-hidden="true" style={getFreezeDividerStyle('right')} />
+          ) : null}
+        </div>
+      ) : null}
 
-      {Array.from({ length: displayColCount }).map((__, colIndex) => (
+      {cfg.visibleColIndexes.map((realColIndex, viewColIndex) => (
         <TableGridTextCell
-          key={`r-0-c-${colIndex}`}
+          key={`r-0-c-${realColIndex}`}
           rowIndex={0}
-          colIndex={colIndex}
+          colIndex={realColIndex}
+          viewColIndex={viewColIndex}
           bodyRowIndex={-1}
           isHeader
           isLastRow={isLastRow}
-          hovered={hovered}
+          hovered={rowHovered}
           active={false}
           isInsertRowPlaceholder={false}
         />
       ))}
+      {cfg.enableInsertRowCol ? (
+        <TableGridTextCell
+          key="r-0-c-insert"
+          rowIndex={0}
+          colIndex={cfg.colCount}
+          viewColIndex={displayColCount - 1}
+          bodyRowIndex={-1}
+          isHeader
+          isLastRow={isLastRow}
+          hovered={rowHovered}
+          active={false}
+          isInsertRowPlaceholder={false}
+        />
+      ) : null}
     </div>
   );
 }
@@ -196,9 +250,15 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
   const gridTemplateColumns = useRowGridTemplateColumns();
   const store = useTableRowHoverStore();
   const hovered = useRowHovered(rowIndex);
+  const hoverSuppressed = isColumnResizeDragging();
+  const rowHovered = !hoverSuppressed && hovered;
 
   const displayRowCount = cfg.rowCount + 1;
-  const displayColCount = cfg.colCount + (cfg.enableInsertRowCol ? 1 : 0);
+  const visibleTextColCount = cfg.visibleColIndexes.length;
+  const displayColCount = visibleTextColCount + (cfg.enableInsertRowCol ? 1 : 0);
+  const showNarrowLead = cfg.narrowLeadWidth > 0;
+  const showFreezeFirstDivider =
+    cfg.enableFreezeFirstCol && visibleTextColCount > 2 && showNarrowLead;
   const isLastRow = true;
   const bodyRowIndex = rowIndex - 1;
   const freezeTailBorder = vcTokens.color.neutral.border.default;
@@ -214,6 +274,10 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
         cursor: 'default',
       }}
       onMouseEnter={(e) => {
+        if (hoverSuppressed) {
+          store.setHoveredRowIndex(null);
+          return;
+        }
         if (isEventFromInsertColPlaceholder(e, cfg.enableInsertRowCol)) {
           store.setHoveredRowIndex(null);
           return;
@@ -222,86 +286,104 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
       }}
       onMouseLeave={() => store.setHoveredRowIndex(null)}
     >
-      <div
-        style={{
-          display: 'flex',
-          minWidth: 0,
-          alignItems: 'stretch',
-          position: cfg.enableFreezeFirstCol ? 'sticky' : undefined,
-          left: cfg.enableFreezeFirstCol ? 0 : undefined,
-          zIndex: cfg.enableFreezeFirstCol ? 4 : undefined,
-          boxSizing: 'border-box',
-          ...freezeTailShellTop,
-        }}
-      >
-        <BizTableCell
-          variant="tbody"
-          hovered={hovered}
-          hoverByCell={false}
-          active={false}
-          isLastRow={isLastRow}
-          isFrozen={cfg.enableFreezeFirstCol}
-          showRightBorder={false}
-          contentPaddingX={NARROW_COL_PADDING_X}
-          contentPaddingY={cfg.typography.headerCellPaddingY}
-          contentAlignX="center"
-          contentAlignY="center"
-          theadMinHeightPx={cfg.typography.theadCellMinHeightPx}
-          style={{ minHeight: cfg.typography.theadCellMinHeightPx }}
+      {showNarrowLead ? (
+        <div
+          style={{
+            display: 'flex',
+            minWidth: 0,
+            alignItems: 'stretch',
+            position: cfg.enableFreezeFirstCol ? 'sticky' : undefined,
+            left: cfg.enableFreezeFirstCol ? 0 : undefined,
+            zIndex: cfg.enableFreezeFirstCol ? 4 : undefined,
+            boxSizing: 'border-box',
+            ...freezeTailShellTop,
+          }}
         >
-          {cfg.enableInsertRowCol ? (
-            <VcIcon
-              type="add"
-              role="button"
-              tabIndex={0}
-              aria-hidden={false}
-              aria-label="插入行"
-              fontSize={16}
-              style={{
-                color: vcTokens.color.neutral.text.icon,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 16,
-                height: 16,
-                lineHeight: 1,
-                flexShrink: 0,
-                overflow: 'hidden',
-                boxSizing: 'border-box',
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                cfg.onInsertRow();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
+          <VTableCell
+            variant="tbody"
+            hovered={rowHovered}
+            hoverByCell={false}
+            pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+            active={false}
+            isLastRow={isLastRow}
+            isFrozen={cfg.enableFreezeFirstCol}
+            suppressBottomBorder
+            showRightBorder={cfg.enableBodyCellRightBorder}
+            contentPaddingX={NARROW_COL_PADDING_X}
+            contentPaddingY={cfg.typography.headerCellPaddingY}
+            contentAlignX="center"
+            contentAlignY="center"
+            tbodyMinHeightPx={cfg.typography.theadCellMinHeightPx}
+          >
+            {cfg.enableInsertRowCol ? (
+              <VcIcon
+                type="add"
+                role="button"
+                tabIndex={0}
+                aria-hidden={false}
+                aria-label="插入行"
+                fontSize={16}
+                style={{
+                  color: vcTokens.color.neutral.text.icon,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 16,
+                  height: 16,
+                  lineHeight: 1,
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  boxSizing: 'border-box',
+                }}
+                onClick={(e) => {
                   e.stopPropagation();
                   cfg.onInsertRow();
-                }
-              }}
-            />
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    cfg.onInsertRow();
+                  }
+                }}
+              />
+            ) : null}
+          </VTableCell>
+          {showFreezeFirstDivider ? (
+            <span aria-hidden="true" style={getFreezeDividerStyle('right')} />
           ) : null}
-        </BizTableCell>
-        {cfg.enableFreezeFirstCol ? (
-          <span aria-hidden="true" style={getFreezeDividerStyle('right')} />
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
-      {Array.from({ length: displayColCount }).map((__, colIndex) => (
+      {cfg.visibleColIndexes.map((realColIndex, viewColIndex) => (
         <TableGridTextCell
-          key={`r-${rowIndex}-c-${colIndex}`}
+          key={`r-${rowIndex}-c-${realColIndex}`}
           rowIndex={rowIndex}
-          colIndex={colIndex}
+          colIndex={realColIndex}
+          viewColIndex={viewColIndex}
           bodyRowIndex={bodyRowIndex}
           isHeader={false}
           isLastRow={isLastRow}
-          hovered={hovered}
+          hovered={rowHovered}
           active={false}
           isInsertRowPlaceholder
         />
       ))}
+      {cfg.enableInsertRowCol ? (
+        <TableGridTextCell
+          key={`r-${rowIndex}-c-insert`}
+          rowIndex={rowIndex}
+          colIndex={cfg.colCount}
+          viewColIndex={displayColCount - 1}
+          bodyRowIndex={bodyRowIndex}
+          isHeader={false}
+          isLastRow={isLastRow}
+          hovered={rowHovered}
+          active={false}
+          isInsertRowPlaceholder
+        />
+      ) : null}
     </div>
   );
 }
@@ -311,6 +393,8 @@ function TableGridBodyRow({ rowIndex }: { rowIndex: number }) {
   const gridTemplateColumns = useRowGridTemplateColumns();
   const store = useTableRowHoverStore();
   const hovered = useRowHovered(rowIndex);
+  const hoverSuppressed = isColumnResizeDragging();
+  const rowHovered = !hoverSuppressed && hovered;
   const bodyRowIndex = rowIndex - 1;
   const selectionStore = useBodyRowSelectionStore();
   const active = useSyncExternalStore(
@@ -320,7 +404,11 @@ function TableGridBodyRow({ rowIndex }: { rowIndex: number }) {
   );
 
   const displayRowCount = cfg.rowCount + 1;
-  const displayColCount = cfg.colCount + (cfg.enableInsertRowCol ? 1 : 0);
+  const visibleTextColCount = cfg.visibleColIndexes.length;
+  const displayColCount = visibleTextColCount + (cfg.enableInsertRowCol ? 1 : 0);
+  const showNarrowLead = cfg.narrowLeadWidth > 0;
+  const showFreezeFirstDivider =
+    cfg.enableFreezeFirstCol && visibleTextColCount > 2 && showNarrowLead;
   const isLastRow = rowIndex === displayRowCount - 1;
   const suppressBottomForFrozenTail =
     cfg.enableFreezeLastRow && rowIndex === cfg.rowCount - 1;
@@ -330,9 +418,13 @@ function TableGridBodyRow({ rowIndex }: { rowIndex: number }) {
       role="row"
       style={{
         ...tableBodyRowGridBase(cfg, gridTemplateColumns),
-        cursor: 'pointer',
+        cursor: cfg.enableBatchSelection ? 'pointer' : 'default',
       }}
       onMouseEnter={(e) => {
+        if (hoverSuppressed) {
+          store.setHoveredRowIndex(null);
+          return;
+        }
         if (isEventFromInsertColPlaceholder(e, cfg.enableInsertRowCol)) {
           store.setHoveredRowIndex(null);
           return;
@@ -341,89 +433,121 @@ function TableGridBodyRow({ rowIndex }: { rowIndex: number }) {
       }}
       onMouseLeave={() => store.setHoveredRowIndex(null)}
       onClick={(e) => {
-        if (cfg.enableEditMode) return;
+        if (cfg.enableEditMode || !cfg.enableBatchSelection) return;
         selectionStore.applyShiftAwareBodyRowSet(bodyRowIndex, e.shiftKey, !active);
       }}
     >
-      <div
-        onClick={(e) => {
-          if (!cfg.enableEditMode) return;
-          e.stopPropagation();
-          selectionStore.applyShiftAwareBodyRowSet(bodyRowIndex, e.shiftKey, !active);
-        }}
-        style={{
-          display: 'flex',
-          minWidth: 0,
-          alignItems: 'stretch',
-          position: cfg.enableFreezeFirstCol ? 'sticky' : undefined,
-          left: cfg.enableFreezeFirstCol ? 0 : undefined,
-          zIndex: cfg.enableFreezeFirstCol ? 4 : undefined,
-        }}
-      >
-        <BizTableCell
-          variant="tbody"
-          hovered={hovered}
-          hoverByCell={false}
-          active={active}
-          isLastRow={isLastRow}
-          isFrozen={cfg.enableFreezeFirstCol}
-          suppressBottomBorder={suppressBottomForFrozenTail}
-          showRightBorder={
-            cfg.enableBodyCellRightBorder && !cfg.enableFreezeFirstCol
-          }
-          contentPaddingX={NARROW_COL_PADDING_X}
-          contentPaddingY={cfg.typography.bodyCellPaddingY}
-          contentAlignX="center"
-          contentAlignY={!cfg.enableVerticalCenter ? 'flex-start' : 'center'}
+      {showNarrowLead ? (
+        <div
+          onClick={(e) => {
+            if (!cfg.enableEditMode || !cfg.enableBatchSelection) return;
+            e.stopPropagation();
+            selectionStore.applyShiftAwareBodyRowSet(bodyRowIndex, e.shiftKey, !active);
+          }}
+          style={{
+            display: 'flex',
+            minWidth: 0,
+            alignItems: 'stretch',
+            position: cfg.enableFreezeFirstCol ? 'sticky' : undefined,
+            left: cfg.enableFreezeFirstCol ? 0 : undefined,
+            zIndex: cfg.enableFreezeFirstCol ? 4 : undefined,
+          }}
         >
-          {cfg.enableShowRowIndex && !hovered && !active ? (
-            <Typography.Text
-              type="secondary"
-              style={{
-                ...cfg.typography.tableTextStyle,
-                whiteSpace: 'nowrap',
-                width: '100%',
-                justifyContent: 'center',
-                userSelect: 'none',
-              }}
-            >
-              {bodyRowIndex + 1}
-            </Typography.Text>
-          ) : (
-            <Checkbox
-              checked={active}
-              onChange={(e) => {
-                e.stopPropagation();
-                const shiftKey = !!(e.nativeEvent as MouseEvent | KeyboardEvent).shiftKey;
-                selectionStore.applyShiftAwareBodyRowSet(
-                  bodyRowIndex,
-                  shiftKey,
-                  e.target.checked
-                );
-              }}
-              onClick={(e) => e.stopPropagation()}
-              style={checkboxInCellStyle(cfg.typography.lineHeightPx)}
-            />
-          )}
-        </BizTableCell>
-        {cfg.enableFreezeFirstCol ? (
-          <span aria-hidden="true" style={getFreezeDividerStyle('right')} />
-        ) : null}
-      </div>
+          <VTableCell
+            variant="tbody"
+            hovered={rowHovered}
+            hoverByCell={false}
+            pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+            active={cfg.enableBatchSelection ? active : false}
+            isLastRow={isLastRow}
+            isFrozen={cfg.enableFreezeFirstCol}
+            suppressBottomBorder={suppressBottomForFrozenTail}
+            showRightBorder={cfg.enableBodyCellRightBorder}
+            contentPaddingX={NARROW_COL_PADDING_X}
+            contentPaddingY={cfg.typography.bodyCellPaddingY}
+            contentAlignX="center"
+            contentAlignY={!cfg.enableVerticalCenter ? 'flex-start' : 'center'}
+            tbodyMinHeightPx={cfg.typography.theadCellMinHeightPx}
+          >
+            {cfg.enableBatchSelection ? (
+              cfg.enableShowRowIndex && !rowHovered && !active ? (
+                <Typography.Text
+                  style={{
+                    ...cfg.typography.tableTextStyle,
+                    color: vcTokens.color.neutral.text.placeholder,
+                    whiteSpace: 'nowrap',
+                    width: '100%',
+                    justifyContent: 'center',
+                    userSelect: 'none',
+                  }}
+                >
+                  {bodyRowIndex + 1}
+                </Typography.Text>
+              ) : (
+                <Checkbox
+                  checked={active}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    const shiftKey = !!(e.nativeEvent as MouseEvent | KeyboardEvent).shiftKey;
+                    selectionStore.applyShiftAwareBodyRowSet(
+                      bodyRowIndex,
+                      shiftKey,
+                      e.target.checked
+                    );
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={checkboxInCellStyle(cfg.typography.lineHeightPx)}
+                />
+              )
+            ) : cfg.enableShowRowIndex ? (
+              <Typography.Text
+                style={{
+                  ...cfg.typography.tableTextStyle,
+                  color: vcTokens.color.neutral.text.placeholder,
+                  whiteSpace: 'nowrap',
+                  width: '100%',
+                  justifyContent: 'center',
+                  userSelect: 'none',
+                }}
+              >
+                {bodyRowIndex + 1}
+              </Typography.Text>
+            ) : null}
+          </VTableCell>
+          {showFreezeFirstDivider ? (
+            <span aria-hidden="true" style={getFreezeDividerStyle('right')} />
+          ) : null}
+        </div>
+      ) : null}
 
-      {Array.from({ length: displayColCount }).map((__, colIndex) => (
+      {cfg.visibleColIndexes.map((realColIndex, viewColIndex) => (
         <TableGridTextCell
-          key={`r-${rowIndex}-c-${colIndex}`}
+          key={`r-${rowIndex}-c-${realColIndex}`}
           rowIndex={rowIndex}
-          colIndex={colIndex}
+          colIndex={realColIndex}
+          viewColIndex={viewColIndex}
           bodyRowIndex={bodyRowIndex}
           isHeader={false}
           isLastRow={isLastRow}
-          hovered={hovered}
+          hovered={rowHovered}
           active={active}
           isInsertRowPlaceholder={false}
         />
       ))}
+      {cfg.enableInsertRowCol ? (
+        <TableGridTextCell
+          key={`r-${rowIndex}-c-insert`}
+          rowIndex={rowIndex}
+          colIndex={cfg.colCount}
+          viewColIndex={displayColCount - 1}
+          bodyRowIndex={bodyRowIndex}
+          isHeader={false}
+          isLastRow={isLastRow}
+          hovered={rowHovered}
+          active={active}
+          isInsertRowPlaceholder={false}
+        />
+      ) : null}
     </div>
   );
 }

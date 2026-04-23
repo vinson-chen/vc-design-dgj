@@ -6,30 +6,46 @@ import {
 } from './tableGridLayout';
 
 describe('tableGridLayout', () => {
-  it('getTableRowGridTemplateColumns uses minmax 1fr for equal columns', () => {
+  it('getTableRowGridTemplateColumns uses fixed widths for text columns', () => {
     const g = getTableRowGridTemplateColumns({
       narrowWidth: 40,
+      showNarrowLeadColumn: true,
       colCount: 3,
       enableInsertRowCol: false,
       minTextColWidth: 100,
+      defaultTextColWidth: 200,
       colWidths: [],
-      insertLayoutTextColPx: null,
       enableColumnResize: false,
     });
-    expect(g).toBe('40px minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr)');
+    expect(g).toBe('40px 200px 200px 200px');
   });
 
   it('getTableRowGridTemplateColumns appends narrow insert column', () => {
     const g = getTableRowGridTemplateColumns({
       narrowWidth: 40,
+      showNarrowLeadColumn: true,
       colCount: 2,
       enableInsertRowCol: true,
       minTextColWidth: 100,
+      defaultTextColWidth: 200,
       colWidths: [],
-      insertLayoutTextColPx: 160,
       enableColumnResize: false,
     });
-    expect(g).toBe('40px minmax(160px, 1fr) minmax(160px, 1fr) 40px');
+    expect(g).toBe('40px 200px 200px 40px minmax(0px, 1fr)');
+  });
+
+  it('getTableRowGridTemplateColumns omits lead column when showNarrowLeadColumn is false', () => {
+    const g = getTableRowGridTemplateColumns({
+      narrowWidth: 40,
+      showNarrowLeadColumn: false,
+      colCount: 2,
+      enableInsertRowCol: false,
+      minTextColWidth: 100,
+      defaultTextColWidth: 200,
+      colWidths: [],
+      enableColumnResize: false,
+    });
+    expect(g).toBe('200px 200px');
   });
 
   it('getTextColGridItemShellStyle sticks first column', () => {

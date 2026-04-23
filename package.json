@@ -8,6 +8,25 @@
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./tokens": {
+      "types": "./dist/tokens.d.ts",
+      "import": "./dist/tokens.js",
+      "require": "./dist/tokens.cjs"
+    },
+    "./icons": {
+      "types": "./dist/icons.d.ts",
+      "import": "./dist/icons.js",
+      "require": "./dist/icons.cjs"
+    },
+    "./icons.css": "./dist/icons.css",
+    "./dist/index.css": "./dist/index.css"
+  },
   "files": [
     "dist",
     "README.md"
@@ -16,7 +35,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node ./scripts/copy-icons-css.mjs",
     "build:vc-biz": "npm run build -w vc-biz",
     "clean": "rm -rf dist",
     "demo": "npm run build && npm run build:vc-biz && cd demo && npm install && npm run dev",

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Space, vcTokens } from 'vc-design';
-import { BizMenuGroup } from 'vc-biz';
+import { VMenuGroup } from 'vc-biz';
 
 const items = [
   { key: 'self-goods', label: '自营商品', iconName: 'catalog' },
@@ -31,7 +31,7 @@ export default function BizMenuGroupSpecDemo() {
               overflow: 'hidden',
             }}
           >
-            <BizMenuGroup
+            <VMenuGroup
               title="商品管理"
               groupIconName="control-platform"
               items={items}
@@ -49,7 +49,7 @@ export default function BizMenuGroupSpecDemo() {
               overflow: 'hidden',
             }}
           >
-            <BizMenuGroup
+            <VMenuGroup
               title="商品管理"
               groupIconName="control-platform"
               items={items}

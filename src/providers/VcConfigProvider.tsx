@@ -4,6 +4,7 @@ import zhCN from 'antd/locale/zh_CN';
 import { buildAntdTheme } from '../theme/buildAntdTheme';
 import '../icons/iconfont.css';
 import '../styles/antdButtonIconPatch.css';
+import '../styles/selectionPanel.css';
 
 export interface VcConfigProviderProps extends Omit<ConfigProviderProps, 'theme'> {
   /**

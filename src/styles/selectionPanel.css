@@ -1,0 +1,59 @@
+/* 选择面板统一规范：
+ * - 每项高度 32px
+ * - 项与项间距 4px
+ */
+
+.ant-dropdown .ant-dropdown-menu,
+.biz-custom-tabs-dropdown .ant-dropdown-menu {
+  display: flex !important;
+  flex-direction: column;
+  gap: 4px !important;
+  padding: 4px;
+}
+
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-submenu-title {
+  min-height: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-inline: 12px !important;
+  display: flex;
+  align-items: center;
+}
+
+.ant-select-dropdown .ant-select-item-option,
+.ant-tree-select-dropdown .ant-select-item-option,
+.ant-cascader-dropdown .ant-cascader-menu-item {
+  min-height: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-inline: 12px !important;
+  display: flex;
+  align-items: center;
+}
+
+.ant-select-dropdown .ant-select-item-option-content,
+.ant-tree-select-dropdown .ant-select-item-option-content,
+.ant-cascader-dropdown .ant-cascader-menu-item-content {
+  line-height: 32px !important;
+}
+
+.ant-select-dropdown .ant-select-item,
+.ant-tree-select-dropdown .ant-select-item,
+.ant-cascader-dropdown .ant-cascader-menu-item {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.ant-select-dropdown .rc-virtual-list-holder-inner,
+.ant-tree-select-dropdown .rc-virtual-list-holder-inner,
+.ant-cascader-dropdown .ant-cascader-menu {
+  display: flex !important;
+  flex-direction: column;
+  gap: 4px !important;
+  padding-bottom: 0 !important;
+}

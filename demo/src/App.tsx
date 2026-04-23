@@ -38,7 +38,7 @@ export default function App() {
     window.location.hash = key;
   }, []);
 
-  /** BizTable：主栏不滚动，仅表格内滚动；需固定高度链才能 flex 吃满剩余视口 */
+  /** VTable：主栏不滚动，仅表格内滚动；需固定高度链才能 flex 吃满剩余视口 */
   const mainContentFillViewport = resolvedSelectedKey === 'biz-table';
 
   return (

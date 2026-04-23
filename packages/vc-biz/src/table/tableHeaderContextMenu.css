@@ -1,0 +1,338 @@
+/**
+ * 表头列菜单：Ant Dropdown + `.ant-dropdown-menu`（由 chevron 点击打开）；
+ * 全局 `selectionPanel.css` 已统一 32px 行高与 4px 项间距。
+ */
+
+/** 子面板底对齐时避免被下拉层裁剪 */
+.vc-biz-table-header-dropdown {
+  overflow: visible;
+}
+
+/** BizTableCell 为 flex 行且 justify-content:flex-start 时，子项默认不占满宽度，右侧会剩一条空白（审查元素易显示为紫色 margin 区） */
+.vc-biz-table-header-edit-wrap {
+  box-sizing: border-box;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.vc-biz-table-header-edit-native-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  height: 32px;
+  padding: 0;
+  /** 原生 input 默认字体/字重可能不继承，导致数字与中文粗细不一致 */
+  font: inherit;
+  font-weight: 500;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  outline: none;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.vc-biz-table-header-cell-inner {
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.vc-biz-table-header-chevron-btn.ant-btn.ant-btn-text {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: none;
+}
+
+.vc-biz-table-header-with-menu:hover .vc-biz-table-header-chevron-btn.ant-btn.ant-btn-text,
+.vc-biz-table-header-with-menu-open .vc-biz-table-header-chevron-btn.ant-btn.ant-btn-text {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/** 悬停时缩短表头名称宽度，与下拉按钮保持 8px 间距 */
+.vc-biz-table-header-with-menu:hover .vc-biz-table-header-cell-inner,
+.vc-biz-table-header-with-menu-open .vc-biz-table-header-cell-inner {
+  padding-right: 28px;
+}
+
+/** 拖拽列宽时隐藏下拉按钮，避免闪烁 */
+html.vc-biz-col-resizing .vc-biz-table-header-chevron-btn.ant-btn.ant-btn-text {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/** 表头处于编辑态时隐藏下拉按钮，避免与输入框抢焦点/重叠 */
+.vc-biz-table-header-edit-wrap ~ .ant-dropdown-trigger .vc-biz-table-header-chevron-btn.ant-btn.ant-btn-text,
+.vc-biz-table-header-edit-wrap .vc-biz-table-header-chevron-btn.ant-btn.ant-btn-text {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.vc-biz-table-header-dropdown .ant-dropdown-menu {
+  padding: 4px;
+  border-radius: 8px;
+  width: max-content;
+  min-width: 0;
+  max-width: calc(100vw - 32px);
+}
+
+.vc-biz-table-header-dropdown .ant-dropdown-menu-item {
+  margin: 0;
+  border-radius: 6px;
+  min-height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.vc-biz-table-header-dropdown .ant-dropdown-menu-item-icon {
+  font-size: 16px;
+}
+
+.vc-biz-table-header-dropdown .ant-dropdown-menu-item-divider {
+  display: none;
+}
+
+/** DropdownMenuSidePanelCombo：表头列菜单主区（与上列 ant-dropdown-menu 行高一致） */
+.vc-biz-table-header-dropdown .vc-biz-table-header-combo-menu-wrap .vc-biz-table-header-combo-menu.ant-menu-vertical.ant-menu-root {
+  padding: 4px;
+  border-radius: 8px;
+  min-width: 160px;
+  border: none;
+  background: transparent;
+}
+
+.vc-biz-table-header-dropdown .vc-biz-table-header-combo-menu-wrap .vc-biz-table-header-combo-menu .ant-menu-item {
+  margin: 0;
+  border-radius: 6px;
+  min-height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.vc-biz-table-header-dropdown .vc-biz-table-header-combo-menu-wrap .vc-biz-table-header-combo-menu .ant-menu-item-icon {
+  font-size: 16px;
+}
+
+.vc-biz-table-header-dropdown
+  .vc-biz-table-header-combo-menu.ant-menu-vertical
+  .ant-menu-item
+  .ant-menu-title-content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.vc-biz-table-header-dropdown .vc-biz-table-header-combo-menu .ant-menu-submenu-title {
+  margin: 0;
+  border-radius: 6px;
+  min-height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.vc-biz-table-header-dropdown .vc-biz-table-header-combo-menu .ant-menu-submenu-title .ant-menu-submenu-arrow {
+  inset-inline-end: 8px;
+}
+
+.vc-biz-table-header-field-type-item-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
+.vc-biz-table-header-field-type-item-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/** 编辑列（字段类型侧栏）SubMenu：展开态与宿主传入的 menu-item-active 类（现挂在 li.ant-menu-submenu） */
+.vc-biz-table-header-combo-menu .ant-menu-submenu-open > .ant-menu-submenu-title {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.vc-biz-table-header-combo-menu
+  .vc-biz-table-header-field-type-menu-item-active.ant-menu-submenu
+  > .ant-menu-submenu-title {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.vc-biz-table-header-field-type-inner {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: calc(100vw - 32px);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+/** 编辑列侧栏：列标题 / 列类型 / 操作区纵向间距 16px；列标题与控件间距 4px；表单控件宽 240px（由内联 style 控制） */
+.vc-biz-table-header-col-edit-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.vc-biz-table-header-col-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.vc-biz-table-header-col-edit-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.vc-biz-table-header-field-type-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vc-biz-table-header-field-type-row.ant-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 32px;
+  box-shadow: none;
+}
+
+.vc-biz-table-header-field-type-row.ant-btn:not(:disabled):not(.ant-btn-disabled):hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.vc-biz-table-header-field-type-row-label {
+  flex: 1;
+  min-width: 0;
+  margin: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 32px;
+  text-align: left;
+}
+
+/** 配置区「字段配置」：与选择面板一致；宽度随内容；整卡 maxHeight 由 JS 约束，列表区 flex 内滚动 */
+.vc-biz-table-field-config-dropdown .vc-biz-table-field-config-inner {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  min-height: 0;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.vc-biz-table-field-config-dropdown .vc-biz-table-field-config-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.vc-biz-table-field-config-dropdown .vc-biz-table-field-config-row.ant-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 32px;
+  box-shadow: none;
+}
+
+.vc-biz-table-field-config-dropdown
+  .vc-biz-table-field-config-row.ant-btn:not(:disabled):not(.ant-btn-disabled):hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.vc-biz-table-field-config-dropdown .vc-biz-table-field-config-row.ant-btn:disabled,
+.vc-biz-table-field-config-dropdown
+  .vc-biz-table-field-config-row.ant-btn.ant-btn-disabled,
+.vc-biz-table-field-config-dropdown .vc-biz-table-field-config-row.ant-btn:disabled:hover,
+.vc-biz-table-field-config-dropdown
+  .vc-biz-table-field-config-row.ant-btn.ant-btn-disabled:hover,
+.vc-biz-table-field-config-dropdown .vc-biz-table-field-config-row.ant-btn:disabled:active,
+.vc-biz-table-field-config-dropdown
+  .vc-biz-table-field-config-row.ant-btn.ant-btn-disabled:active {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.vc-biz-table-field-config-dropdown .vc-biz-table-field-config-row-label {
+  flex: 1;
+  min-width: 0;
+  margin: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 32px;
+  text-align: left;
+}

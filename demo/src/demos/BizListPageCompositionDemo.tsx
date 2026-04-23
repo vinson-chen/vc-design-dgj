@@ -1,15 +1,18 @@
-import React, { useMemo, useState, useSyncExternalStore } from 'react';
+import React, { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
 import { Checkbox, Pagination, Segmented, vcTokens, message } from 'vc-design';
 import {
-  FilterArea,
-  type FilterFieldConfig,
-  SwitchTabs,
-  type SwitchTabItemData,
-  TableOperationBar,
-  BatchOperationBar,
-  type OverflowActionItem,
+  VFilterArea,
+  type VFilterFieldConfig,
+  VSwitchTabs,
+  type VSwitchTabItemData,
+  VTableOperationBar,
+  VBatchOperationBar,
+  type VOverflowActionItem,
   TableAreaTableInstance,
   useTableAreaDemoState,
+  VInput,
+  type VInputAttachedFile,
+  type VInputLlmOption,
 } from 'vc-biz';
 
 const pageBoxStyle: React.CSSProperties = {
@@ -18,11 +21,17 @@ const pageBoxStyle: React.CSSProperties = {
   padding: 0,
 };
 
+const VCELL_COMP_LLM: VInputLlmOption[] = [
+  { value: 'qwen', label: 'Qwen' },
+  { value: 'deepseek', label: 'DeepSeek', disabled: true },
+  { value: 'automation_rules', label: '自动化规则', disabled: true },
+];
+
 export default function BizListPageCompositionDemo() {
   // 筛选区状态（假数据）
   const [filterValue, setFilterValue] = useState<Record<string, unknown>>({});
 
-  const filterFields = useMemo<FilterFieldConfig[]>(
+  const filterFields = useMemo<VFilterFieldConfig[]>(
     () => [
       { key: 'goodsName', type: 'input', placeholder: '请输入商品名' },
       {
@@ -43,7 +52,7 @@ export default function BizListPageCompositionDemo() {
   const [storeActiveKey, setStoreActiveKey] = useState('精选平台');
   const [stateActiveKey, setStateActiveKey] = useState('全部');
 
-  const storeItems = useMemo<SwitchTabItemData[]>(
+  const storeItems = useMemo<VSwitchTabItemData[]>(
     () => [
       { key: '精选平台', label: '精选平台', icon: 'otherstore.jpg' },
       { key: '抖音', label: '抖音', icon: 'douyin.jpg' },
@@ -54,7 +63,7 @@ export default function BizListPageCompositionDemo() {
     [],
   );
 
-  const stateItems = useMemo<SwitchTabItemData[]>(
+  const stateItems = useMemo<VSwitchTabItemData[]>(
     () => [
       { key: '全部', label: '全部' },
       { key: '进行中', label: '进行中' },
@@ -77,7 +86,7 @@ export default function BizListPageCompositionDemo() {
   // 保持 segmented 与 tabs 同步
   React.useEffect(() => setOpSegValue(stateActiveKey), [stateActiveKey]);
 
-  const actionItems = useMemo<OverflowActionItem[]>(
+  const actionItems = useMemo<VOverflowActionItem[]>(
     () => [
       { key: 'export', label: '导出', icon: 'cloud-upload', onClick: () => message.info('点击：导出') },
       { key: 'setting', label: '设置', icon: 'setting', onClick: () => message.info('点击：设置') },
@@ -86,7 +95,29 @@ export default function BizListPageCompositionDemo() {
   );
 
   const tableDemo = useTableAreaDemoState();
+  const { importExcelFromFile } = tableDemo;
   const bodyRowCount = Math.max(0, tableDemo.rowCount - 1);
+
+  const [vcellDraft, setVcellDraft] = useState('');
+  const [vcellExcel, setVcellExcel] = useState<VInputAttachedFile[]>([]);
+  const [vcellLlm, setVcellLlm] = useState('qwen');
+
+  const handleVcellSend = useCallback(async () => {
+    const text = vcellDraft.trim();
+    const files = vcellExcel;
+    if (files.length > 0) {
+      for (const a of files) {
+        await importExcelFromFile(a.file);
+      }
+      setVcellExcel([]);
+    }
+    if (text) {
+      void message.info(
+        `已发送（演示）：${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
+      );
+      setVcellDraft('');
+    }
+  }, [importExcelFromFile, vcellDraft, vcellExcel]);
 
   const checkedCount = useSyncExternalStore(
     (cb) => tableDemo.bodyRowSelectionStore.subscribeSelection(cb),
@@ -97,7 +128,7 @@ export default function BizListPageCompositionDemo() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const batchItems = useMemo<OverflowActionItem[]>(
+  const batchItems = useMemo<VOverflowActionItem[]>(
     () => [
       { key: 'batch-edit', label: '批量编辑', icon: 'edit', type: 'primary', onClick: () => message.info('点击：批量编辑') },
       { key: 'batch-copy', label: '批量复制', icon: 'file-copy', onClick: () => message.info('点击：批量复制') },
@@ -114,8 +145,9 @@ export default function BizListPageCompositionDemo() {
     <>
       <h1 style={{ marginBottom: 8, fontWeight: 600 }}>列表页串联（多组件）</h1>
       <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
-        按常见列表页顺序串联：<code>SwitchTabs</code> → <code>FilterArea</code> → <code>TableOperationBar</code> →{' '}
-        <code>TableAreaTableInstance</code>（表格区 demo 状态）→ <code>BatchOperationBar</code>。
+        按常见列表页顺序串联：<code>VSwitchTabs</code> → <code>VFilterArea</code> → <code>VTableOperationBar</code> →{' '}
+        <code>VInput</code>（可选 Excel 附件，发送即调用表格区 <code>importExcelFromFile</code>）+
+        <code>TableAreaTableInstance</code> → <code>VBatchOperationBar</code>。
         用于验证区块级复用与组件间视觉/间距一致。
       </p>
 
@@ -123,7 +155,7 @@ export default function BizListPageCompositionDemo() {
         <section>
           <div style={pageBoxStyle}>
             <div style={{ background: vcTokens.color.neutral.background.container, padding: 0 }}>
-              <SwitchTabs
+              <VSwitchTabs
                 items={storeItems}
                 activeKey={storeActiveKey}
                 onChange={handleStoreChange}
@@ -135,7 +167,7 @@ export default function BizListPageCompositionDemo() {
         </section>
 
         <section>
-          <FilterArea
+          <VFilterArea
             fields={filterFields}
             value={filterValue}
             onChange={setFilterValue}
@@ -146,7 +178,7 @@ export default function BizListPageCompositionDemo() {
 
         <section>
           <div style={pageBoxStyle}>
-            <TableOperationBar
+            <VTableOperationBar
               segmentedOptions={stateItems.map((i) => i.key)}
               value={opSegValue}
               onChange={(next) => {
@@ -161,13 +193,27 @@ export default function BizListPageCompositionDemo() {
 
         <section>
           <div style={pageBoxStyle}>
+            <div style={{ padding: 16 }}>
+              <VInput
+                style={{ maxWidth: 440 }}
+                value={vcellDraft}
+                onChange={setVcellDraft}
+                onSend={handleVcellSend}
+                placeholder="输入指令，Shift+Enter 换行，Enter 发送；可附加 Excel 后点发送导入下方表格"
+                llmOptions={VCELL_COMP_LLM}
+                llmValue={vcellLlm}
+                onLlmChange={setVcellLlm}
+                attachedFiles={vcellExcel}
+                onAttachedFilesChange={setVcellExcel}
+              />
+            </div>
             <TableAreaTableInstance {...tableDemo} />
           </div>
         </section>
 
         <section>
           <div style={pageBoxStyle}>
-            <BatchOperationBar
+            <VBatchOperationBar
               checked={checkedCount > 0 && checkedCount === bodyRowCount}
               indeterminate={checkedCount > 0 && checkedCount < bodyRowCount}
               selectedCount={checkedCount}

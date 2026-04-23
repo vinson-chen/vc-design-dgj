@@ -8,7 +8,8 @@
 
 - 容器使用 Tabs，保留现有 active 下划线样式与横向切换动效。
 - `tab_item` 作为 tab label slot，承载图标 + 文案。
-- `store_tabs` 为带图标实例；`state_tabs` 为无图标实例。
+- 设计稿：`store_tabs` 为带图标实例；`state_tabs` 为无图标实例。
+- 实现：`TypeTabs`（带图标）、`StateTabs`（无图标）。
 
 ---
 
@@ -34,8 +35,9 @@
 
 ## 4. 业务实例
 
-### 4.1 store_tabs（带图标）
+### 4.1 store_tabs（带图标）→ `TypeTabs`
 
+- 组件导出：`TypeTabs`（`TypeTabsProps`），对应 Figma `store_tabs`。
 - 图标默认读取 `packages/vc-biz/assets/store_logo` 同名图片（如 `douyin.jpg`、`pdd.jpg`）。
 - 最后一项“更多平台”为动作项：点击后在页面右侧打开 Drawer（占位内容可后续替换）。
 
@@ -48,7 +50,9 @@
 
 ## 5. 代码落点（demo）
 
-- 组件：`packages/vc-biz/src/switch-tabs/SwitchTabs.tsx`
+- 带图标封装：`packages/vc-biz/src/switch-tabs/TypeTabs.tsx`
+- 无图标封装：`packages/vc-biz/src/switch-tabs/StateTabs.tsx`
+- 底层导航：`packages/vc-biz/src/switch-tabs/SwitchTabs.tsx`
 - 图标解析：`packages/vc-biz/src/switch-tabs/iconResolver.ts`
 - Demo：`demo/src/demos/SwitchAreaDemo.tsx`
 
@@ -92,6 +96,6 @@
 ## 7. 自适应收纳规则（more）
 
 - 当 `tabs` 可视宽度不足时，选项会按顺序逐个收纳到 `more` 下拉菜单。
-- `store_tabs` 的“更多平台”是独立业务项，可被收纳；并非收纳按钮本身。
+- `TypeTabs` / 设计稿 `store_tabs` 的“更多平台”是独立业务项，可被收纳；并非收纳按钮本身。
 - 收纳按钮为纯图标（无“更多”文字）。
 - 若当前激活项位于收纳菜单中，`more` 按钮进入 active 态，且 `ink-bar` 跟随到 `more` 下方。

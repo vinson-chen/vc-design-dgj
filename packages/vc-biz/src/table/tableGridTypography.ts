@@ -45,7 +45,7 @@ export function getTableGridTypographyMetrics(enableRegular: boolean): TableGrid
     alignItems: 'center',
   };
   const bodyCellPaddingY = 8;
-  const bodyCellPaddingX = vcTokens.size.padding.sm;
+  const bodyCellPaddingX = vcTokens.size.padding.xs;
   const headerCellPaddingY = vcTokens.size.padding.xs;
   const editCellEdgePadding = 3;
   const editTextareaChromePadPx = enableRegular ? 20 : 18;
@@ -57,7 +57,7 @@ export function getTableGridTypographyMetrics(enableRegular: boolean): TableGrid
   const displayCellMaxHeightPx = bodyCellPaddingY * 2 + displayTextMaxHeightPx + 2;
   const editCellMaxHeightPx =
     editCellEdgePadding * 2 + displayTextMaxHeightPx + editTextareaChromePadPx;
-  const theadCellMinHeightPx = enableRegular ? 40 : 36;
+  const theadCellMinHeightPx = enableRegular ? 38 : 36;
   const headerVirtualRowEstimatePx = enableRegular ? 44 : 40;
   const bodyVirtualRowEstimatePx = Math.ceil(displayCellMaxHeightPx);
   return {

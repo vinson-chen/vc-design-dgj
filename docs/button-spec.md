@@ -14,6 +14,7 @@
 
 - 高度来自：`vcTokens.size.controlHeight.{lg | md | sm}`
 - 圆角来自：`vcTokens.style.borderRadius.{lg | md | sm}`
+- 纯图标描边按钮（业务实例特例）：固定 **32px × 32px**（例如 VTable 图片列 add）。
 
 ---
 

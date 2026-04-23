@@ -38,7 +38,7 @@ description: 在 vc-design demo 中基于 Figma 落地业务切换区（tabs/.ta
 - `packages/vc-biz/src/switch-tabs/iconResolverView.tsx`
   - 图标解析与按需加载实现
 - `demo/src/demos/SwitchAreaDemo.tsx`
-  - `store_tabs` / `state_tabs` 示例与“更多平台”抽屉动作
+  - `TypeTabs` / `StateTabs` 示例（设计稿 `store_tabs` / `state_tabs`）与“更多平台”抽屉动作
 
 ## 3) Token 映射原则（必须）
 
@@ -55,7 +55,7 @@ description: 在 vc-design demo 中基于 Figma 落地业务切换区（tabs/.ta
   - hover/pressed 背景与文本符合设计口径
   - disabled 不可点击且文本衰减
 - 交互：
-  - `store_tabs` 的“更多平台”是独立业务项，不等同于收纳按钮
+  - `TypeTabs`（`store_tabs`）的“更多平台”是独立业务项，不等同于收纳按钮
   - 宽度不足时会逐项进入 `more`
   - 激活项在 `more` 中时，`more` 有 active 态
 - 工程：

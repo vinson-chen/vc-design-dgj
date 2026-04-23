@@ -1,6 +1,6 @@
 # 版本矩阵（v0）
 
-用于阶段 4 的“集成验证口径”：当前已在本仓库 `demo` 场景中通过生产构建（`vite build`）。
+用于阶段 4 的"集成验证口径"：当前已在本仓库 `demo` 场景中通过生产构建（`vite build`）。
 
 ## 已验证的依赖组合
 
@@ -16,5 +16,4 @@
 ## 集成验证方式
 
 - 在 `demo/` 执行：`npm run build`（生产构建）
-- 通过页面入口：`SwitchArea`、`OperationBar`、`BizTable`、本次新增的 `ListPageShell 列表页串联`
-
+- 通过页面入口：`VSwitchArea`、`VTopOperationBar`、`VTable`、本次新增的 `列表页串联（多组件）`

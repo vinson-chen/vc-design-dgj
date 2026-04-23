@@ -24,7 +24,10 @@ export type TableFrozenScrollConfig = Readonly<{
   enableFreezeLastRow: boolean;
   displayRowCount: number;
   narrowWidth: number;
+  /** 首列窄轨（checkbox/序号/插入行+）；0 表示无该列 */
+  narrowLeadWidth: number;
   minTextColWidth: number;
+  defaultTextColWidth: number;
   /** 未挂载 footer DOM 时估算 sticky 末行高度 */
   frozenFooterRowEstimatePx: number;
 }>;
@@ -79,7 +82,7 @@ function getSafeViewportClientRect(
     if (col0) {
       left = Math.max(left, col0.getBoundingClientRect().right);
     } else {
-      left = Math.max(left, sr.left + frozen.narrowWidth + frozen.minTextColWidth);
+      left = Math.max(left, sr.left + frozen.narrowLeadWidth + frozen.defaultTextColWidth);
     }
   }
 
@@ -91,7 +94,7 @@ function getSafeViewportClientRect(
     if (lastCell) {
       right = Math.min(right, lastCell.getBoundingClientRect().left);
     } else {
-      let w = frozen.minTextColWidth;
+      let w = frozen.defaultTextColWidth;
       if (frozen.enableInsertRowCol) w += frozen.narrowWidth;
       right = Math.min(right, sr.right - w);
     }

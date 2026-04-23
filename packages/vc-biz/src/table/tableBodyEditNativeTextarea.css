@@ -1,0 +1,40 @@
+/**
+ * 表体编辑 / 选中失焦态：与表头 `vc-biz-table-header-edit-wrap` 同构（wrap + 原生控件），
+ * 多行高度由 JS（syncBodyEditTextareaHeight）驱动。
+ */
+.vc-biz-table-body-edit-wrap {
+  box-sizing: border-box;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  /** 勿 stretch：与展示态一致，由 BizTableCell 的 align-items 整坨垂直居中 */
+  display: flex;
+  align-items: flex-start;
+}
+
+.vc-biz-table-body-edit-native-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  outline: none;
+  box-shadow: none;
+  resize: none;
+  font: inherit;
+  color: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+}
+
+.vc-biz-table-body-edit-native-textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.vc-biz-table-body-edit-native-textarea--readonly-idle {
+  cursor: default;
+}

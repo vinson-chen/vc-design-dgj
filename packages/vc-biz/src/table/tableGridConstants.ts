@@ -57,6 +57,5 @@ export function getTableBodyVirtualOverscan(
   return Math.max(TABLE_VIRTUAL_OVERSCAN_MIN_ROWS, visibleRows + TABLE_VIRTUAL_OVERSCAN_EXTRA_ROWS);
 }
 
-/** 表头不透明显式色（与 token 透明度无关），用于 sticky 行底与单元格底一致、避免纵滚叠字 */
-export const TABLE_HEADER_BG_DEFAULT = '#F2F2F2';
-export const TABLE_HEADER_BG_HOVER = '#E5E5E5';
+/** 表体默认底色 */
+export const TABLE_BODY_BG_DEFAULT = '#FFFFFF';

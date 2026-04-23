@@ -1,24 +1,7 @@
 /**
  * 全量使用 iconfont 项目（5131978）样式表，保证 VcIcon 各类名（含 add）均有 :before codepoint，
  * 避免在仓库内对单个业务图标重复维护映射。
+ *
+ * Font class 与 @font-face 与线上一致：font_5131978_bettnhcpx7b（t=1775728895027）。
  */
-@import url('https://at.alicdn.com/t/c/font_5131978_3p97qib57p7.css');
-
-/* 与最新字模对齐时的覆盖（与 alicdn 默认一致时可删） */
-.icon-edit:before,
-.icon-edit-filled:before {
-  font-family: 'iconfont' !important;
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  line-height: 1;
-}
-
-.icon-edit:before {
-  content: '\e7a3' !important;
-}
-
-.icon-edit-filled:before {
-  content: '\e776' !important;
-}
+@import url('https://at.alicdn.com/t/c/font_5131978_46wonlm3lvo.css');

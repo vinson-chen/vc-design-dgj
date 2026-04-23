@@ -39,6 +39,21 @@ export function buildAntdTheme(tokens: VcTokens = vcTokens): ThemeConfig {
       colorBorderSecondary: color.neutral.border.secondary,
       colorSplit: color.neutral.border.split,
 
+      /**
+       * 与 VC `color.neutral.fill.secondary`（Figma colorFillSecondary / #000 5%）对齐。
+       * Ant 默认 `colorFillSecondary` 为 textBase 6%，且经 alias 映射为 `colorBgTextHover`，
+       * Dropdown/Menu 选项悬停、面包屑等「文本区悬停底」均走该链路。
+       */
+      colorFillSecondary: color.neutral.fill.secondary,
+
+      /**
+       * VC 简化规范：整站「列表项悬停底」统一为 #000 5%。
+       *
+       * Ant alias：`controlItemBgHover` = `colorFillTertiary`，会被 Select/Cascader/Tree/DatePicker 等
+       * 多类「列表项悬停」消费。
+       */
+      colorFillTertiary: color.neutral.fill.secondary,
+
       // semantic colors
       colorSuccess: color.success.default,
       colorSuccessBg: color.success.bg,

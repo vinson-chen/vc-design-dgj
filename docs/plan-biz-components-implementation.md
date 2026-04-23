@@ -61,10 +61,10 @@
 
 建议顺序（依赖由弱到强）：
 
-1. `OperationBar` + `operation/OverflowActions`（若有私有依赖一并迁入）
-2. `FilterGroup` + `filter/*` + CSS
+1. `VOperationBar` + `operation/VOverflowActions`（若有私有依赖一并迁入）
+2. `VFilterGroup` + `filter/*` + CSS
 3. `switch-tabs/*`（SwitchTabs + iconResolver + 资源引用策略）
-4. `menu/*`（BizMenu 等）+ `dispatchSidebarMenuData` 等
+4. `menu/*`（VMenu 等）+ `dispatchSidebarMenuData` 等
 5. `table/*` + `TableArea` 拆出的 **可发布 API**（见 4.1）
 
 ### 4.1 表格区特殊处理

@@ -1,14 +1,14 @@
-import type { BizMenuGroupItem } from './BizMenuGroup';
+import type { VMenuGroupItem } from './VMenuGroup';
 
 export interface DispatchSidebarMenuGroup {
   key: string;
   title: string;
   groupIconName: string;
   defaultOpen?: boolean;
-  items: BizMenuGroupItem[];
+  items: VMenuGroupItem[];
 }
 
-/** 与《导航项.xlsx》列结构一致：组名 + 组图标 + 列内自上而下菜单项（BizMenu / DispatchSiderMenu 共用） */
+/** 与《导航项.xlsx》列结构一致：组名 + 组图标 + 列内自上而下菜单项（VMenu / DispatchSiderMenu 共用） */
 export const DISPATCH_SIDEBAR_MENU_GROUPS: DispatchSidebarMenuGroup[] = [
   {
     key: 'common',

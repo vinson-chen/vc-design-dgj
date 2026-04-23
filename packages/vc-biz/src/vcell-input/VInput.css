@@ -1,0 +1,136 @@
+/* 模型下拉：选项间距与圆角，与 VCell 对话区一致 */
+.vc-biz-vcell-input-llm-dropdown .ant-dropdown-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  font-size: 14px;
+}
+
+.vc-biz-vcell-input-llm-dropdown .ant-dropdown-menu-item {
+  margin: 0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Shell 区：flex 垂直排列三个区域 */
+.vc-biz-vcell-input-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Tag 区：仅在有附件时渲染，水平排列多个标签 */
+.vc-biz-vcell-input-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Input 区：文本输入框 */
+.vc-biz-vcell-input-textarea {
+  width: 100%;
+  line-height: 22px;
+}
+
+/* borderless 模式下 textarea 直接带 .ant-input 类，无 wrapper */
+.vc-biz-vcell-input-textarea.vc-biz-vcell-input-textarea.ant-input {
+  padding: 0 !important;
+  border-radius: 0 !important;
+  transition: none !important;
+}
+
+/* Button 区：底部按钮组 */
+.vc-biz-vcell-input-button-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vc-biz-vcell-input-btn-hashtag,
+.vc-biz-vcell-input-btn-slash,
+.vc-biz-vcell-input-btn-add,
+.vc-biz-vcell-input-btn-llm,
+.vc-biz-vcell-input-btn-send {
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vc-biz-vcell-input-btn-hashtag,
+.vc-biz-vcell-input-btn-slash,
+.vc-biz-vcell-input-btn-add {
+  width: 32px;
+  color: var(--vc-biz-vcell-input-btn-color);
+}
+
+.vc-biz-vcell-input-btn-llm {
+  margin-left: auto;
+  padding: 0 8px;
+  font-size: 14px;
+  color: var(--vc-biz-vcell-input-btn-color);
+}
+
+.vc-biz-vcell-input-btn-send {
+  width: 32px;
+}
+
+/* Figma「对话输入区」Tag：品牌浅底 + 主色字（与 MCP 节点 Tag-default / Tag-hover 一致，变量由 shell 注入） */
+.vc-biz-vcell-input-file-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  max-width: min(280px, 100%);
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: var(--vc-biz-vcell-tag-bg, #ecf6ff);
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--vc-biz-vcell-tag-text, #0888ff);
+  box-sizing: border-box;
+}
+
+.vc-biz-vcell-input-file-tag:hover {
+  background: var(--vc-biz-vcell-tag-bg-hover, #d7ecff);
+}
+
+.vc-biz-vcell-input-file-tag__icon-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  line-height: 0;
+}
+
+.vc-biz-vcell-input-file-tag__icon-close {
+  display: none !important;
+}
+
+.vc-biz-vcell-input-file-tag:hover .vc-biz-vcell-input-file-tag__icon-file {
+  display: none !important;
+}
+
+.vc-biz-vcell-input-file-tag:hover .vc-biz-vcell-input-file-tag__icon-close {
+  display: inline-flex !important;
+}
+
+.vc-biz-vcell-input-file-tag__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}

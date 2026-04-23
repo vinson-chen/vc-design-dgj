@@ -1,6 +1,6 @@
 import React from 'react';
 import { vcTokens } from 'vc-design';
-import { BizMenu } from 'vc-biz';
+import { VMenu } from 'vc-biz';
 
 export default function BizMenuLayoutDemo() {
   return (
@@ -18,7 +18,7 @@ export default function BizMenuLayoutDemo() {
           minHeight: 840,
         }}
       >
-        <BizMenu />
+        <VMenu />
       </div>
     </>
   );

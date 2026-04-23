@@ -22,6 +22,8 @@ const subMenuItems = [
     children: [
       { key: 'sub-1', label: '子项 1' },
       { key: 'sub-2', label: '子项 2' },
+      { key: 'sub-3', label: '子项 3' },
+      { key: 'sub-4', label: '子项 4' },
     ],
   },
   { key: '5', label: '直接项' },

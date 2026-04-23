@@ -1,3 +1,3 @@
-export { BizTableCell } from './BizTableCell';
-export type { BizTableCellProps, BizTableCellVariant } from './BizTableCell';
+export { VTableCell, BizTableCell } from './VTableCell';
+export type { VTableCellProps, VTableCellVariant, BizTableCellProps, BizTableCellVariant } from './VTableCell';
 

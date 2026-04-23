@@ -1,0 +1,319 @@
+/* CustomTabs：Figma CustomTabs / .tab_item（861:1412），与 SwitchTabs token 对齐 */
+.biz-custom-tabs {
+  position: relative;
+  min-width: 320px;
+  width: 100%;
+}
+
+.biz-custom-tabs--bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  max-height: 48px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  background: var(--custom-tabs-bg-bar);
+  border: none;
+  overflow: hidden;
+}
+
+.biz-custom-tabs--bar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--custom-tabs-color-border);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.biz-custom-tabs--nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  max-height: 48px;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.biz-custom-tabs--right {
+  margin-left: auto;
+  padding-left: var(--custom-tabs-right-gap);
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.biz-custom-tabs--right-default-btn.ant-btn.ant-btn-text {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--custom-tabs-item-radius);
+}
+
+.biz-custom-tabs--tab {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  color: var(--custom-tabs-color-text);
+  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  max-height: 48px;
+  box-sizing: border-box;
+}
+
+.biz-custom-tabs--tab:focus-visible .biz-custom-tabs--surface {
+  outline: 1px solid var(--custom-tabs-color-primary-border);
+  outline-offset: 1px;
+}
+
+.biz-custom-tabs--surface {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--custom-tabs-item-gap);
+  min-height: var(--custom-tabs-item-min-height);
+  max-height: var(--custom-tabs-item-min-height);
+  padding: var(--custom-tabs-item-padding-v) var(--custom-tabs-item-padding-h);
+  border-radius: var(--custom-tabs-item-radius);
+  box-sizing: border-box;
+  font-size: var(--custom-tabs-font-size);
+  line-height: var(--custom-tabs-line-height);
+  font-weight: var(--custom-tabs-font-weight-default);
+  color: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.biz-custom-tabs--label {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.biz-custom-tabs--surface.is-input {
+  max-height: var(--custom-tabs-item-min-height);
+  overflow: hidden;
+}
+
+.biz-custom-tabs--tab.is-active .biz-custom-tabs--surface {
+  font-weight: var(--custom-tabs-font-weight-active);
+  color: var(--custom-tabs-color-primary);
+}
+
+/* 选中 + 悬停：active-hover（5% 黑底），有图标时由组件换 more */
+.biz-custom-tabs--tab.is-active:not(.is-menu-open):hover .biz-custom-tabs--surface:not(.is-input) {
+  background: var(--custom-tabs-bg-hover);
+}
+
+/* 选中 + 配置菜单打开 / 按下：active-pressed（10% 黑底） */
+.biz-custom-tabs--tab.is-active.is-menu-open .biz-custom-tabs--surface:not(.is-input),
+.biz-custom-tabs--tab.is-active:active .biz-custom-tabs--surface:not(.is-input) {
+  background: var(--custom-tabs-bg-pressed);
+}
+
+/* 未选中 hover / pressed */
+.biz-custom-tabs--tab:not(.is-active):hover .biz-custom-tabs--surface {
+  background: var(--custom-tabs-bg-hover);
+}
+
+.biz-custom-tabs--tab:not(.is-active):active .biz-custom-tabs--surface {
+  background: var(--custom-tabs-bg-pressed);
+}
+
+/* active-input：内嵌输入框（固定 120px 宽，行高不撑高外层 48px 容器） */
+.biz-custom-tabs--surface.is-input .biz-custom-tabs--input {
+  width: 120px !important;
+  min-width: 120px;
+  max-width: 120px;
+  height: 32px;
+  font-size: var(--custom-tabs-font-size);
+  line-height: var(--custom-tabs-line-height);
+  border-radius: var(--custom-tabs-item-radius);
+}
+
+.biz-custom-tabs--surface.is-input .biz-custom-tabs--input.ant-input {
+  padding: 0 8px;
+}
+
+.biz-custom-tabs--surface.is-input .biz-custom-tabs--input .ant-input,
+.biz-custom-tabs--surface.is-input .biz-custom-tabs--input.ant-input {
+  height: 32px;
+  line-height: var(--custom-tabs-line-height);
+}
+
+.biz-custom-tabs--surface.is-input .biz-custom-tabs--input.ant-input-affix-wrapper {
+  padding-inline: 8px;
+  max-height: 32px;
+}
+
+.biz-custom-tabs--ink {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--custom-tabs-color-primary);
+  opacity: 0;
+  /* 与 SwitchTabs 一致：普通切换有滑动；编辑态通过 .is-edit-hidden 限制为仅透明度变化 */
+  transition: transform 0.2s ease, width 0.2s ease, opacity 0.15s ease;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.biz-custom-tabs--ink.is-visible {
+  opacity: 1;
+}
+
+/* 收纳与添加：同为 32×32 图标按钮（与 Figma 一致） */
+.biz-custom-tabs--nav-icon-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: 32px;
+  height: 32px;
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  border-radius: var(--custom-tabs-item-radius);
+  background: transparent;
+  color: var(--custom-tabs-color-text);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.biz-custom-tabs--nav-icon-btn:hover {
+  background: var(--custom-tabs-bg-hover);
+}
+
+.biz-custom-tabs--nav-icon-btn:active,
+.biz-custom-tabs--nav-icon-btn.is-menu-open {
+  background: var(--custom-tabs-bg-pressed);
+}
+
+.biz-custom-tabs--nav-icon-btn:focus-visible {
+  outline: 1px solid var(--custom-tabs-color-primary-border);
+  outline-offset: 1px;
+}
+
+.biz-custom-tabs-dropdown .ant-dropdown-menu {
+  padding: 4px;
+  border-radius: 8px;
+  min-width: 104px;
+}
+
+.biz-custom-tabs-dropdown .ant-dropdown-menu-item {
+  margin: 0;
+  border-radius: 6px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.biz-custom-tabs-dropdown .ant-dropdown-menu-item-icon {
+  font-size: 16px;
+}
+
+/* 「导入表格」挂在「自定义」下：略增左内边距以区分层级 */
+.biz-custom-tabs-dropdown .biz-custom-tabs-add-import-item.ant-dropdown-menu-item {
+  padding-inline-start: 36px;
+}
+
+/* 选中 tab 配置：主菜单 + SubMenu 子弹层（根节点不再 flex 并排侧栏） */
+.biz-custom-tabs-config-combo {
+  display: block;
+}
+
+/** 底对齐子面板可能超出下拉层裁剪区 */
+.biz-custom-tabs-dropdown {
+  overflow: visible;
+}
+
+/** 字段配置子弹层（原侧栏 class 现挂在 SubMenu popupClassName） */
+.biz-custom-tabs-dropdown .biz-custom-tabs-field-config-side.ant-menu-submenu-popup,
+.biz-custom-tabs-dropdown .biz-custom-tabs-field-config-side.ant-dropdown-menu-submenu-popup {
+  min-width: 0;
+}
+
+.biz-custom-tabs-field-config-side .ant-menu,
+.biz-custom-tabs-field-config-side .ant-dropdown-menu {
+  min-width: 200px;
+}
+
+.biz-custom-tabs-config-combo-menu .biz-custom-tabs-config-primary-menu.ant-menu-vertical.ant-menu-root {
+  padding: 4px;
+  border-radius: 8px;
+  min-width: 160px;
+  border: none;
+  background: transparent;
+}
+
+.biz-custom-tabs-config-combo-menu .biz-custom-tabs-config-primary-menu .ant-menu-item {
+  margin: 0;
+  border-radius: 6px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.biz-custom-tabs-config-combo-menu .biz-custom-tabs-config-primary-menu .ant-menu-item .ant-menu-item-icon {
+  font-size: 16px;
+}
+
+.biz-custom-tabs-config-combo-menu
+  .biz-custom-tabs-config-primary-menu.ant-menu-vertical
+  .ant-menu-item
+  .ant-menu-title-content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.biz-custom-tabs-field-config-item-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
+.biz-custom-tabs-field-config-item-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.biz-custom-tabs-config-primary-menu
+  .biz-custom-tabs-field-config-menu-item-active.ant-menu-submenu
+  > .ant-menu-submenu-title {
+  background: var(--custom-tabs-bg-hover);
+}
+
+.biz-custom-tabs-config-primary-menu .ant-menu-submenu-open > .ant-menu-submenu-title {
+  background: var(--custom-tabs-bg-hover);
+}
+
+.biz-custom-tabs--measure {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  left: -9999px;
+  top: -9999px;
+}

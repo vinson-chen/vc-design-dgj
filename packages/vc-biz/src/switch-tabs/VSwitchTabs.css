@@ -1,0 +1,166 @@
+.biz-switch-tabs {
+  min-width: 320px;
+  width: 100%;
+}
+
+.biz-switch-tabs-nav {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  min-height: var(--switch-tabs-nav-min-height);
+  padding: 0 var(--switch-tabs-nav-padding-h);
+  box-sizing: border-box;
+}
+
+.biz-switch-tabs-nav::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--switch-tabs-color-border);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.biz-switch-tabs-right {
+  margin-left: auto;
+  padding-left: var(--switch-tabs-right-gap);
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.biz-switch-tabs-right-default-btn.ant-btn.ant-btn-text {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--switch-tabs-item-radius);
+}
+
+.biz-switch-tabs-tab {
+  flex: 0 0 auto;
+  padding: var(--switch-tabs-tab-padding-y) 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: var(--switch-tabs-color-text);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.biz-switch-tabs-tab.is-disabled {
+  color: var(--switch-tabs-color-text-disabled);
+  cursor: not-allowed;
+}
+
+.biz-switch-tabs-nav-icon-btn {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 32px;
+  height: 32px;
+  margin-left: var(--switch-tabs-more-margin-left);
+  padding: 0;
+  border: none;
+  border-radius: var(--switch-tabs-item-radius);
+  background: transparent;
+  color: var(--switch-tabs-color-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.biz-switch-tabs-nav-icon-btn:hover {
+  background: var(--switch-tabs-bg-hover);
+}
+
+.biz-switch-tabs-nav-icon-btn:active,
+.biz-switch-tabs-nav-icon-btn.is-menu-open {
+  background: var(--switch-tabs-bg-pressed);
+}
+
+.biz-switch-tab-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--switch-tabs-item-gap);
+  min-height: var(--switch-tabs-item-min-height);
+  padding: var(--switch-tabs-item-padding-v) var(--switch-tabs-item-padding-h);
+  border-radius: var(--switch-tabs-item-radius);
+  box-sizing: border-box;
+  transition: background-color 0.2s ease;
+  color: inherit;
+  font-size: var(--switch-tabs-font-size);
+  line-height: var(--switch-tabs-line-height);
+  font-weight: var(--switch-tabs-font-weight-default);
+}
+
+.biz-switch-tabs--label {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.biz-switch-tabs-tab:not(.is-disabled):hover .biz-switch-tab-item {
+  background: var(--switch-tabs-bg-hover);
+}
+
+.biz-switch-tabs-tab:not(.is-disabled):active .biz-switch-tab-item {
+  background: var(--switch-tabs-bg-pressed);
+}
+
+.biz-switch-tabs-tab:not(.is-active):not(.is-disabled):hover,
+.biz-switch-tabs-tab:not(.is-active):not(.is-disabled):active,
+.biz-switch-tabs-tab:not(.is-active):not(.is-disabled):focus {
+  color: var(--switch-tabs-color-text);
+}
+
+.biz-switch-tabs-tab.is-active {
+  color: var(--switch-tabs-color-primary);
+}
+
+.biz-switch-tabs-tab.is-active .biz-switch-tab-item,
+.biz-switch-tabs-tab.is-active .biz-switch-tab-item > span {
+  font-weight: var(--switch-tabs-font-weight-active);
+}
+
+.biz-switch-tabs-tab:focus-visible .biz-switch-tab-item {
+  outline: 1px solid var(--switch-tabs-color-primary-border);
+  outline-offset: 1px;
+}
+
+.biz-switch-tabs-ink-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: var(--switch-tabs-ink-bar-height);
+  background: var(--switch-tabs-color-primary);
+  transition: transform 0.2s ease, width 0.2s ease, opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.biz-switch-tabs--no-panel .biz-switch-tabs-nav {
+  border-bottom: none;
+}
+
+.biz-switch-tabs--no-panel .biz-switch-tabs-ink-bar {
+  bottom: 0;
+}
+
+.biz-switch-tabs-panel {
+  min-height: var(--switch-tabs-panel-min-height);
+}
+
+.biz-switch-tabs-measure {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  left: -9999px;
+  top: -9999px;
+}

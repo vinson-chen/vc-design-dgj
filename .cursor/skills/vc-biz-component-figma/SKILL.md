@@ -20,7 +20,7 @@ description: >-
 
 ### 2. 单一数据源
 
-- 菜单 **分组与文案** 集中在一处（如 `BizMenu` 的 `groups`），再按需同步到侧栏示意（如 `PageCaseDemo`、旧版 `DispatchSiderMenu`），避免三处各写一份后漂移。
+- 菜单 **分组与文案** 集中在一处（如 `VMenu` 的 `groups`），再按需同步到侧栏示意（如 `PageCaseDemo`、旧版 `DispatchSiderMenu`），避免三处各写一份后漂移。
 
 ### 3. 色值与 token
 
@@ -109,9 +109,9 @@ description: >-
 
 | 用途 | 路径 |
 |------|------|
-| 导航区菜单外壳与数据 | `packages/vc-biz/src/menu/BizMenu.tsx` |
-| 分组 / 子项槽 | `packages/vc-biz/src/menu/BizMenuGroup.tsx` |
-| 子项 | `packages/vc-biz/src/menu/BizMenuItem.tsx` |
+| 导航区菜单外壳与数据 | `packages/vc-biz/src/menu/VMenu.tsx` |
+| 分组 / 子项槽 | `packages/vc-biz/src/menu/VMenuGroup.tsx` |
+| 子项 | `packages/vc-biz/src/menu/VMenuItem.tsx` |
 | Figma 图标名解析 | `packages/vc-biz/src/menu/figmaIconResolver.ts` |
 | 设计 token | `src/theme/vcTokens.ts` |
 | 色值 + 场景反查 token | `src/theme/resolveTokenByValue.ts` |
