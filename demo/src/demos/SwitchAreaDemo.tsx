@@ -14,6 +14,7 @@ export default function SwitchAreaDemo() {
   const [stateActiveKey, setStateActiveKey] = useState('全部');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const customTabs = useVCustomTabsState();
+  const customTabsVertical = useVCustomTabsState({ initialLabel: '表格 1' });
   /** 最小演示：让 VCustomTabs 出现「字段配置」及右侧列显隐子面板（与业务页传入的 activeTabFieldConfig 同源契约） */
   const [demoHiddenColSet, setDemoHiddenColSet] = useState<Set<number>>(() => new Set());
   const setDemoColumnHidden = useCallback((colIndex: number, hidden: boolean) => {
@@ -122,6 +123,29 @@ export default function SwitchAreaDemo() {
               activeTabFieldConfig={customTabsFieldConfigDemo}
             />
           </div>
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
+          VCustomTabs 垂直模式
+        </h2>
+        <div
+          style={{
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
+            padding: 24,
+          }}
+        >
+          <VCustomTabs
+            mode="vertical"
+            items={customTabsVertical.items}
+            onItemsChange={customTabsVertical.setItems}
+            activeKey={customTabsVertical.activeKey}
+            onActiveKeyChange={customTabsVertical.setActiveKey}
+            verticalWidth={240}
+            verticalHeight={400}
+          />
         </div>
       </section>
 

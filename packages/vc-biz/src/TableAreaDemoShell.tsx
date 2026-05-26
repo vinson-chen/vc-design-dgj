@@ -34,6 +34,8 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
     setEnableShowRowIndex,
     enableBatchSelection,
     setEnableBatchSelection,
+    enablePagination,
+    setEnablePagination,
     enableInsertRowCol,
     setEnableInsertRowCol,
     enableEditMode,
@@ -176,6 +178,10 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>批量选择</Typography.Text>
             <Switch size="small" checked={enableBatchSelection} onChange={setEnableBatchSelection} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>显示分页</Typography.Text>
+            <Switch size="small" checked={enablePagination} onChange={setEnablePagination} />
           </div>
         </div>
       </div>

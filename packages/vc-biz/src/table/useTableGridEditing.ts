@@ -6,12 +6,25 @@ import {
   cellStorageKey,
   parseCellSelectionSetKey,
 } from './headless/tableGridCellAddress';
-import { parseClipboardMatrix, serializeSelectionToTsv } from './headless/tableGridClipboard';
 import { stepLockedCell } from './headless/tableGridSelectionGeometry';
 import {
   remapValueByCellAfterRemoveBodyRow,
   remapValueByCellAfterRemoveColumn,
 } from './headless/tableGridSparseRemap';
+import {
+  handleArrowNavigation,
+  handleClearLockedCell,
+  isArrowKey,
+  isClearCellKey,
+  isExternalFieldFocused,
+  shouldAppendToEditDraft,
+  shouldEnterEditMode,
+} from './headless/tableGridKeyboardHandler';
+import {
+  handleCopy,
+  handlePaste,
+  applyPasteToValueByCell,
+} from './headless/tableGridClipboardHandler';
 import {
   editingGridUiReducer,
   initialEditingGridUiState,
@@ -60,6 +73,12 @@ export type TableGridEditingState = {
   onKeyboardNavigateCell?: (p: { r: number; c: number; key: string }) => void;
   removeColumnAt: (colIndex: number) => void;
   removeBodyRowAt: (bodyRowIndex: number) => void;
+  /** 添加列到选中集合（支持多列选择） */
+  addColumnToSelection: (colIndex: number, maxBodyR: number) => void;
+  /** 从选中集合中移除列（支持多列取消） */
+  removeColumnFromSelection: (colIndex: number) => void;
+  /** 插入行后调整选中区域 */
+  insertBodyRowAt: (bodyRowIndex: number, colCount: number) => void;
 };
 
 export type UseTableGridEditingOptions = Readonly<{
@@ -97,6 +116,10 @@ export function useTableGridEditing(
     hoverLockedCell,
     editingCell,
   } = ui;
+
+  // 使用 ref 跟踪最新的 selectedCells，避免 stale closure 问题
+  const selectedCellsRef = useRef<ReadonlySet<string>>(selectedCells);
+  selectedCellsRef.current = selectedCells;
 
   const setSelectedCell = useCallback(
     (update: SetStateAction<{ r: number; c: number } | null>) => {
@@ -212,12 +235,65 @@ export function useTableGridEditing(
     dispatchUi({ type: 'clearSelection' });
   }, []);
 
-  const setRangeSelection = useCallback(
-    (anchor: { r: number; c: number }, current: { r: number; c: number }) => {
-      dispatchUi({ type: 'applyRangeSelection', anchor, current });
+  /** 添加列到选中集合（支持多列选择） */
+  const addColumnToSelection = useCallback(
+    (colIndex: number, maxBodyR: number) => {
+      // 使用 ref 获取最新的选中集合，避免 stale closure 问题
+      const currentSelectedCells = selectedCellsRef.current;
+      // 获取当前已选中的列
+      const currentSelectedCols = new Set<number>();
+      for (const key of currentSelectedCells) {
+        const parsed = parseCellSelectionSetKey(key);
+        if (parsed) currentSelectedCols.add(parsed.c);
+      }
+      // 添加新列
+      currentSelectedCols.add(colIndex);
+      // 构建新的选中集合
+      const newSelectedCells = new Set<string>();
+      for (const c of currentSelectedCols) {
+        for (let r = 0; r <= maxBodyR; r += 1) {
+          newSelectedCells.add(cellSelectionSetKey(r, c));
+        }
+      }
+      setSelectedCells(newSelectedCells);
+      setSelectedCell({ r: 0, c: colIndex });
+      setSelectionAnchor({ r: 0, c: colIndex });
+      // 选中列时清除锁定单元格，避免首行显示锁定样式
+      setHoverLockedCell(null);
       editingDraftRef.current = '';
     },
-    []
+    [setSelectedCells, setSelectedCell, setSelectionAnchor, setHoverLockedCell]
+  );
+
+  /** 从选中集合中移除列（支持多列取消） */
+  const removeColumnFromSelection = useCallback(
+    (colIndex: number) => {
+      // 使用 ref 获取最新的选中集合
+      const currentSelectedCells = selectedCellsRef.current;
+      const newSelectedCells = new Set<string>();
+      for (const key of currentSelectedCells) {
+        const parsed = parseCellSelectionSetKey(key);
+        if (parsed && parsed.c !== colIndex) {
+          newSelectedCells.add(key);
+        }
+      }
+      if (newSelectedCells.size === 0) {
+        clearSelection();
+      } else {
+        setSelectedCells(newSelectedCells);
+        // 如果移除的是 anchor 所在列，更新 anchor
+        if (selectedCell?.c === colIndex) {
+          const firstKey = Array.from(newSelectedCells)[0];
+          const newAnchor = parseCellSelectionSetKey(firstKey);
+          if (newAnchor) {
+            setSelectedCell(newAnchor);
+            setSelectionAnchor(newAnchor);
+          }
+        }
+      }
+      editingDraftRef.current = '';
+    },
+    [clearSelection, setSelectedCells, setSelectedCell, setSelectionAnchor, selectedCell]
   );
 
   const setEditingDraft = useCallback((action: SetStateAction<string>) => {
@@ -267,6 +343,23 @@ export function useTableGridEditing(
     editingDraftRef.current = '';
   }, [getEditingValueForSave, scheduleClearEditCommitGuards, setValueByCell]);
 
+  const setRangeSelection = useCallback(
+    (anchor: { r: number; c: number }, current: { r: number; c: number }) => {
+      // 先保存当前编辑内容（如果有的话）
+      const ec = editingCellRef.current;
+      if (ec) {
+        const k = ec.r === -1 ? `header-${ec.c}` : cellStorageKey(ec.r, ec.c);
+        const valueToSave = getEditingValueForSave();
+        pendingBlurIgnoreCellKeyRef.current = k;
+        scheduleClearEditCommitGuards();
+        setValueByCell((prev) => ({ ...prev, [k]: valueToSave }));
+      }
+      dispatchUi({ type: 'applyRangeSelection', anchor, current });
+      editingDraftRef.current = '';
+    },
+    [getEditingValueForSave, scheduleClearEditCommitGuards, setValueByCell]
+  );
+
   const removeColumnAt = useCallback((colIndex: number) => {
     const ec = editingCellRef.current;
     if (ec?.c === colIndex) {
@@ -300,6 +393,8 @@ export function useTableGridEditing(
       if (!(target instanceof Node)) return;
       const el = target instanceof Element ? target : target.parentElement;
       if (!el) return;
+      // 排除带有 data-keep-table-selection 属性的元素（如 VTell 输入框）
+      if (el.closest('[data-keep-table-selection]')) return;
       const cell = el.closest('[data-hover-lock-cell]');
       if (cell) {
         const r = Number(cell.getAttribute('data-body-row'));
@@ -309,6 +404,9 @@ export function useTableGridEditing(
           if (r === locked.r && c === locked.c) return;
           // 列选择时（anchor 在 body，点击同列 header），视为仍在当前选择内，不清空
           if (r === TABLE_GRID_HEADER_ROW_INDEX && c === locked.c && locked.r >= 0) return;
+          // 点击表格内的任何单元格，都不清除选中区域（保持选中列）
+          // 只有框选拖拽或点击表头切换列时才会取消选中列
+          return;
         }
       }
       const wasEditing = editingCellRef.current != null;
@@ -340,182 +438,139 @@ export function useTableGridEditing(
     if (!enableEditMode) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
-      const isArrow =
-        e.key === 'ArrowUp' ||
-        e.key === 'ArrowDown' ||
-        e.key === 'ArrowLeft' ||
-        e.key === 'ArrowRight';
+      const activeEl = document.activeElement;
+      const ctx = {
+        hoverLockedCell,
+        editingCell,
+        selectedCell,
+        maxBodyRowIndex,
+        maxColIndex,
+        activeElement: activeEl,
+      };
 
+      // 方向键导航
       if (
-        maxBodyRowIndex >= 0 &&
-        maxColIndex >= 0 &&
-        hoverLockedCell &&
-        isArrow &&
+        isArrowKey(e.key) &&
         !e.ctrlKey &&
         !e.metaKey &&
         !e.altKey &&
         !e.isComposing
       ) {
-        const taFocused = editTextAreaRef.current;
-        if (taFocused && document.activeElement === taFocused) {
+        const result = handleArrowNavigation(ctx, e.key);
+        if (result) {
+          e.preventDefault();
+          if (editingCell) {
+            exitEditingLikeEscape();
+          }
+          dispatchUi({ type: 'lockedArrowNavigate', next: result.next });
+          options?.onKeyboardNavigateCell?.({ r: result.next.r, c: result.next.c, key: result.key });
           return;
         }
-        const from = editingCell ?? selectedCell ?? hoverLockedCell;
-        e.preventDefault();
-        if (editingCell) {
-          exitEditingLikeEscape();
-        }
-        const next = stepLockedCell(from.r, from.c, e.key, maxBodyRowIndex, maxColIndex);
-        dispatchUi({ type: 'lockedArrowNavigate', next });
-        options?.onKeyboardNavigateCell?.({ r: next.r, c: next.c, key: e.key });
-        return;
       }
 
-      // Mac 笔记本主键盘「删除」多为 Backspace；Fn+Delete 常为 Delete。非编辑态下 Backspace 与 Delete 均整格清空。
-      const isClearLockedCellKey =
-        e.key === 'Delete' || (e.key === 'Backspace' && !editingCell);
-      const activeEl = document.activeElement;
-      const clearBlockedByExternalFocus =
-        activeEl instanceof HTMLElement &&
-        activeEl !== document.body &&
-        !activeEl.closest('[data-hover-lock-cell]') &&
-        (activeEl.tagName === 'INPUT' ||
-          activeEl.tagName === 'TEXTAREA' ||
-          activeEl.tagName === 'SELECT' ||
-          activeEl.hasAttribute('contenteditable'));
-
+      // 清空锁定单元格
       if (
-        hoverLockedCell &&
-        isClearLockedCellKey &&
-        !clearBlockedByExternalFocus &&
         !e.ctrlKey &&
         !e.metaKey &&
         !e.altKey &&
         !e.isComposing
       ) {
-        e.preventDefault();
-        const { r, c } = hoverLockedCell;
-        const k = cellStorageKey(r, c);
-        setValueByCell((prev) => ({ ...prev, [k]: '' }));
-        if (editingCell?.r === r && editingCell?.c === c) {
-          editingDraftRef.current = '';
-          if (r === TABLE_GRID_HEADER_ROW_INDEX) {
-            if (headerEditInputRef.current) headerEditInputRef.current.value = '';
-          } else {
-            const ta = editTextAreaRef.current;
-            if (ta) {
-              ta.value = '';
-              bodyEditTextareaAutosizeRef.current?.(ta);
+        const result = handleClearLockedCell(ctx, e.key);
+        if (result) {
+          e.preventDefault();
+          setValueByCell((prev) => ({ ...prev, [result.cellKey]: '' }));
+          if (editingCell?.r === result.r && editingCell?.c === result.c) {
+            editingDraftRef.current = '';
+            if (result.r === TABLE_GRID_HEADER_ROW_INDEX) {
+              if (headerEditInputRef.current) headerEditInputRef.current.value = '';
+            } else {
+              const ta = editTextAreaRef.current;
+              if (ta) {
+                ta.value = '';
+                bodyEditTextareaAutosizeRef.current?.(ta);
+              }
             }
           }
+          return;
         }
-        return;
       }
 
       const bodyTa = editTextAreaRef.current;
+      if (bodyTa && document.activeElement === bodyTa) return;
 
-      if (bodyTa && document.activeElement === bodyTa) {
-        return;
-      }
-
+      // 复制/粘贴
       const mod = (e.ctrlKey || e.metaKey) && !e.altKey;
       const keyOne = e.key.length === 1 ? e.key.toLowerCase() : '';
       if (mod && (keyOne === 'c' || keyOne === 'v') && !e.isComposing) {
         const headerInput = headerEditInputRef.current;
-        if (headerInput && document.activeElement === headerInput) {
-          // 表头单行 input 使用浏览器原生复制/粘贴，避免全局拦截导致连续粘贴失效。
-          return;
-        }
-        const hasCellContext =
-          editingCell != null || selectedCell != null || hoverLockedCell != null;
+        if (headerInput && document.activeElement === headerInput) return;
+
+        const hasCellContext = editingCell != null || selectedCell != null || hoverLockedCell != null;
         if (hasCellContext) {
           if (keyOne === 'c') {
             e.preventDefault();
-            if (selectedCells.size > 1) {
-              void navigator.clipboard.writeText(
-                serializeSelectionToTsv(selectedCells, valueByCellRef.current, selectedCell)
-              );
-            } else if (editingCell != null) {
-              void navigator.clipboard.writeText(getEditingValueForSave());
-            } else {
-              const cell = selectedCell ?? hoverLockedCell;
-              if (cell) {
-                void navigator.clipboard.writeText(
-                  valueByCellRef.current[cellStorageKey(cell.r, cell.c)] ?? ''
-                );
-              }
+            const copyResult = handleCopy(
+              {
+                editingCell,
+                selectedCell,
+                hoverLockedCell,
+                selectedCells,
+                valueByCell: valueByCellRef.current,
+                maxBodyRowIndex,
+                maxColIndex,
+              },
+              getEditingValueForSave()
+            );
+            if (copyResult) {
+              void navigator.clipboard.writeText(copyResult.text);
             }
             return;
           }
-          const pasteTarget = selectedCell ?? hoverLockedCell ?? editingCell;
-          if (pasteTarget && keyOne === 'v') {
+          if (keyOne === 'v') {
             e.preventDefault();
-            void navigator.clipboard.readText().then((t) => {
-              const { matrix, isMatrix } = parseClipboardMatrix(t);
-              const anchor = selectedCell ?? pasteTarget;
-              const applySingleValueToRange =
-                !isMatrix && selectedCells.size > 1 && anchor.r >= 0;
-              const isHeaderAnchor = anchor.r === TABLE_GRID_HEADER_ROW_INDEX;
+            void navigator.clipboard.readText().then((text) => {
+              const pasteInfo = handlePaste(
+                {
+                  editingCell,
+                  selectedCell,
+                  hoverLockedCell,
+                  selectedCells,
+                  valueByCell: valueByCellRef.current,
+                  maxBodyRowIndex,
+                  maxColIndex,
+                },
+                text
+              );
+              if (!pasteInfo) return;
 
-              if (editingCellRef.current && (applySingleValueToRange || isMatrix)) {
+              if (editingCellRef.current && (pasteInfo.applySingleValueToRange || pasteInfo.isMatrix)) {
                 setEditingCell(null);
                 editingDraftRef.current = '';
               }
 
-              if (isHeaderAnchor) {
-                const ck = cellStorageKey(anchor.r, anchor.c);
-                setValueByCell((prev) => ({ ...prev, [ck]: t }));
-              } else if (applySingleValueToRange) {
-                setValueByCell((prev) => {
-                  const next = { ...prev };
-                  for (const key of selectedCells) {
-                    const p = parseCellSelectionSetKey(key);
-                    if (!p) continue;
-                    if (p.r < 0 || p.r > maxBodyRowIndex || p.c < 0 || p.c > maxColIndex) continue;
-                    next[cellStorageKey(p.r, p.c)] = t;
-                  }
-                  return next;
-                });
-              } else if (isMatrix) {
-                setValueByCell((prev) => {
-                  const next = { ...prev };
-                  for (let dr = 0; dr < matrix.length; dr += 1) {
-                    const row = matrix[dr]!;
-                    for (let dc = 0; dc < row.length; dc += 1) {
-                      const r = anchor.r + dr;
-                      const c = anchor.c + dc;
-                      if (r < 0 || r > maxBodyRowIndex || c < 0 || c > maxColIndex) continue;
-                      next[cellStorageKey(r, c)] = row[dc] ?? '';
-                    }
-                  }
-                  return next;
-                });
-              } else {
-                const ck = cellStorageKey(anchor.r, anchor.c);
-                setValueByCell((prev) => ({ ...prev, [ck]: t }));
-              }
+              setValueByCell((prev) =>
+                applyPasteToValueByCell(prev, pasteInfo, maxBodyRowIndex, maxColIndex)
+              );
 
               const ec = editingCellRef.current;
-              if (ec?.r === anchor.r && ec?.c === anchor.c) {
-                editingDraftRef.current = t;
-                if (anchor.r === TABLE_GRID_HEADER_ROW_INDEX) {
+              if (ec?.r === pasteInfo.anchor.r && ec?.c === pasteInfo.anchor.c) {
+                editingDraftRef.current = text;
+                if (pasteInfo.anchor.r === TABLE_GRID_HEADER_ROW_INDEX) {
                   const ip = headerEditInputRef.current;
                   if (ip) {
-                    ip.value = t;
+                    ip.value = text;
                     requestAnimationFrame(() => {
                       try {
                         const len = ip.value.length;
                         ip.focus({ preventScroll: true });
                         ip.setSelectionRange?.(len, len);
-                      } catch {
-                        /* 节点未就绪 */
-                      }
+                      } catch { /* 节点未就绪 */ }
                     });
                   }
                 } else {
                   const ta = editTextAreaRef.current;
                   if (ta) {
-                    ta.value = t;
+                    ta.value = text;
                     bodyEditTextareaAutosizeRef.current?.(ta);
                     requestAnimationFrame(() => {
                       bodyEditTextareaAutosizeRef.current?.(ta);
@@ -524,9 +579,7 @@ export function useTableGridEditing(
                           const len = ta.value.length;
                           ta.focus({ preventScroll: true });
                           ta.setSelectionRange(len, len);
-                        } catch {
-                          /* 节点未就绪 */
-                        }
+                        } catch { /* 节点未就绪 */ }
                         bodyEditTextareaAutosizeRef.current?.(ta);
                       });
                     });
@@ -539,17 +592,7 @@ export function useTableGridEditing(
         }
       }
 
-      const isOtherFieldFocused = () => {
-        const el = document.activeElement;
-        if (!el || el === document.body) return false;
-        const tag = el.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
-        return el.hasAttribute('contenteditable');
-      };
-
-      if (isOtherFieldFocused()) {
-        return;
-      }
+      if (isExternalFieldFocused(activeEl)) return;
 
       if (e.key === 'Escape' && editingCell) {
         e.preventDefault();
@@ -560,35 +603,31 @@ export function useTableGridEditing(
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.isComposing) return;
 
-      if (editingCell) {
-        // 表头编辑（单行）不支持“任意按键追加到草稿”的模式，避免与「仅双击进入编辑」冲突。
-        if (editingCell.r === TABLE_GRID_HEADER_ROW_INDEX) return;
-        if (e.key.length === 1) {
-          e.preventDefault();
-          const ta = editTextAreaRef.current;
-          if (ta) {
-            ta.value += e.key;
-            editingDraftRef.current = ta.value;
+      // 编辑态追加字符
+      if (shouldAppendToEditDraft(ctx, e.key)) {
+        e.preventDefault();
+        const ta = editTextAreaRef.current;
+        if (ta) {
+          ta.value += e.key;
+          editingDraftRef.current = ta.value;
+          bodyEditTextareaAutosizeRef.current?.(ta);
+          requestAnimationFrame(() => {
             bodyEditTextareaAutosizeRef.current?.(ta);
             requestAnimationFrame(() => {
+              const len = ta.value.length;
+              ta.focus({ preventScroll: true });
+              ta.setSelectionRange(len, len);
               bodyEditTextareaAutosizeRef.current?.(ta);
-              requestAnimationFrame(() => {
-                const len = ta.value.length;
-                ta.focus({ preventScroll: true });
-                ta.setSelectionRange(len, len);
-                bodyEditTextareaAutosizeRef.current?.(ta);
-              });
             });
-          } else {
-            editingDraftRef.current += e.key;
-          }
+          });
+        } else {
+          editingDraftRef.current += e.key;
         }
         return;
       }
 
-      if (selectedCell && e.key.length === 1) {
-        // 表头保持“仅双击进入编辑”，不支持键入即编辑。
-        if (selectedCell.r === TABLE_GRID_HEADER_ROW_INDEX) return;
+      // 进入编辑态
+      if (shouldEnterEditMode(ctx, e.key) && selectedCell) {
         e.preventDefault();
         const k = cellStorageKey(selectedCell.r, selectedCell.c);
         const displayText = valueByCellRef.current[k] ?? '';
@@ -644,13 +683,18 @@ export function useTableGridEditing(
       onKeyboardNavigateCell: options?.onKeyboardNavigateCell,
       removeColumnAt,
       removeBodyRowAt,
+      addColumnToSelection,
+      removeColumnFromSelection,
+      insertBodyRowAt: (bodyRowIndex: number, colCount: number) => {
+        dispatchUi({ type: 'afterInsertBodyRow', bodyRowIndex, colCount });
+      },
     };
     Object.defineProperty(api, 'editingDraft', {
       enumerable: true,
       configurable: true,
       get: () => editingDraftRef.current,
     });
-    return api as TableGridEditingState;
+    return api as unknown as TableGridEditingState;
   }, [
     selectedCell,
     selectedCells,
@@ -666,6 +710,8 @@ export function useTableGridEditing(
     consumeDuplicatePrevCellClickSave,
     removeColumnAt,
     removeBodyRowAt,
+    addColumnToSelection,
+    removeColumnFromSelection,
     setEditingDraft,
     options?.onKeyboardNavigateCell,
   ]);

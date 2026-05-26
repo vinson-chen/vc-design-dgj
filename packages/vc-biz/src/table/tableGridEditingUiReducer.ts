@@ -6,6 +6,8 @@ import {
   adjustCoordAfterRemoveColumn,
   adjustSelectionSetAfterRemoveBodyRow,
   adjustSelectionSetAfterRemoveColumn,
+  adjustSelectionSetAfterInsertBodyRow,
+  adjustCoordAfterInsertBodyRow,
 } from './headless/tableGridSparseRemap';
 
 export type GridCellCoord = Readonly<{ r: number; c: number }>;
@@ -45,7 +47,9 @@ export type EditingGridUiAction =
   /** 表格外 pointerdown：已保存编辑态时落到该格；否则清空锁定与选区 */
   | { type: 'pointerDownOutside'; wasEditing: boolean; exitCell: GridCellCoord | null }
   /** 仅结束编辑并保留选中/锁定在格上（配合外部 setValueByCell） */
-  | { type: 'commitEditExit'; cell: GridCellCoord };
+  | { type: 'commitEditExit'; cell: GridCellCoord }
+  /** 插入行后调整选中集合 */
+  | { type: 'afterInsertBodyRow'; bodyRowIndex: number; colCount: number };
 
 export function editingGridUiReducer(
   state: EditingGridUiState,
@@ -129,12 +133,16 @@ export function editingGridUiReducer(
           editingCell: null,
         };
       }
+      // 点击表格外部（非编辑状态）：不做任何修改，保留选中列
+      return state;
+    case 'afterInsertBodyRow':
       return {
         ...state,
-        hoverLockedCell: null,
-        selectedCell: null,
-        selectedCells: new Set<string>(),
-        selectionAnchor: null,
+        editingCell: adjustCoordAfterInsertBodyRow(state.editingCell, action.bodyRowIndex),
+        selectedCell: adjustCoordAfterInsertBodyRow(state.selectedCell, action.bodyRowIndex),
+        selectedCells: adjustSelectionSetAfterInsertBodyRow(state.selectedCells, action.bodyRowIndex, action.colCount),
+        selectionAnchor: adjustCoordAfterInsertBodyRow(state.selectionAnchor, action.bodyRowIndex),
+        hoverLockedCell: adjustCoordAfterInsertBodyRow(state.hoverLockedCell, action.bodyRowIndex),
       };
     default:
       return state;

@@ -14,7 +14,8 @@ export function VTellCompletionMenu({
   onHighlightChange,
   onPick,
   children,
-}: VTellCompletionMenuProps & { children: React.ReactNode }) {
+  containerRef,
+}: VTellCompletionMenuProps & { children: React.ReactNode; containerRef?: React.RefObject<HTMLDivElement | null> }) {
   // Menu items 配置
   const menuItems: MenuProps['items'] = useMemo(
     () =>
@@ -50,6 +51,8 @@ export function VTellCompletionMenu({
         onClick,
       }}
       placement="topLeft"
+      // 将下拉菜单渲染在输入区容器内，使宽度能够跟随
+      getPopupContainer={() => containerRef?.current ?? document.body}
     >
       {children}
     </Dropdown>

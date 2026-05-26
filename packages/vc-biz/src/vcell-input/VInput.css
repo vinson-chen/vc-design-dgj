@@ -32,7 +32,7 @@
 /* Input 区：文本输入框 */
 .vc-biz-vcell-input-textarea {
   width: 100%;
-  line-height: 22px;
+  line-height: 24px;
 }
 
 /* borderless 模式下 textarea 直接带 .ant-input 类，无 wrapper */
@@ -53,7 +53,8 @@
 .vc-biz-vcell-input-btn-slash,
 .vc-biz-vcell-input-btn-add,
 .vc-biz-vcell-input-btn-llm,
-.vc-biz-vcell-input-btn-send {
+.vc-biz-vcell-input-btn-send,
+.vc-biz-vcell-input-btn-cancel {
   height: 32px;
   min-width: 32px;
   padding: 0;
@@ -77,12 +78,14 @@
   color: var(--vc-biz-vcell-input-btn-color);
 }
 
-.vc-biz-vcell-input-btn-send {
+.vc-biz-vcell-input-btn-send,
+.vc-biz-vcell-input-btn-cancel {
   width: 32px;
 }
 
-/* Figma「对话输入区」Tag：品牌浅底 + 主色字（与 MCP 节点 Tag-default / Tag-hover 一致，变量由 shell 注入） */
-.vc-biz-vcell-input-file-tag {
+/* Figma「对话输入区」Tag：品牌浅底 + 主色字 */
+.vc-biz-vcell-input-file-tag,
+.vc-biz-vcell-input-command-tag {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -98,10 +101,12 @@
   box-sizing: border-box;
 }
 
-.vc-biz-vcell-input-file-tag:hover {
+.vc-biz-vcell-input-file-tag:hover,
+.vc-biz-vcell-input-command-tag:hover {
   background: var(--vc-biz-vcell-tag-bg-hover, #d7ecff);
 }
 
+.vc-biz-vcell-input-tag__icon-btn,
 .vc-biz-vcell-input-file-tag__icon-btn {
   flex-shrink: 0;
   display: inline-flex;
@@ -116,6 +121,43 @@
   line-height: 0;
 }
 
+.vc-biz-vcell-input-tag__name,
+.vc-biz-vcell-input-file-tag__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* 指令标签图标切换 */
+.vc-biz-vcell-input-command-tag__icon-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  line-height: 0;
+}
+
+.vc-biz-vcell-input-command-tag__icon-close {
+  display: none !important;
+}
+
+.vc-biz-vcell-input-command-tag:hover .vc-biz-vcell-input-command-tag__icon-default {
+  display: none !important;
+}
+
+.vc-biz-vcell-input-command-tag:hover .vc-biz-vcell-input-command-tag__icon-close {
+  display: inline-flex !important;
+}
+
+/* 文件标签图标切换 */
+
 .vc-biz-vcell-input-file-tag__icon-close {
   display: none !important;
 }
@@ -126,11 +168,4 @@
 
 .vc-biz-vcell-input-file-tag:hover .vc-biz-vcell-input-file-tag__icon-close {
   display: inline-flex !important;
-}
-
-.vc-biz-vcell-input-file-tag__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
 }

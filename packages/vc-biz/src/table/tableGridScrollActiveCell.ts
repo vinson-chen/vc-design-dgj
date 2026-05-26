@@ -26,7 +26,7 @@ export type TableFrozenScrollConfig = Readonly<{
   narrowWidth: number;
   /** 首列窄轨（checkbox/序号/插入行+）；0 表示无该列 */
   narrowLeadWidth: number;
-  minTextColWidth: number;
+  minResizableTextColWidth: number;
   defaultTextColWidth: number;
   /** 未挂载 footer DOM 时估算 sticky 末行高度 */
   frozenFooterRowEstimatePx: number;

@@ -22,9 +22,11 @@ import {
 import { DropdownMenuSidePanelCombo } from './DropdownMenuSidePanelCombo';
 import { useBodyRowSelectionStore } from './bodyRowSelectionStoreContext';
 import { VTableCell } from './VTableCell';
-import { useTableGridEditingDispatchersRef } from './tableGridEditingDispatchersRefContext';
-import { useTableGridEditingStateSelector } from './tableGridEditingStateContext';
+import { useTableGridEditingDispatchersRef, useTableGridEditingStateSelector } from './tableGridEditingContext';
 import { useTableGridConfigContext } from './tableGridConfigContext';
+import { TableCellEditing, getBodyEditTextareaStyle } from './TableCellEditing';
+import { TableCellImage } from './TableCellImage';
+import { TableHeaderCell, getColLetterIndex, HEADER_COL_FIELD_TYPE_KEY } from './TableHeaderCell';
 import { syncBodyEditTextareaHeight } from './bodyEditTextareaAutosize';
 import { cellKey, EDIT_TEXTAREA_MAX_ROWS } from './tableGridConstants';
 import { tableTextClampNStyleFromMetrics } from './tableGridTypography';
@@ -36,25 +38,6 @@ import './tableHeaderContextMenu.css';
 
 /** 表体编辑/选中失焦态：VTableCell 描边 + 内层原生 textarea（与表头 wrap+input 同构） */
 const INSERT_TAIL_STATS_SSR: { total: number; selected: number } = { total: 0, selected: 0 };
-
-const HEADER_COL_FIELD_TYPE_KEY = 'field-type';
-
-const HEADER_COL_TYPE_OPTIONS = [
-  { label: '文本列', value: 'text' as const },
-  { label: '图片列', value: 'image' as const },
-];
-
-/** 将列索引转换为 A-Z 序号标记 */
-function getColLetterIndex(colIndex: number): string {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  if (colIndex < 26) {
-    return letters[colIndex];
-  }
-  // 超过 26 列时使用 AA, AB, ... 格式
-  const firstLetterIndex = Math.floor(colIndex / 26) - 1;
-  const secondLetterIndex = colIndex % 26;
-  return letters[firstLetterIndex] + letters[secondLetterIndex];
-}
 
 function useInsertTailFooterStats(enabled: boolean) {
   const store = useBodyRowSelectionStore();
@@ -396,10 +379,9 @@ function TableGridTextCellInner({
   const cellActive = isInsertColPlaceholder ? false : active || isBodySelectionCell;
   const bodyHoverLocked = !isHeader && isHoverLocked;
   const IMAGE_ADD_BUTTON_SIZE_PX = 32;
-  const LOCKED_TEXT_PANEL_GAP_PX = 2;
-  const LOCKED_TEXT_PANEL_CONTENT_GAP_PX = 5;
-  const LOCKED_TEXT_PANEL_CONTENT_BOTTOM_GAP_PX = 4;
-  const LOCKED_TEXT_PANEL_BOTTOM_GAP_PX = 3;
+  const LOCKED_TEXT_PANEL_GAP_PX = 0;
+  const LOCKED_TEXT_PANEL_CONTENT_GAP_PX = 6;
+  const LOCKED_TEXT_PANEL_CONTENT_BOTTOM_GAP_PX = 5;
   const isEditableBodyDisplayCell =
     isBody &&
     !isInsertRowPlaceholder &&
@@ -449,7 +431,6 @@ function TableGridTextCellInner({
   const headerFieldTypeSubOpenPrevRef = useRef(false);
   const [headerColEditDraftTitle, setHeaderColEditDraftTitle] = useState('');
   const [headerColEditDraftKind, setHeaderColEditDraftKind] = useState<'text' | 'image'>('text');
-  const [textInsetPanelHovered, setTextInsetPanelHovered] = useState(false);
   const headerColumnFieldKind = cfg.columnFieldKindByCol[colIndex] ?? 'text';
   const setHeaderColumnFieldKind = useCallback(
     (kind: 'text' | 'image') => cfg.setColumnFieldKind(colIndex, kind),
@@ -550,8 +531,13 @@ function TableGridTextCellInner({
 
   const headerContextMenuItems = useMemo((): MenuProps['items'] | undefined => {
     if (!canUseHeaderVisibilityMenu) return undefined;
-    const lockedByFreeze =
+    // 隐藏列：冻结列不允许隐藏
+    const lockedByFreezeForHide =
       (cfg.enableFreezeFirstCol && colIndex === 0) ||
+      (cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1);
+    // 删除列：列数 > 2 时允许删除冻结首列（冻结取消，原 B 列变为首列）
+    const lockedByFreezeForDelete =
+      (cfg.enableFreezeFirstCol && colIndex === 0 && cfg.colCount <= 2) ||
       (cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1);
     return [
       {
@@ -574,14 +560,14 @@ function TableGridTextCellInner({
         key: 'hide-column',
         icon: <VcIcon type="browse-off" fontSize={16} />,
         label: '隐藏列',
-        disabled: lockedByFreeze,
+        disabled: lockedByFreezeForHide,
       },
       {
         key: 'delete-column',
         danger: true,
         icon: <VcIcon type="delete" fontSize={16} />,
         label: '删除列',
-        disabled: cfg.colCount <= gridMin || lockedByFreeze,
+        disabled: cfg.colCount <= gridMin || lockedByFreezeForDelete,
       },
     ];
   }, [canUseHeaderVisibilityMenu, cfg.colCount, colIndex, gridMin, headerFieldTypeSubOpen]);
@@ -589,16 +575,21 @@ function TableGridTextCellInner({
   const onHeaderColumnMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
     ({ key, domEvent }) => {
       domEvent.stopPropagation();
-      const lockedByFreeze =
+      // 隐藏列：冻结列不允许隐藏
+      const lockedByFreezeForHide =
         (cfg.enableFreezeFirstCol && colIndex === 0) ||
         (cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1);
+      // 删除列：列数 > 2 时允许删除冻结首列
+      const lockedByFreezeForDelete =
+        (cfg.enableFreezeFirstCol && colIndex === 0 && cfg.colCount <= 2) ||
+        (cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1);
       if (key === 'hide-column') {
-        if (lockedByFreeze) return;
+        if (lockedByFreezeForHide) return;
         setHeaderColumnHidden(colIndex, true);
         return;
       }
       if (key === 'delete-column') {
-        if (lockedByFreeze || cfg.colCount <= gridMin) return;
+        if (lockedByFreezeForDelete || cfg.colCount <= gridMin) return;
         cfg.deleteColumnAt(colIndex);
         setHeaderMenuOpen(false);
       }
@@ -643,10 +634,16 @@ function TableGridTextCellInner({
     : undefined;
 
   const suppressBottomBeforeFrozenTail =
-    cfg.enableFreezeLastRow &&
-    !isInsertRowPlaceholder &&
-    !isHeader &&
-    rowIndex === cfg.rowCount - 1;
+    (cfg.enableFreezeLastRow &&
+      !isInsertRowPlaceholder &&
+      !isHeader &&
+      rowIndex === cfg.rowCount - 1) ||
+    (cfg.pageBodyRowEnd != null &&
+      !isHeader &&
+      bodyRowIndex === cfg.pageBodyRowEnd);
+
+  // 每页最后一行：padding: 0px；非最后一行：padding: 0px 0px 1px
+  const LOCKED_TEXT_PANEL_BOTTOM_GAP_PX = suppressBottomBeforeFrozenTail ? 0 : 1;
 
   const ed = edRef.current;
   if (ed == null) {
@@ -711,16 +708,9 @@ function TableGridTextCellInner({
           paddingBottom: LOCKED_TEXT_PANEL_BOTTOM_GAP_PX,
         }
       : tableCellOverflowStyle;
-  const textInsetPanelBorderColor = isEditing
-    ? vcTokens.color.primary.default
-    : textInsetPanelHovered
-      ? vcTokens.color.primary.borderHover
-      : vcTokens.color.neutral.border.default;
   const wrapBodyTextInsetPanel = (content: React.ReactNode): React.ReactNode =>
     useBodyTextInsetPanel ? (
       <div
-        onMouseEnter={() => setTextInsetPanelHovered(true)}
-        onMouseLeave={() => setTextInsetPanelHovered(false)}
         style={{
           width: '100%',
           minWidth: 0,
@@ -734,7 +724,7 @@ function TableGridTextCellInner({
           paddingBottom: LOCKED_TEXT_PANEL_CONTENT_BOTTOM_GAP_PX,
           paddingLeft: LOCKED_TEXT_PANEL_CONTENT_GAP_PX,
           borderRadius: 0,
-          border: `1px solid ${textInsetPanelBorderColor}`,
+          border: `2px solid ${vcTokens.color.primary.default}`,
           background: vcTokens.color.neutral.background.container,
         }}
       >
@@ -750,7 +740,7 @@ function TableGridTextCellInner({
       pointerHoverResetNonce={cfg.pointerHoverResetNonce}
       className={tableCellClassName}
       hovered={
-        isInsertColPlaceholder && !isHeader
+        (isInsertColPlaceholder && !isHeader) || (isHeader && isHeaderFullColumnSelected)
           ? false
           : hovered || isHoverLocked || isHeaderSelectedLocked || isNonAnchorMultiSelected
       }
@@ -795,6 +785,7 @@ function TableGridTextCellInner({
             ? LOCKED_TEXT_PANEL_GAP_PX
             : m.bodyCellPaddingX
       }
+      contentPaddingLeft={isHeader && cfg.enableShowRowIndex && !isInsertColPlaceholder ? 2 : undefined}
       contentAlignX={isInsertTailFirstVisibleCol ? 'flex-start' : undefined}
       contentAlignY={
         isImageColumnBodyCell
@@ -806,257 +797,25 @@ function TableGridTextCellInner({
       style={tableCellStyle}
     >
       {isHeader ? (
-        isInsertColPlaceholder ? (
-          <VcIcon
-            type="add"
-            fontSize={16}
-            style={{
-              color: vcTokens.color.neutral.text.icon,
-              lineHeight: 1,
-              display: 'block',
-              cursor: 'pointer',
-            }}
-          />
-        ) : isHeaderEditing ? (
-          <div className="vc-biz-table-header-edit-wrap">
-            <input
-              ref={ed.headerEditInputRef}
-              key={`header-edit-${colIndex}`}
-              className="vc-biz-table-header-edit-native-input"
-              type="text"
-              defaultValue={ed.editingDraftRef.current}
-              aria-label="表头名称"
-              onChange={(e) => {
-                ed.editingDraftRef.current = e.target.value;
-              }}
-              onBlur={() => {
-                const api = edRef.current;
-                if (!api) return;
-                if (api.pendingBlurIgnoreCellKeyRef.current === headerEditKey) return;
-                const v = api.getEditingValueForSave();
-                api.setValueByCell((prev) => ({ ...prev, [headerEditKey]: v }));
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  const api = edRef.current;
-                  if (!api) return;
-                  const v = api.getEditingValueForSave();
-                  api.setValueByCell((prev) => ({ ...prev, [headerEditKey]: v }));
-                  api.pendingBlurIgnoreCellKeyRef.current = headerEditKey;
-                  api.scheduleClearEditCommitGuards();
-                  api.setEditingCell(null);
-                  api.editingDraftRef.current = '';
-                  return;
-                }
-                if (e.key === 'Escape') {
-                  e.preventDefault();
-                  const api = edRef.current;
-                  if (!api) return;
-                  api.pendingBlurIgnoreCellKeyRef.current = headerEditKey;
-                  api.scheduleClearEditCommitGuards();
-                  api.setSelectedCell({ r: -1, c: colIndex });
-                  api.setSelectedCells(new Set([`-1:${colIndex}`]));
-                  api.setSelectionAnchor({ r: -1, c: colIndex });
-                  api.setEditingCell(null);
-                  api.editingDraftRef.current = '';
-                }
-              }}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              style={{
-                fontSize: m.fontSizePx,
-                lineHeight: `${m.lineHeightPx}px`,
-                color: vcTokens.color.neutral.text.default,
-              }}
-            />
-          </div>
-        ) : showHeaderColumnMenu && headerContextMenuItems ? (
-          <div className="vc-biz-table-header-cell-inner" onDoubleClick={onHeaderDoubleClick}>
-            {cfg.enableShowRowIndex && !isInsertColPlaceholder ? (
-              <Typography.Text
-                style={{
-                  color: vcTokens.color.neutral.text.placeholder,
-                  fontSize: vcTokens.style.font.size.sm,
-                  width: 20,
-                  textAlign: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                {getColLetterIndex(colIndex)}
-              </Typography.Text>
-            ) : null}
-            <Tooltip
-              title={headerTextTruncated ? fullHeaderLabel : undefined}
-              placement="top"
-              mouseEnterDelay={0.3}
-            >
-              <Typography.Text
-                ref={headerTextRef}
-                style={{
-                  ...m.tableTextStyle,
-                  fontWeight: 500,
-                  flex: 1,
-                  minWidth: 0,
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {headerFitLabel}
-              </Typography.Text>
-            </Tooltip>
-            <DropdownMenuSidePanelCombo
-              open={headerMenuOpen}
-              onOpenChange={(next, info) => {
-                setHeaderMenuOpen(next);
-                if (next) setHeaderFieldTypeSubOpen(false);
-                else if (!info?.keepSidePanel) setHeaderFieldTypeSubOpen(false);
-              }}
-              /** 子面板更宽：bottomRight 与列操作按钮右对齐向左展开，减轻视口右侧 flip 闪现 */
-              placement="bottomRight"
-              alignOffsetX={6}
-              alignOffsetY={12}
-              subMenuTriggerAction="click"
-              replacePrimaryWithSidePanel
-              closeSidePanelOnOverlayMouseLeave={false}
-              overlayClassName="vc-biz-table-header-dropdown"
-              primaryMenuClassName="vc-biz-table-header-combo-menu-wrap"
-              primaryMenuStyle={{
-                borderRadius: vcTokens.style.borderRadius.lg,
-                background: vcTokens.color.neutral.background.container,
-                boxShadow: vcTokens.style.boxShadowSecondary,
-              }}
-              menuItems={headerContextMenuItems}
-              onMenuClick={onHeaderColumnMenuClick}
-              sidePanelTriggerKey={HEADER_COL_FIELD_TYPE_KEY}
-              sidePanelOpen={headerFieldTypeSubOpen}
-              onSidePanelOpenChange={setHeaderFieldTypeSubOpen}
-              showSidePanel
-              renderSidePanel={() => (
-                <div
-                  className="vc-biz-table-header-field-type-inner"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="vc-biz-table-header-col-edit-stack">
-                    <div className="vc-biz-table-header-col-edit-field">
-                      <Typography.Text
-                        className="vc-biz-table-header-col-edit-field-label"
-                        style={headerColEditFieldLabelStyle}
-                      >
-                        列标题
-                      </Typography.Text>
-                      <Input
-                        ref={headerColEditInputRef}
-                        value={headerColEditDraftTitle}
-                        onChange={(e) => setHeaderColEditDraftTitle(e.target.value)}
-                        style={{ width: 240 }}
-                      />
-                    </div>
-                    <div className="vc-biz-table-header-col-edit-field">
-                      <Typography.Text
-                        className="vc-biz-table-header-col-edit-field-label"
-                        style={headerColEditFieldLabelStyle}
-                      >
-                        列类型
-                      </Typography.Text>
-                      <Select
-                        value={headerColEditDraftKind}
-                        onChange={(v) => setHeaderColEditDraftKind(v)}
-                        options={HEADER_COL_TYPE_OPTIONS}
-                        style={{ width: 240 }}
-                        suffixIcon={
-                          <VcIcon
-                            type="chevron-down"
-                            fontSize={16}
-                            style={{
-                              lineHeight: 1,
-                              display: 'block',
-                              color: vcTokens.color.neutral.text.icon,
-                            }}
-                          />
-                        }
-                      />
-                    </div>
-                    <div className="vc-biz-table-header-col-edit-actions">
-                      <Space size={8}>
-                        <Button
-                          type="primary"
-                          aria-label="保存"
-                          onClick={commitHeaderColumnEditPanel}
-                        >
-                          保存
-                        </Button>
-                        <Button aria-label="取消" onClick={cancelHeaderColumnEditPanel}>
-                          取消
-                        </Button>
-                      </Space>
-                    </div>
-                  </div>
-                </div>
-              )}
-              sidePanelTriggerRowClassName="vc-biz-dropdown-side-panel-trigger-row"
-              menuClassName="vc-biz-table-header-combo-menu"
-            >
-              <Button
-                type="text"
-                className="vc-biz-table-header-chevron-btn"
-                aria-label="列操作"
-                aria-expanded={headerMenuOpen || headerFieldTypeSubOpen}
-                icon={
-                  <VcIcon
-                    type="chevron-down"
-                    fontSize={16}
-                    style={{
-                      lineHeight: 1,
-                      display: 'block',
-                      color: vcTokens.color.neutral.text.icon,
-                    }}
-                  />
-                }
-                disabled={isHeaderEditing}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </DropdownMenuSidePanelCombo>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-            {cfg.enableShowRowIndex && !isInsertColPlaceholder ? (
-              <Typography.Text
-                style={{
-                  color: vcTokens.color.neutral.text.placeholder,
-                  fontSize: vcTokens.style.font.size.sm,
-                  width: 20,
-                  textAlign: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                {getColLetterIndex(colIndex)}
-              </Typography.Text>
-            ) : null}
-            <Tooltip
-              title={headerTextTruncated ? fullHeaderLabel : undefined}
-              placement="top"
-              mouseEnterDelay={0.3}
-            >
-              <Typography.Text
-                ref={headerTextRef}
-                onDoubleClick={onHeaderDoubleClick}
-                style={{
-                  ...m.tableTextStyle,
-                  fontWeight: 500,
-                  flex: 1,
-                  minWidth: 0,
-                  display: 'block',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {headerFitLabel}
-              </Typography.Text>
-            </Tooltip>
-          </div>
-        )
+        <TableHeaderCell
+          colIndex={colIndex}
+          isInsertColPlaceholder={isInsertColPlaceholder}
+          headerStored={headerStored}
+          isHeaderEditing={isHeaderEditing}
+          isHeaderSelectedLocked={isHeaderSelectedLocked}
+          isHeaderFullColumnSelected={isHeaderFullColumnSelected}
+          cfg={cfg}
+          typography={m}
+          editingApi={ed}
+          canResizeHeaderTextCol={canResizeHeaderTextCol}
+          showHeaderColumnMenu={showHeaderColumnMenu}
+          headerContextMenuItems={headerContextMenuItems}
+          onHeaderColumnMenuClick={onHeaderColumnMenuClick}
+          headerMenuOpen={headerMenuOpen}
+          headerFieldTypeSubOpen={headerFieldTypeSubOpen}
+          onHeaderMenuOpenChange={setHeaderMenuOpen}
+          onHeaderFieldTypeSubOpenChange={setHeaderFieldTypeSubOpen}
+        />
       ) : isInsertColPlaceholder ? null : isInsertTailFirstVisibleCol ? (
         <div
           style={{
@@ -1122,149 +881,32 @@ function TableGridTextCellInner({
           </Typography.Text>
         </div>
       ) : isInsertRowPlaceholder ? null : isImageColumnBodyCell ? (
-        <div
-          className={
-            'vc-biz-table-image-cell-wrap' +
-            (isHoverLocked ? ' vc-biz-table-image-cell-wrap--hover-locked' : '')
-          }
-          style={
-            {
-              minHeight: imagePreviewSize,
-              ...(isHoverLocked
-                ? {
-                    '--vc-biz-table-image-hover-mask': vcTokens.color.neutral.background.mask,
-                    /** Figma colorTextLabelDK：暗遮罩上白字 70% */
-                    '--vc-biz-table-image-remove-icon': vcTokens.color.menu.textSecondaryOnNav,
-                    /** Figma colorTextSolid */
-                    '--vc-biz-table-image-remove-icon-hover': vcTokens.color.neutral.text.solid,
-                    '--vc-biz-table-image-remove-icon-active': vcTokens.color.menu.textSecondaryOnNav,
-                  }
-                : {}),
-            } as React.CSSProperties
-          }
-        >
-          {imageUrls.map((url, idx) => (
-            <div
-              key={`${url}-${idx}`}
-              className="vc-biz-table-image-item"
-              style={{ width: imagePreviewSize, height: imagePreviewSize }}
-            >
-              <img
-                src={url}
-                alt={`图片 ${idx + 1}`}
-                draggable={false}
-                className="vc-biz-table-image-item-preview"
-              />
-              <button
-                type="button"
-                className="vc-biz-table-image-remove-btn"
-                aria-label="删除图片"
-                onClick={(e) => onRemoveImageAt(idx, e)}
-              >
-                <VcIcon type="close-circle-filled" fontSize={14} />
-              </button>
-            </div>
-          ))}
-          {showImageAddButton ? (
-            <Button
-              type="default"
-              className="vc-biz-table-image-add-btn"
-              aria-label="添加图片"
-              icon={<VcIcon type="add" fontSize={16} />}
-              style={{
-                width: IMAGE_ADD_BUTTON_SIZE_PX,
-                minWidth: IMAGE_ADD_BUTTON_SIZE_PX,
-                height: IMAGE_ADD_BUTTON_SIZE_PX,
-                padding: 0,
-                '--vc-biz-table-image-add-icon': vcTokens.color.neutral.text.icon,
-                '--vc-biz-table-image-add-border-hover': vcTokens.color.primary.hover,
-                '--vc-biz-table-image-add-border-active': vcTokens.color.primary.active,
-                '--vc-biz-table-image-add-icon-hover': vcTokens.color.primary.hover,
-                '--vc-biz-table-image-add-icon-active': vcTokens.color.primary.active,
-              }}
-              onClick={onOpenImageFilePicker}
-            />
-          ) : null}
-          <input
-            ref={imageFileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="vc-biz-table-image-file-input"
-            onChange={onImageFilesSelected}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+        <TableCellImage
+          bodyRowIndex={bodyRowIndex}
+          colIndex={colIndex}
+          imageUrls={imageUrls}
+          isHoverLocked={isHoverLocked}
+          enableEditMode={cfg.enableEditMode}
+          imagePreviewSize={imagePreviewSize}
+          addButtonSize={IMAGE_ADD_BUTTON_SIZE_PX}
+          editingApi={ed}
+          appendImageFiles={(r, c, files) => cfg.appendImageFilesToCell(r, c, files)}
+          removeImageAt={(r, c, idx) => cfg.removeImageAtCell(r, c, idx)}
+        />
       ) : isEditing ? (
-        wrapBodyTextInsetPanel(
-          <div className="vc-biz-table-body-edit-wrap">
-            <textarea
-              key={`edit-${bodyRowIndex}-${colIndex}`}
-              ref={ed.editTextAreaRef}
-              className="vc-biz-table-body-edit-native-textarea"
-              rows={1}
-              defaultValue={ed.editingDraftRef.current}
-              style={bodyEditNativeTextareaStyle}
-              onInput={(e) => {
-                ed.editingDraftRef.current = e.currentTarget.value;
-                syncBodyTextareaHeight(e.currentTarget);
-              }}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onBlur={() => {
-                const api = edRef.current;
-                if (!api) return;
-                if (api.pendingBlurIgnoreCellKeyRef.current === key) {
-                  return;
-                }
-                const v = api.getEditingValueForSave();
-                api.setValueByCell((prev) => ({ ...prev, [key]: v }));
-              }}
-              onKeyDown={(e) => {
-                if (
-                  e.key === 'Enter' &&
-                  !e.shiftKey &&
-                  !e.ctrlKey &&
-                  !e.metaKey &&
-                  !e.altKey &&
-                  !(e.nativeEvent as KeyboardEvent & { isComposing?: boolean }).isComposing
-                ) {
-                  e.preventDefault();
-                  const v = ed.getEditingValueForSave();
-                  ed.setValueByCell((prev) => ({ ...prev, [key]: v }));
-                  ed.pendingBlurIgnoreCellKeyRef.current = key;
-                  ed.suppressDuplicatePrevCellClickSaveRef.current = true;
-                  ed.scheduleClearEditCommitGuards();
-                  ed.setEditingCell(null);
-                  ed.editingDraftRef.current = '';
-
-                  const maxBodyR = cfg.rowCount >= 2 ? cfg.rowCount - 2 : 0;
-                  const nextR = Math.min(maxBodyR, bodyRowIndex + 1);
-                  const next = { r: nextR, c: colIndex };
-                  ed.setSelectedCell(next);
-                  ed.setSelectedCells(new Set([`${next.r}:${next.c}`]));
-                  ed.setSelectionAnchor(next);
-                  ed.setHoverLockedCell(next);
-                  ed.onKeyboardNavigateCell?.({ r: next.r, c: next.c, key: 'ArrowDown' });
-                  return;
-                }
-
-                const exit = e.key === 'Escape' || (e.key === 'Enter' && (e.metaKey || e.ctrlKey));
-                if (!exit) return;
-                e.preventDefault();
-                const v = ed.getEditingValueForSave();
-                ed.setValueByCell((prev) => ({ ...prev, [key]: v }));
-                ed.pendingBlurIgnoreCellKeyRef.current = key;
-                ed.scheduleClearEditCommitGuards();
-                ed.setSelectedCell({ r: bodyRowIndex, c: colIndex });
-                ed.setSelectedCells(new Set([`${bodyRowIndex}:${colIndex}`]));
-                ed.setSelectionAnchor({ r: bodyRowIndex, c: colIndex });
-                ed.setEditingCell(null);
-                ed.editingDraftRef.current = '';
-              }}
-            />
-          </div>
-        )
+        <TableCellEditing
+          bodyRowIndex={bodyRowIndex}
+          colIndex={colIndex}
+          cellKey={key}
+          editingDraft={ed.editingDraftRef.current}
+          typography={m}
+          editingApi={ed}
+          rowCount={cfg.rowCount}
+          wrapWithInsetPanel={useBodyTextInsetPanel}
+          onEnterNavigateDown={(nextR, nextC) => {
+            ed.onKeyboardNavigateCell?.({ r: nextR, c: nextC, key: 'ArrowDown' });
+          }}
+        />
       ) : isSelectedIdle ? (
         wrapBodyTextInsetPanel(
           <div className="vc-biz-table-body-edit-wrap">
@@ -1371,10 +1013,7 @@ function TableGridTextCellInner({
       bodyMouseDownWasSelectedRef.current =
         api.selectedCell?.r === anchor.r && api.selectedCell?.c === anchor.c;
       api.setRangeSelection(anchor, anchor);
-      // 开启编辑模式下，有选中行时框选单元格取消选中行
-      if (bodyRowSelectionStore.getCheckedCount() > 0) {
-        bodyRowSelectionStore.toggleAll(false);
-      }
+      // 不在点击时取消选中行/选中列，只在框选拖拽时取消
       dragSelectingRef.current = true;
       let hasDragged = false;
       let pointerX = e.clientX;
@@ -1400,6 +1039,10 @@ function TableGridTextCellInner({
         if (r === current.r && c === current.c) return;
         current = { r, c };
         hasDragged = true;
+        // 框选拖拽时取消选中行/选中列
+        if (bodyRowSelectionStore.getCheckedCount() > 0) {
+          bodyRowSelectionStore.toggleAll(false);
+        }
         api.setRangeSelection(anchor, current);
       };
 
@@ -1464,15 +1107,6 @@ function TableGridTextCellInner({
         cfg.onInsertColumn();
         return;
       }
-      // 开启编辑模式下，点击或框选单元格时取消选中行
-      if (
-        cfg.enableEditMode &&
-        !isInsertColPlaceholder &&
-        colIndex < cfg.colCount &&
-        bodyRowSelectionStore.getCheckedCount() > 0
-      ) {
-        bodyRowSelectionStore.toggleAll(false);
-      }
       if (cfg.enableEditMode && isHeader && !isInsertColPlaceholder && colIndex < cfg.colCount) {
         e.stopPropagation();
         const maxBodyR = cfg.rowCount >= 2 ? cfg.rowCount - 2 : -1;
@@ -1484,6 +1118,10 @@ function TableGridTextCellInner({
         if (isHeaderFullColumnSelected) {
           ed.clearSelection();
           return;
+        }
+        // 有选中行时先取消选中行
+        if (bodyRowSelectionStore.getCheckedCount() > 0) {
+          bodyRowSelectionStore.toggleAll(false);
         }
         ed.setRangeSelection({ r: 0, c: colIndex }, { r: maxBodyR, c: colIndex });
         return;

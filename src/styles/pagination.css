@@ -1,0 +1,23 @@
+/**
+ * Ant Design Pagination 样式覆盖。
+ */
+
+/* pageSize 选择器样式 */
+.ant-pagination-options-size-changer .ant-select-selector {
+  border-radius: 6px !important;
+  padding-left: 6px !important;
+  padding-right: 0 !important;
+}
+
+/* pageSize 选择器下拉图标位置调整 */
+.ant-pagination-options-size-changer .ant-select-arrow {
+  right: 6px;
+}
+
+/* 简洁分页器输入框：覆盖浏览器默认 padding，确保文本居中 */
+.ant-pagination-simple-pager input[type="text"] {
+  padding-block: 0 !important;
+  padding-inline: 4px !important;
+  text-align: center !important;
+  line-height: 22px !important;
+}

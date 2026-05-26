@@ -35,6 +35,26 @@ export function VTellMessageList({ messages, lastUserMessageId }: VTellMessageLi
     };
   }, [messages, lastUserMessageId]);
 
+  // 判断消息是否是新对话组的开始（用户消息，且前一条不是用户消息）
+  const isNewConversationGroup = (index: number, msg: VTellMessage): boolean => {
+    if (msg.role !== 'user') return false;
+    if (index === 0) return true;
+    return messages[index - 1].role !== 'user';
+  };
+
+  // 获取消息的 margin-top
+  // - 第一条消息：0
+  // - 用户消息：新对话组开始时 32px，连续发送时 8px
+  // - 助手消息：8px（跟随用户消息）
+  const getMessageMarginTop = (index: number, msg: VTellMessage): number => {
+    if (index === 0) return 0;
+    if (msg.role === 'user') {
+      return isNewConversationGroup(index, msg) ? 32 : 8;
+    }
+    // 助手消息：跟随用户消息，间距 8px
+    return 8;
+  };
+
   // 滚动区域样式
   const scrollAreaStyle: React.CSSProperties = {
     flex: 1,
@@ -46,7 +66,6 @@ export function VTellMessageList({ messages, lastUserMessageId }: VTellMessageLi
     scrollbarGutter: 'stable',
     display: 'flex',
     flexDirection: 'column',
-    gap: 12,
   };
 
   // 底部渐变遮罩样式
@@ -73,13 +92,17 @@ export function VTellMessageList({ messages, lastUserMessageId }: VTellMessageLi
       }}
     >
       <div ref={scrollRef} style={scrollAreaStyle}>
-        {messages.map((msg) => (
-          <VTellMessageBubble
+        {messages.map((msg, index) => (
+          <div
             key={msg.id}
-            message={msg}
-            isLatestUser={msg.id === lastUserMessageId && msg.role === 'user'}
-            bubbleRef={latestUserBubbleRef}
-          />
+            style={{ marginTop: getMessageMarginTop(index, msg) }}
+          >
+            <VTellMessageBubble
+              message={msg}
+              isLatestUser={msg.id === lastUserMessageId && msg.role === 'user'}
+              bubbleRef={latestUserBubbleRef}
+            />
+          </div>
         ))}
       </div>
       {/* 底部渐变遮罩 */}

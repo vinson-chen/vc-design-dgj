@@ -12,10 +12,8 @@ export type TableRowsProps = Readonly<{
   enableEditMode: boolean;
   rowMinWidth: number;
   narrowWidth: number;
-  /** @deprecated 使用 `minResizableTextColWidth`，此字段仅为兼容保留 */
-  minTextColWidth: number;
   /** 文本列拖拽最小宽度 */
-  minResizableTextColWidth?: number;
+  minResizableTextColWidth: number;
   /** 默认文本列宽（不含 checkbox/插入列） */
   defaultTextColWidth: number;
   enableColumnResize: boolean;
@@ -78,6 +76,18 @@ export type TableRowsProps = Readonly<{
   setAllColumnsHidden?: (nextHiddenCols: ReadonlySet<number>) => void;
   /** 单元格选中状态 store 回调：TableRows 内部创建后传出 */
   onCellSelectionStore?: (store: CellSelectionStore) => void;
+  /** 显示分页：默认关闭；开启后插入行右侧显示简洁模式分页器 */
+  enablePagination?: boolean;
+  /** 当前页码（1-based），受控模式 */
+  paginationCurrent?: number;
+  /** 每页条数，默认 20 */
+  paginationPageSize?: number;
+  /** 页码变化回调 */
+  onPaginationChange?: (page: number, pageSize: number) => void;
+  /** 当前页表体行起始索引（0-based），用于分页全选 */
+  pageBodyRowStart?: number;
+  /** 当前页表体行结束索引（0-based），用于分页全选 */
+  pageBodyRowEnd?: number;
 }>;
 
 export type TableGridConfigValue = TableRowsProps & {
@@ -115,4 +125,16 @@ export type TableGridStaticConfig = Omit<
   imageUrlsByCell: Readonly<Record<string, ReadonlyArray<string>>>;
   appendImageFilesToCell: (bodyRowIndex: number, colIndex: number, files: readonly File[]) => void;
   removeImageAtCell: (bodyRowIndex: number, colIndex: number, imageIndex: number) => void;
+  /** 显示分页 */
+  enablePagination?: boolean;
+  /** 当前页码 */
+  paginationCurrent?: number;
+  /** 每页条数 */
+  paginationPageSize?: number;
+  /** 页码变化回调 */
+  onPaginationChange?: (page: number, pageSize: number) => void;
+  /** 当前页表体行起始索引（0-based），用于分页全选 */
+  pageBodyRowStart?: number;
+  /** 当前页表体行结束索引（0-based），用于分页全选 */
+  pageBodyRowEnd?: number;
 };

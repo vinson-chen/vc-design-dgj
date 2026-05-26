@@ -1,7 +1,7 @@
 /* CustomTabs：Figma CustomTabs / .tab_item（861:1412），与 SwitchTabs token 对齐 */
 .biz-custom-tabs {
   position: relative;
-  min-width: 320px;
+  min-width: 280px;
   width: 100%;
 }
 
@@ -113,9 +113,9 @@
   color: var(--custom-tabs-color-primary);
 }
 
-/* 选中 + 悬停：active-hover（5% 黑底），有图标时由组件换 more */
-.biz-custom-tabs--tab.is-active:not(.is-menu-open):hover .biz-custom-tabs--surface:not(.is-input) {
-  background: var(--custom-tabs-bg-hover);
+/* 选中项 hover：保持选中底色 */
+.biz-custom-tabs--tab.is-active:hover .biz-custom-tabs--surface:not(.is-input) {
+  background: var(--custom-tabs-bg-active);
 }
 
 /* 选中 + 配置菜单打开 / 按下：active-pressed（10% 黑底） */
@@ -316,4 +316,180 @@
   white-space: nowrap;
   left: -9999px;
   top: -9999px;
+}
+
+/* ===== 垂直模式样式 ===== */
+.biz-custom-tabs.is-vertical {
+  min-width: 0;
+  width: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.biz-custom-tabs.is-vertical .biz-custom-tabs--bar {
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  padding: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.biz-custom-tabs.is-vertical .biz-custom-tabs--bar::after {
+  display: none;
+}
+
+.biz-custom-tabs.is-vertical .biz-custom-tabs--bar::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--custom-tabs-color-border);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.biz-custom-tabs.is-vertical .biz-custom-tabs--nav {
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  align-items: stretch;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  gap: 4px;
+  box-sizing: border-box;
+}
+
+.biz-custom-tabs.is-vertical .biz-custom-tabs--right {
+  position: relative;
+  order: -1;
+  margin-left: 0;
+  padding-left: 0;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 8px 0 8px;
+  border-bottom: none;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+.biz-custom-tabs.is-vertical .biz-custom-tabs--tab {
+  flex: 0 0 auto;
+  width: 100%;
+  max-height: none;
+  align-self: auto;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+}
+
+/* 垂直模式选项 surface：包含图标 + label + more 按钮 */
+.biz-custom-tabs.is-vertical .biz-custom-tabs--surface {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--custom-tabs-item-gap);
+  justify-content: flex-start;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  overflow: hidden;
+  padding: var(--custom-tabs-item-padding-v) 12px;
+}
+
+.biz-custom-tabs.is-vertical .biz-custom-tabs--label {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 垂直模式 more 按钮：在 surface 内部右对齐 */
+.biz-custom-tabs--more-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: auto;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--custom-tabs-color-icon);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  line-height: 20px;
+}
+
+.biz-custom-tabs--more-btn:hover {
+  background: var(--custom-tabs-bg-hover);
+}
+
+.biz-custom-tabs--more-btn:active,
+.biz-custom-tabs--more-btn.is-open {
+  background: var(--custom-tabs-bg-pressed);
+}
+
+.biz-custom-tabs--more-btn:focus-visible {
+  outline: 1px solid var(--custom-tabs-color-primary-border);
+  outline-offset: 1px;
+}
+
+/* 垂直模式激活态：选中项底色 */
+.biz-custom-tabs.is-vertical .biz-custom-tabs--tab.is-active .biz-custom-tabs--surface:not(.is-input) {
+  background: var(--custom-tabs-bg-active);
+  font-weight: var(--custom-tabs-font-weight-active);
+  color: var(--custom-tabs-color-primary);
+}
+
+/* 垂直模式选中项菜单打开态：保持选中底色 */
+.biz-custom-tabs.is-vertical .biz-custom-tabs--tab.is-active.is-menu-open .biz-custom-tabs--surface:not(.is-input),
+.biz-custom-tabs.is-vertical .biz-custom-tabs--tab.is-active:active .biz-custom-tabs--surface:not(.is-input) {
+  background: var(--custom-tabs-bg-active);
+}
+
+/* 垂直模式：隐藏下划线指示器 */
+.biz-custom-tabs.is-vertical .biz-custom-tabs--ink {
+  display: none;
+}
+
+.biz-custom-tabs.is-vertical .biz-custom-tabs--nav-icon-btn {
+  margin-left: 0;
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0 12px;
+  border-radius: var(--custom-tabs-item-radius);
+  height: 40px;
+  min-height: 40px;
+}
+
+.biz-custom-tabs.is-vertical .biz-custom-tabs--nav-icon-btn .vc-icon {
+  margin-right: var(--custom-tabs-item-gap);
+}
+
+/* 垂直模式编辑态输入框宽度自适应 */
+.biz-custom-tabs.is-vertical .biz-custom-tabs--surface.is-input .biz-custom-tabs--input {
+  width: auto !important;
+  min-width: 0;
+  max-width: none;
+  flex: 1;
 }

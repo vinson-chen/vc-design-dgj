@@ -39,3 +39,44 @@
   cursor: col-resize !important;
 }
 
+/* 插入行分页器：确保所有元素垂直居中 */
+[data-vc-biz-table-insert-tail-row] .ant-pagination {
+  display: flex;
+  align-items: center;
+}
+
+[data-vc-biz-table-insert-tail-row] .ant-pagination-item-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: top;
+  line-height: 1;
+}
+
+[data-vc-biz-table-insert-tail-row] .ant-pagination-item-link .iconfont {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: top;
+  line-height: 1;
+}
+
+/* 简洁分页器页码区域居中 */
+[data-vc-biz-table-insert-tail-row] .ant-pagination-simple-pager {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+}
+
+/* 简洁分页器输入框：flexbox 强制居中 + 覆盖浏览器默认 padding */
+[data-vc-biz-table-insert-tail-row] .ant-pagination-simple-pager input {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: top;
+  padding-block: 0 !important;
+  padding-inline: 4px !important;
+  text-align: center !important;
+  line-height: 22px !important;
+}
+

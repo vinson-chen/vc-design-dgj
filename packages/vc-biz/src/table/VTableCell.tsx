@@ -23,6 +23,8 @@ export interface VTableCellProps {
   contentPaddingY?: number;
   /** 非 zoom 分支内容左右 padding */
   contentPaddingX?: number;
+  /** 左 padding 覆盖（优先级高于内部逻辑，用于表头单独控制） */
+  contentPaddingLeft?: number;
   /** 非 zoom 分支内容垂直对齐 */
   contentAlignY?: 'center' | 'flex-start';
   /** 非 compact、非 zoom 时内容槽主轴对齐（水平）；checkbox/序号窄列用 center */
@@ -92,6 +94,7 @@ export function VTableCell({
   onColumnResizeStart,
   contentPaddingY = 8,
   contentPaddingX = 8,
+  contentPaddingLeft,
   contentAlignY = 'center',
   contentAlignX = 'flex-start',
   isLastRow = false,
@@ -133,6 +136,8 @@ export function VTableCell({
         ? 18
         : contentPaddingX;
 
+  const effectivePaddingLeft = contentPaddingLeft ?? contentPaddingX;
+
   const contentLayout: React.CSSProperties = compactVerticalContent
     ? {
         display: 'flex',
@@ -141,7 +146,7 @@ export function VTableCell({
         alignItems: 'center',
         paddingTop: 0,
         paddingBottom: 0,
-        paddingLeft: contentPaddingX,
+        paddingLeft: effectivePaddingLeft,
         paddingRight: contentPaddingRight,
       }
     : {
@@ -151,7 +156,7 @@ export function VTableCell({
         justifyContent: contentAlignX,
         paddingTop: contentPaddingY,
         paddingBottom: contentPaddingY,
-        paddingLeft: contentPaddingX,
+        paddingLeft: effectivePaddingLeft,
         paddingRight: contentPaddingRight,
       };
 

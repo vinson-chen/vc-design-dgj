@@ -32,3 +32,18 @@
   vertical-align: middle;
 }
 
+/* 分页器每页条数选择器：下拉面板打开时不显示光标 */
+.ant-pagination-options .ant-select-selection-search-input {
+  cursor: pointer;
+  caret-color: transparent;
+}
+
+/* 分页器迷你尺寸：每页条数选择器高度统一为 24px */
+.ant-pagination.ant-pagination-mini .ant-select-selector {
+  height: 24px !important;
+}
+
+.ant-pagination.ant-pagination-mini .ant-select-selection-item {
+  line-height: 22px !important;
+}
+

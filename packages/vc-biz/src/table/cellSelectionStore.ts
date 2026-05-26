@@ -76,12 +76,23 @@ export class CellSelectionStore {
   private rowCount = 0;
   private colCount = 0;
 
+  /** 外部（如 Vtell）通过此回调反向更新表格编辑状态 */
+  externalSelectionHandler?: (cells: ReadonlySet<string>) => void;
+
   /** 更新选中集合（由 TableRows 内部调用） */
   setSelectedCells(cells: ReadonlySet<string>): void {
     if (cells === this.selectedCells) return;
     this.selectedCells = cells;
     this.summaryCache = null; // 清除缓存
     this.emitSelection();
+  }
+
+  /** 从外部（如 Vtell hashtag）选中所有单元格，同时反向同步到表格编辑状态 */
+  setExternalSelection(cells: ReadonlySet<string>): void {
+    this.selectedCells = cells;
+    this.summaryCache = null;
+    this.emitSelection();
+    this.externalSelectionHandler?.(cells);
   }
 
   /** 更新行列数（用于计算"全选"判断） */

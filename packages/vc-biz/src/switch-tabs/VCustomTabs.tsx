@@ -72,9 +72,23 @@ export type VCustomTabsProps = Readonly<{
    * 若提供：在添加菜单中于「自定义」下展示「导入表格」，选 .xlsx/.xls 后回调（宿主按新建表格再导入处理，与聊天附件导入一致）。
    */
   onAddMenuImportTableFile?: (file: File) => void | Promise<void>;
+  /**
+   * 若提供：在选中态表格选项菜单中展示「导入表格」，选 .xlsx/.xls 后回调（宿主按替换当前表格数据处理）。
+   */
+  onConfigMenuImportTableFile?: (file: File) => void | Promise<void>;
+  /**
+   * 若提供：在添加菜单中「商品」选项启用，点击后回调（宿主按新建商品模板表格处理）。
+   */
+  onAddMenuGoods?: () => void | Promise<void>;
   rightSlot?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  /** 布局模式：水平（默认）或垂直 */
+  mode?: 'horizontal' | 'vertical';
+  /** 垂直模式宽度，默认 240px */
+  verticalWidth?: number;
+  /** 垂直模式高度，默认 100% */
+  verticalHeight?: number | string;
 }>;
 /** @deprecated Use VCustomTabsProps instead */
 export type CustomTabsProps = VCustomTabsProps;
@@ -87,9 +101,14 @@ export default function VCustomTabs({
   showIcon = true,
   activeTabFieldConfig = null,
   onAddMenuImportTableFile,
+  onConfigMenuImportTableFile,
+  onAddMenuGoods,
   rightSlot,
   className,
   style,
+  mode = 'horizontal',
+  verticalWidth = 240,
+  verticalHeight = '100%',
 }: VCustomTabsProps) {
   const navRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -98,6 +117,7 @@ export default function VCustomTabs({
   const moreRef = useRef<HTMLButtonElement | null>(null);
   const addRef = useRef<HTMLButtonElement | null>(null);
   const addImportFileInputRef = useRef<HTMLInputElement | null>(null);
+  const configImportFileInputRef = useRef<HTMLInputElement | null>(null);
   const rightRef = useRef<HTMLDivElement | null>(null);
   const editInputRef = useRef<InputRef | null>(null);
 
@@ -106,7 +126,7 @@ export default function VCustomTabs({
   const [moreWidth, setMoreWidth] = useState(0);
 
   const [addOpen, setAddOpen] = useState(false);
-  const [configOpen, setConfigOpen] = useState(false);
+  const [configOpenKey, setConfigOpenKey] = useState<string | null>(null);
   const [fieldConfigSubOpen, setFieldConfigSubOpen] = useState(false);
   /** 供 TableFieldConfigPanel 计算 max-height：与「字段配置」行对齐时用该行底边 */
   const fieldConfigMeasureTriggerRef = useRef<HTMLElement | null>(null);
@@ -128,6 +148,9 @@ export default function VCustomTabs({
   const [deleteAnchor, setDeleteAnchor] = useState<{ left: number; top: number } | null>(null);
 
   const [inkBar, setInkBar] = useState({ left: 0, width: 0, visible: false });
+  const [inkBarTop, setInkBarTop] = useState(0);
+
+  const isVertical = mode === 'vertical';
 
   const activeItem = useMemo(
     () => items.find((t) => t.key === activeKey) ?? items[0],
@@ -143,11 +166,16 @@ export default function VCustomTabs({
 
   /**
    * 溢出规则：
-   * - 收纳列表顺序保持 items 原始顺序；
-   * - 从收纳选中（pinActiveRight）：选中项固定在外层最右，左侧从左到右尽量塞入，空间不足等价于从右往左回收；
-   * - 外层切换（!pinActiveRight）：与 SwitchTabs 一致从左到右铺满，选中项不强制到最右。
+   * - 垂直模式：无溢出，所有项可见，直接滚动
+   * - 水平模式：
+   *   - 收纳列表顺序保持 items 原始顺序；
+   *   - 从收纳选中（pinActiveRight）：选中项固定在外层最右，左侧从左到右尽量塞入，空间不足等价于从右往左回收；
+   *   - 外层切换（!pinActiveRight）：与 SwitchTabs 一致从左到右铺满，选中项不强制到最右。
    */
   const { visibleItems, hiddenItems } = useMemo(() => {
+    if (isVertical) {
+      return { visibleItems: items, hiddenItems: [] as CustomTabItem[] };
+    }
     if (items.length === 0) {
       return { visibleItems: [] as CustomTabItem[], hiddenItems: [] as CustomTabItem[] };
     }
@@ -225,18 +253,28 @@ export default function VCustomTabs({
     const tabEl = activeItem ? tabRefs.current[activeItem.key] : null;
     if (!nav || !tabEl) {
       setInkBar({ left: 0, width: 0, visible: false });
+      setInkBarTop(0);
       return;
     }
     const nr = nav.getBoundingClientRect();
     const tr = tabEl.getBoundingClientRect();
-    setInkBar({
-      left: tr.left - nr.left,
-      width: tr.width,
-      visible: true,
-    });
-  }, [activeItem]);
+    if (isVertical) {
+      // 垂直模式：顶部位置，宽度固定为指示器自身宽度
+      setInkBarTop(tr.top - nr.top);
+      setInkBar({ left: 0, width: 3, visible: true });
+    } else {
+      // 水平模式：左侧位置和宽度
+      setInkBar({
+        left: tr.left - nr.left,
+        width: tr.width,
+        visible: true,
+      });
+      setInkBarTop(0);
+    }
+  }, [activeItem, isVertical]);
 
   useLayoutEffect(() => {
+    if (isVertical) return; // 垂直模式无需测量宽度
     const nextWidths: Record<string, number> = {};
     items.forEach((item) => {
       const w = measureRefs.current[item.key]?.offsetWidth ?? 0;
@@ -246,13 +284,24 @@ export default function VCustomTabs({
     setItemWidths(nextWidths);
     setMoreWidth(mw);
     updateInkBar();
-  }, [updateInkBar, items, showIcon, editingKey]);
+  }, [updateInkBar, items, showIcon, editingKey, isVertical]);
 
   useLayoutEffect(() => {
     updateInkBar();
-  }, [updateInkBar, items, activeKey, editingKey, configOpen, showIcon, overflowOpen, visibleItems, hiddenItems]);
+  }, [updateInkBar, items, activeKey, editingKey, configOpenKey, showIcon, overflowOpen, visibleItems, hiddenItems]);
 
   useEffect(() => {
+    if (isVertical) {
+      // 垂直模式：监听高度变化更新指示器
+      const nav = navRef.current;
+      if (!nav) return;
+      const observer = new ResizeObserver(() => {
+        updateInkBar();
+      });
+      observer.observe(nav);
+      return () => observer.disconnect();
+    }
+    // 水平模式：监听宽度变化
     const nav = navRef.current;
     if (!nav) return;
     const observer = new ResizeObserver(() => {
@@ -268,7 +317,7 @@ export default function VCustomTabs({
     const rw = rightRef.current?.offsetWidth ?? 0;
     setContainerWidth(Math.max(0, inner - aw - rw));
     return () => observer.disconnect();
-  }, [readNavContentWidth, updateInkBar]);
+  }, [readNavContentWidth, updateInkBar, isVertical]);
 
   useLayoutEffect(() => {
     const nav = navRef.current;
@@ -317,16 +366,17 @@ export default function VCustomTabs({
       ({
         '--custom-tabs-bg-bar': vcTokens.color.neutral.background.container,
         '--custom-tabs-color-text': vcTokens.color.neutral.text.default,
+        '--custom-tabs-color-icon': vcTokens.color.neutral.text.icon,
         '--custom-tabs-color-primary': vcTokens.color.primary.default,
         '--custom-tabs-color-primary-border': vcTokens.color.primary.border,
         '--custom-tabs-color-border': vcTokens.color.neutral.border.default,
         '--custom-tabs-bg-hover': vcTokens.color.neutral.fill.secondary,
         '--custom-tabs-bg-pressed': vcTokens.color.neutral.fill.default,
+        '--custom-tabs-bg-active': vcTokens.color.neutral.background.controlItemBgActive,
         '--custom-tabs-item-gap': `${vcTokens.size.padding.xs}px`,
-        '--custom-tabs-item-min-height': `${vcTokens.size.controlHeight.md}px`,
         '--custom-tabs-item-padding-v': '5px',
-        '--custom-tabs-item-padding-h': `${vcTokens.size.padding.sm}px`,
-        '--custom-tabs-item-radius': `${vcTokens.style.borderRadius.md}px`,
+        '--custom-tabs-item-padding-h': '12px',
+        '--custom-tabs-item-radius': '8px',
         '--custom-tabs-font-size': `${vcTokens.style.font.size.base}px`,
         '--custom-tabs-line-height': `${vcTokens.style.font.lineHeight.base}px`,
         '--custom-tabs-font-weight-default': 400,
@@ -369,13 +419,13 @@ export default function VCustomTabs({
     onItemsChange([...items.slice(0, idx + 1), dup, ...items.slice(idx + 1)]);
     setPinActiveRight(false);
     onActiveKeyChange(dup.key);
-    setConfigOpen(false);
+    setConfigOpenKey(null);
     setOverflowOpen(false);
   }, [activeKey, items, onActiveKeyChange, onItemsChange]);
 
   const openDeleteConfirm = useCallback(() => {
     if (items.length <= 1) return;
-    setConfigOpen(false);
+    setConfigOpenKey(null);
     setOverflowOpen(false);
     const el = tabRefs.current[activeKey];
     const r = el?.getBoundingClientRect();
@@ -399,7 +449,7 @@ export default function VCustomTabs({
 
   const beginRename = useCallback(
     (item: CustomTabItem) => {
-      setConfigOpen(false);
+      setConfigOpenKey(null);
       renameBaselineRef.current = item.label;
       setEditDraft(item.label);
       setEditingKey(item.key);
@@ -423,7 +473,7 @@ export default function VCustomTabs({
       rows.push({
         key: 'custom:import',
         label: '导入表格',
-        icon: <VcIcon type="upload" fontSize={16} />,
+        icon: <VcIcon type="cloud-upload" fontSize={16} />,
         className: 'biz-custom-tabs-add-import-item',
       });
     }
@@ -431,7 +481,7 @@ export default function VCustomTabs({
       {
         key: 'goods',
         label: '商品',
-        disabled: true,
+        disabled: !onAddMenuGoods,
         icon: <VcIcon type="control-platform" fontSize={16} />,
       },
       {
@@ -442,7 +492,7 @@ export default function VCustomTabs({
       },
     );
     return rows;
-  }, [onAddMenuImportTableFile]);
+  }, [onAddMenuImportTableFile, onAddMenuGoods]);
 
   const openAddMenuImportFilePicker = useCallback(() => {
     setAddOpen(false);
@@ -464,8 +514,12 @@ export default function VCustomTabs({
       const k = String(info.key);
       if (k === 'custom') onAddKind('custom');
       else if (k === 'custom:import') openAddMenuImportFilePicker();
+      else if (k === 'goods' && onAddMenuGoods) {
+        setAddOpen(false);
+        void Promise.resolve(onAddMenuGoods());
+      }
     },
-    [onAddKind, openAddMenuImportFilePicker],
+    [onAddKind, openAddMenuImportFilePicker, onAddMenuGoods],
   );
 
   const closeFieldConfigSub = useCallback(() => {
@@ -494,6 +548,13 @@ export default function VCustomTabs({
         icon: <VcIcon type="file-copy" fontSize={16} />,
       },
     ];
+    if (onConfigMenuImportTableFile) {
+      rows.push({
+        key: 'import',
+        label: blurOtherItems('导入表格'),
+        icon: <VcIcon type="cloud-upload" fontSize={16} />,
+      });
+    }
     if (activeTabFieldConfig) {
       rows.push({
         key: 'fieldConfig',
@@ -527,7 +588,24 @@ export default function VCustomTabs({
     fieldConfigSubOpen,
     closeFieldConfigSub,
     openFieldConfigSub,
+    onConfigMenuImportTableFile,
   ]);
+
+  const openConfigMenuImportFilePicker = useCallback(() => {
+    setConfigOpenKey(null);
+    setFieldConfigSubOpen(false);
+    queueMicrotask(() => configImportFileInputRef.current?.click());
+  }, []);
+
+  const onConfigImportFileInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file || !onConfigMenuImportTableFile) return;
+      void Promise.resolve(onConfigMenuImportTableFile(file));
+    },
+    [onConfigMenuImportTableFile],
+  );
 
   const onConfigMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
     ({ key, domEvent }) => {
@@ -537,22 +615,26 @@ export default function VCustomTabs({
         const cur = items.find((t) => t.key === activeKey);
         if (!cur) return;
         beginRename(cur);
-        setConfigOpen(false);
+        setConfigOpenKey(null);
         return;
       }
       if (key === 'copy') {
         setFieldConfigSubOpen(false);
         onCopyActive();
-        setConfigOpen(false);
+        setConfigOpenKey(null);
+        return;
+      }
+      if (key === 'import') {
+        openConfigMenuImportFilePicker();
         return;
       }
       if (key === 'delete') {
         setFieldConfigSubOpen(false);
         openDeleteConfirm();
-        setConfigOpen(false);
+        setConfigOpenKey(null);
       }
     },
-    [activeKey, beginRename, items, onCopyActive, openDeleteConfirm],
+    [activeKey, beginRename, items, onCopyActive, openDeleteConfirm, openConfigMenuImportFilePicker],
   );
 
   const overflowMenuItems: MenuProps['items'] = useMemo(() => {
@@ -577,7 +659,7 @@ export default function VCustomTabs({
       info.domEvent.stopPropagation();
       const k = String(info.key);
       if (!k.startsWith('tab:')) return;
-      setConfigOpen(false);
+      setConfigOpenKey(null);
       setPinActiveRight(true);
       onActiveKeyChange(k.slice(4));
     },
@@ -590,14 +672,61 @@ export default function VCustomTabs({
     if (!resolved) return null;
     const tabIcon = renderSwitchTabIcon(resolved);
     if (!tabIcon) return null;
+    // 垂直模式：不再替换图标为 chevron-down-circle
+    if (isVertical) return tabIcon;
+    // 水平模式：激活态 hover 时替换为 more 图标
     const useMore =
       isActive &&
-      (hoveredKey === item.key || configOpen) &&
+      (hoveredKey === item.key || configOpenKey === item.key) &&
       (editingKey !== item.key);
     if (useMore) {
       return <VcIcon type="chevron-down-circle" fontSize={16} />;
     }
     return tabIcon;
+  };
+
+  const renderMoreButton = (item: CustomTabItem, isActive: boolean) => {
+    if (!isVertical) return null;
+    // 非选中项：只有悬停时才显示
+    const isHovered = hoveredKey === item.key;
+    if (!isActive && !isHovered) return null;
+    const isOpen = configOpenKey === item.key;
+    return (
+      <Dropdown
+        trigger={['click']}
+        open={isOpen}
+        onOpenChange={(o) => {
+          if (o) {
+            setOverflowOpen(false);
+            setFieldConfigSubOpen(false);
+            setConfigOpenKey(item.key);
+          } else {
+            setConfigOpenKey(null);
+          }
+        }}
+        menu={{ items: configMenuItems, onClick: onConfigMenuClick }}
+        overlayClassName="biz-custom-tabs-dropdown"
+      >
+        <button
+          type="button"
+          className={`biz-custom-tabs--more-btn${isOpen ? ' is-open' : ''}`}
+          aria-label="更多选项"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <VcIcon type="chevron-down" fontSize={16} />
+        </button>
+      </Dropdown>
+    );
+  };
+
+  const renderTabContent = (item: CustomTabItem, isActive: boolean) => {
+    return (
+      <span className="biz-custom-tabs--surface">
+        {showIcon ? renderTabIcon(item, isActive) : null}
+        <span className="biz-custom-tabs--label">{item.label}</span>
+        {isVertical && renderMoreButton(item, isActive)}
+      </span>
+    );
   };
 
   const renderEditingSurface = (item: CustomTabItem) => {
@@ -626,9 +755,16 @@ export default function VCustomTabs({
   };
 
   return (
-    <div className={`biz-custom-tabs${className ? ` ${className}` : ''}`} style={{ ...cssVars, ...style }}>
+    <div
+      className={`biz-custom-tabs${isVertical ? ' is-vertical' : ''}${className ? ` ${className}` : ''}`}
+      style={{
+        ...cssVars,
+        ...(isVertical ? { width: verticalWidth, height: verticalHeight } : {}),
+        ...style,
+      }}
+    >
       <div className="biz-custom-tabs--bar">
-        <div className="biz-custom-tabs--nav" ref={navRef} role="tablist" aria-orientation="horizontal">
+        <div className="biz-custom-tabs--nav" ref={navRef} role="tablist" aria-orientation={isVertical ? 'vertical' : 'horizontal'}>
           {visibleItems.map((item) => {
             const isActive = activeItem?.key === item.key;
             const isEditing = editingKey === item.key;
@@ -652,19 +788,38 @@ export default function VCustomTabs({
             }
 
             if (isActive) {
+              // 垂直模式：more 按钮触发菜单，选项点击不触发菜单
+              if (isVertical) {
+                return (
+                  <div
+                    key={item.key}
+                    className={`biz-custom-tabs--tab is-active${configOpenKey === activeKey ? ' is-menu-open' : ''}`}
+                    ref={(el) => {
+                      tabRefs.current[item.key] = el;
+                    }}
+                    role="tab"
+                    aria-selected
+                    onMouseEnter={() => setHoveredKey(item.key)}
+                    onMouseLeave={() => setHoveredKey(null)}
+                  >
+                    {renderTabContent(item, true)}
+                  </div>
+                );
+              }
+              // 水平模式：整选项触发菜单
               return (
                 <DropdownMenuSidePanelCombo
                   key={item.key}
-                  open={configOpen}
+                  open={configOpenKey === activeKey}
                   onOpenChange={(nextOpen) => {
                     if (editingKey) return;
                     if (nextOpen) {
                       setOverflowOpen(false);
                       setFieldConfigSubOpen(false);
-                      setConfigOpen(true);
+                      setConfigOpenKey(activeKey);
                       return;
                     }
-                    setConfigOpen(false);
+                    setConfigOpenKey(null);
                   }}
                   overlayClassName="biz-custom-tabs-dropdown"
                   comboClassName="biz-custom-tabs-config-combo"
@@ -701,9 +856,9 @@ export default function VCustomTabs({
                     type="button"
                     role="tab"
                     aria-selected
-                    aria-expanded={configOpen}
+                    aria-expanded={configOpenKey === activeKey}
                     aria-haspopup="menu"
-                    className={`biz-custom-tabs--tab is-active${configOpen ? ' is-menu-open' : ''}`}
+                    className={`biz-custom-tabs--tab is-active${configOpenKey === activeKey ? ' is-menu-open' : ''}`}
                     ref={(el) => {
                       tabRefs.current[item.key] = el;
                     }}
@@ -720,9 +875,8 @@ export default function VCustomTabs({
             }
 
             return (
-              <button
+              <div
                 key={item.key}
-                type="button"
                 role="tab"
                 aria-selected={false}
                 className="biz-custom-tabs--tab"
@@ -730,7 +884,7 @@ export default function VCustomTabs({
                   tabRefs.current[item.key] = el;
                 }}
                 onClick={() => {
-                  setConfigOpen(false);
+                  setConfigOpenKey(null);
                   setOverflowOpen(false);
                   setPinActiveRight(false);
                   onActiveKeyChange(item.key);
@@ -738,20 +892,17 @@ export default function VCustomTabs({
                 onMouseEnter={() => setHoveredKey(item.key)}
                 onMouseLeave={() => setHoveredKey(null)}
               >
-                <span className="biz-custom-tabs--surface">
-                  {renderTabIcon(item, false)}
-                  <span className="biz-custom-tabs--label">{item.label}</span>
-                </span>
-              </button>
+                {renderTabContent(item, false)}
+              </div>
             );
           })}
 
-          {hiddenItems.length > 0 ? (
+          {hiddenItems.length > 0 && !isVertical ? (
             <Dropdown
               trigger={['click']}
               open={overflowOpen}
               onOpenChange={(o) => {
-                if (o) setConfigOpen(false);
+                if (o) setConfigOpenKey(null);
                 setOverflowOpen(o);
               }}
               menu={{ items: overflowMenuItems, onClick: onOverflowMenuClick }}
@@ -770,25 +921,27 @@ export default function VCustomTabs({
             </Dropdown>
           ) : null}
 
-          <Dropdown
-            trigger={['click']}
-            open={addOpen}
-            onOpenChange={(o) => {
-              if (o) setOverflowOpen(false);
-              setAddOpen(o);
-            }}
-            menu={{ items: addMenuItems, onClick: onAddMenuClick }}
-            overlayClassName="biz-custom-tabs-dropdown"
-          >
-            <button
-              ref={addRef}
-              type="button"
-              className={`biz-custom-tabs--nav-icon-btn${addOpen ? ' is-menu-open' : ''}`}
-              aria-label="添加选项"
+          {!isVertical && (
+            <Dropdown
+              trigger={['click']}
+              open={addOpen}
+              onOpenChange={(o) => {
+                if (o) setOverflowOpen(false);
+                setAddOpen(o);
+              }}
+              menu={{ items: addMenuItems, onClick: onAddMenuClick }}
+              overlayClassName="biz-custom-tabs-dropdown"
             >
-              <VcIcon type="add" fontSize={16} />
-            </button>
-          </Dropdown>
+              <button
+                ref={addRef}
+                type="button"
+                className={`biz-custom-tabs--nav-icon-btn${addOpen ? ' is-menu-open' : ''}`}
+                aria-label="添加选项"
+              >
+                <VcIcon type="add" fontSize={16} />
+              </button>
+            </Dropdown>
+          )}
           {onAddMenuImportTableFile ? (
             <input
               ref={addImportFileInputRef}
@@ -800,25 +953,63 @@ export default function VCustomTabs({
               onChange={onAddImportFileInputChange}
             />
           ) : null}
+          {onConfigMenuImportTableFile ? (
+            <input
+              ref={configImportFileInputRef}
+              type="file"
+              accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+              style={{ display: 'none' }}
+              aria-hidden
+              tabIndex={-1}
+              onChange={onConfigImportFileInputChange}
+            />
+          ) : null}
 
           <div
             className={`biz-custom-tabs--ink${inkBar.visible ? ' is-visible' : ''}`}
-            style={{
-              transform: `translateX(${inkBar.left}px)`,
-              width: inkBar.width,
-            }}
+            style={isVertical
+              ? { transform: `translateY(${inkBarTop}px)`, width: inkBar.width }
+              : { transform: `translateX(${inkBar.left}px)`, width: inkBar.width }
+            }
           />
-          <div className="biz-custom-tabs--right" ref={rightRef}>
-            {rightSlot ?? (
-              <Button
-                type="text"
-                icon={<VcIcon type="user" fontSize={16} />}
-                className="biz-custom-tabs--right-default-btn"
-                aria-label="用户"
-              />
-            )}
-          </div>
+          {!isVertical && (
+            <div className="biz-custom-tabs--right" ref={rightRef}>
+              {rightSlot === undefined ? (
+                <Button
+                  type="text"
+                  icon={<VcIcon type="user" fontSize={16} />}
+                  className="biz-custom-tabs--right-default-btn"
+                  aria-label="用户"
+                />
+              ) : rightSlot}
+            </div>
+          )}
         </div>
+        {isVertical && (
+          <div className="biz-custom-tabs--right" ref={rightRef}>
+            <Dropdown
+              trigger={['click']}
+              open={addOpen}
+              onOpenChange={(o) => {
+                if (o) setOverflowOpen(false);
+                setAddOpen(o);
+              }}
+              menu={{ items: addMenuItems, onClick: onAddMenuClick }}
+              overlayClassName="biz-custom-tabs-dropdown"
+            >
+              <button
+                ref={addRef}
+                type="button"
+                className={`biz-custom-tabs--nav-icon-btn${addOpen ? ' is-menu-open' : ''}`}
+                aria-label="添加选项"
+              >
+                <VcIcon type="add" fontSize={16} />
+                <span style={{ marginLeft: 8 }}>添加</span>
+              </button>
+            </Dropdown>
+            {rightSlot}
+          </div>
+        )}
       </div>
 
       <Popconfirm

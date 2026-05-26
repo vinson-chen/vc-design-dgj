@@ -5,6 +5,7 @@ import { buildAntdTheme } from '../theme/buildAntdTheme';
 import '../icons/iconfont.css';
 import '../styles/antdButtonIconPatch.css';
 import '../styles/selectionPanel.css';
+import '../styles/pagination.css';
 
 export interface VcConfigProviderProps extends Omit<ConfigProviderProps, 'theme'> {
   /**
@@ -37,6 +38,7 @@ export const VcConfigProvider: React.FC<PropsWithChildren<VcConfigProviderProps>
     <ConfigProvider
       locale={zhCN}
       theme={theme}
+      wave={{ disabled: false }}
       {...rest}
     >
       {children}

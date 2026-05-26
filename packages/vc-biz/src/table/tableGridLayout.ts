@@ -8,7 +8,7 @@ export type TableRowGridColumnsParams = Readonly<{
   colCount: number;
   visibleColIndexes?: ReadonlyArray<number>;
   enableInsertRowCol: boolean;
-  minTextColWidth: number;
+  minResizableTextColWidth: number;
   defaultTextColWidth: number;
   colWidths: ReadonlyArray<number | null>;
   enableColumnResize: boolean;

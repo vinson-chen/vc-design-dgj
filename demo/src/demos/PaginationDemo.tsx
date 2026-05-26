@@ -94,6 +94,21 @@ export default function PaginationDemo() {
 
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
+          迷你简洁模式
+        </h2>
+        <div
+          style={{
+            background: vcTokens.color.neutral.background.layout,
+            borderRadius: vcTokens.style.borderRadius.lg,
+            padding: 24,
+          }}
+        >
+          <Pagination simple size="small" defaultCurrent={1} total={80} pageSize={20} />
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: 16, marginBottom: 12, color: vcTokens.color.neutral.text.label }}>
           受控
         </h2>
         <div

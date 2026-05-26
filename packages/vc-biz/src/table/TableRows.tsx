@@ -10,9 +10,8 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { vcTokens } from 'vc-design';
 import { BodyRowSelectionStoreContext } from './bodyRowSelectionStoreContext';
 import { CellSelectionStore } from './cellSelectionStore';
-import { TableGridEditingDispatchersRefContext } from './tableGridEditingDispatchersRefContext';
-import { TableGridEditingStateContext } from './tableGridEditingStateContext';
-import type { TableGridEditingStateSlice } from './tableGridEditingStateContext';
+import { TableGridEditingContext } from './tableGridEditingContext';
+import type { TableGridEditingContextValue } from './tableGridEditingContext';
 import { TableGridConfigContext } from './tableGridConfigContext';
 import TableGridRow from './TableGridRow';
 import { TableRowHoverStoreContext } from './tableRowHoverStoreContext';
@@ -25,6 +24,11 @@ import {
   getTableBodyVirtualOverscan,
   TABLE_BODY_BG_DEFAULT,
 } from './tableGridConstants';
+import {
+  remapImageUrlsByCellAfterRemoveColumn,
+  remapImageUrlsByCellAfterRemoveBodyRow,
+  remapColumnFieldKindsAfterRemoveColumn,
+} from './headless/tableGridSparseRemap';
 import { syncBodyEditTextareaHeight } from './bodyEditTextareaAutosize';
 import { getTableGridTypographyMetrics } from './tableGridTypography';
 import type { TableFrozenScrollConfig } from './tableGridScrollActiveCell';
@@ -51,55 +55,6 @@ function rangeExtractorPinHeader(range: Range) {
   const base = defaultRangeExtractor(range);
   if (base.includes(0)) return base;
   return [0, ...base].sort((a, b) => a - b);
-}
-
-function remapImageUrlsByCellAfterRemoveColumn(
-  prev: Readonly<Record<string, ReadonlyArray<string>>>,
-  colIndex: number
-): Record<string, ReadonlyArray<string>> {
-  const next: Record<string, ReadonlyArray<string>> = {};
-  for (const [k, list] of Object.entries(prev)) {
-    const [rRaw, cRaw] = k.split('-');
-    const r = Number(rRaw);
-    const c = Number(cRaw);
-    if (Number.isNaN(r) || Number.isNaN(c)) continue;
-    if (c === colIndex) continue;
-    const nk = c > colIndex ? cellKey(r, c - 1) : k;
-    next[nk] = list;
-  }
-  return next;
-}
-
-function remapImageUrlsByCellAfterRemoveBodyRow(
-  prev: Readonly<Record<string, ReadonlyArray<string>>>,
-  bodyRowIndex: number
-): Record<string, ReadonlyArray<string>> {
-  const next: Record<string, ReadonlyArray<string>> = {};
-  for (const [k, list] of Object.entries(prev)) {
-    const [rRaw, cRaw] = k.split('-');
-    const r = Number(rRaw);
-    const c = Number(cRaw);
-    if (Number.isNaN(r) || Number.isNaN(c)) continue;
-    if (r === bodyRowIndex) continue;
-    const nk = r > bodyRowIndex ? cellKey(r - 1, c) : k;
-    next[nk] = list;
-  }
-  return next;
-}
-
-function remapColumnFieldKindsAfterRemoveColumn(
-  prev: Readonly<Record<number, TableColumnFieldKind>>,
-  colIndex: number
-): Record<number, TableColumnFieldKind> {
-  const next: Record<number, TableColumnFieldKind> = {};
-  for (const [kRaw, kind] of Object.entries(prev)) {
-    const c = Number(kRaw);
-    if (Number.isNaN(c)) continue;
-    if (c === colIndex) continue;
-    const nk = c > colIndex ? c - 1 : c;
-    next[nk] = kind;
-  }
-  return next;
 }
 
 function canScrollElementByDelta(el: HTMLElement, dX: number, dY: number): boolean {
@@ -133,8 +88,7 @@ export default function TableRows(props: TableRowsProps) {
     {}
   );
   const [imageUrlsByCell, setImageUrlsByCell] = useState<Record<string, ReadonlyArray<string>>>({});
-  const effectiveMinResizableTextColWidth =
-    props.minResizableTextColWidth ?? props.minTextColWidth;
+  const effectiveMinResizableTextColWidth = props.minResizableTextColWidth;
 
   const gridNavMaxBodyRowIndex = props.rowCount >= 2 ? props.rowCount - 2 : -1;
   const gridNavMaxColIndex = props.colCount > 0 ? props.colCount - 1 : -1;
@@ -257,15 +211,35 @@ export default function TableRows(props: TableRowsProps) {
   }
   const cellSelectionStore = cellSelectionStoreRef.current;
 
+  // 标记当前选区来源：'editing' | 'checkbox' | 'external'
+  const selectionSourceRef = useRef<'editing' | 'checkbox' | 'external'>('editing');
+
   // 初始化/更新行列数
   useEffect(() => {
     cellSelectionStore.setDimensions(props.rowCount, props.colCount);
   }, [cellSelectionStore, props.rowCount, props.colCount]);
 
-  // 同步选中集合到 store
+  // 同步 editing.selectedCells 到 store（仅当来源是 editing 时）
   useEffect(() => {
-    cellSelectionStore.setSelectedCells(editing.selectedCells);
+    if (selectionSourceRef.current === 'editing') {
+      cellSelectionStore.setSelectedCells(editing.selectedCells);
+    }
   }, [cellSelectionStore, editing.selectedCells]);
+
+  // 反向同步：外部（如 Vtell）通过 store.setExternalSelection 更新表格编辑状态
+  useEffect(() => {
+    cellSelectionStore.externalSelectionHandler = (cells) => {
+      selectionSourceRef.current = 'external';
+      editing.setSelectedCells(new Set(cells));
+      // 同步完成后恢复为 editing 模式
+      setTimeout(() => {
+        selectionSourceRef.current = 'editing';
+      }, 0);
+    };
+    return () => {
+      cellSelectionStore.externalSelectionHandler = undefined;
+    };
+  }, [cellSelectionStore, editing.setSelectedCells]);
 
   // 传出 store 给父组件
   useEffect(() => {
@@ -274,14 +248,62 @@ export default function TableRows(props: TableRowsProps) {
     }
   }, [cellSelectionStore, props.onCellSelectionStore]);
 
-  const editingStateSlice = useMemo((): TableGridEditingStateSlice => {
+  // 监听 BodyRowSelectionStore（checkbox 行选择），同步到 CellSelectionStore
+  useEffect(() => {
+    const bodyRowStore = props.bodyRowSelectionStore;
+    if (!bodyRowStore) return;
+
+    const syncBodyRowToCellSelection = () => {
+      // 获取所有选中的行
+      const checkedRows: number[] = [];
+      const bodyRowCount = bodyRowStore.getBodyRowCount();
+      for (let r = 0; r < bodyRowCount; r++) {
+        if (bodyRowStore.getRow(r)) {
+          checkedRows.push(r);
+        }
+      }
+
+      // 如果有选中的行，转换为单元格选中集合
+      if (checkedRows.length > 0) {
+        // 标记来源为 checkbox，避免 editing.selectedCells 的 useEffect 覆盖
+        selectionSourceRef.current = 'checkbox';
+
+        const cells = new Set<string>();
+        for (const r of checkedRows) {
+          // 整行选中：该行所有列都选中
+          for (let c = 0; c < props.colCount; c++) {
+            cells.add(`${r}:${c}`);
+          }
+        }
+        cellSelectionStore.setSelectedCells(cells);
+        // 同步到 editing.selectedCells
+        editing.setSelectedCells(cells);
+      } else {
+        // 取消 checkbox 选择时，清空选区
+        // 注意：不立即同步，等待下一个选区来源（如列选择）
+        cellSelectionStore.setSelectedCells(new Set());
+        editing.setSelectedCells(new Set());
+        // 立即恢复为 editing 模式，让后续选区变化能同步
+        selectionSourceRef.current = 'editing';
+      }
+    };
+
+    // 订阅行选择变化
+    const unsubscribe = bodyRowStore.subscribeSelection(syncBodyRowToCellSelection);
+    return unsubscribe;
+  }, [cellSelectionStore, props.bodyRowSelectionStore, props.colCount, editing.setSelectedCells]);
+
+  const editingStateSlice = useMemo((): TableGridEditingContextValue => {
     return {
-      editingCell: editing.editingCell,
-      selectedCell: editing.selectedCell,
-      selectedCells: editing.selectedCells,
-      selectionAnchor: editing.selectionAnchor,
-      valueByCell: editing.valueByCell,
-      hoverLockedCell: editing.hoverLockedCell,
+      state: {
+        editingCell: editing.editingCell,
+        selectedCell: editing.selectedCell,
+        selectedCells: editing.selectedCells,
+        selectionAnchor: editing.selectionAnchor,
+        valueByCell: editing.valueByCell,
+        hoverLockedCell: editing.hoverLockedCell,
+      },
+      dispatchersRef: editingDispatchersRef,
     };
   }, [
     editing.editingCell,
@@ -290,14 +312,32 @@ export default function TableRows(props: TableRowsProps) {
     editing.selectionAnchor,
     editing.valueByCell,
     editing.hoverLockedCell,
+    editingDispatchersRef,
   ]);
+
+  // 分页逻辑：计算当前页显示的表体行范围
+  const pageSize = props.paginationPageSize ?? 20;
+  const paginationEnabled = props.enablePagination && pageSize > 0;
+  const bodyRowCount = props.rowCount - 1; // 表体行数（不含表头）
+  const currentPage = props.paginationCurrent ?? 1;
+
+  // 计算当前页应该显示的表体行索引范围（0-based bodyRowIndex）
+  // 第1页显示 bodyRowIndex 0-19，第2页显示 20-39...
+  const pageBodyStart = paginationEnabled ? (currentPage - 1) * pageSize : 0;
+  const pageBodyEnd = paginationEnabled
+    ? Math.min(currentPage * pageSize - 1, bodyRowCount - 1)
+    : bodyRowCount - 1;
 
   /** 末行（插入行占位）始终渲染；「插入行列」只控制是否出现 + 与插入能力 */
   const displayRowCount = props.rowCount + 1;
-  const useBodyVirtual =
+  // 虚拟列表：仅在非分页模式下启用
+  const useVirtualList =
+    !paginationEnabled &&
     props.bodyScrollMaxHeight != null &&
     props.bodyScrollMaxHeight > 0 &&
     displayRowCount > 0;
+  // 滚动容器：虚拟列表或分页模式都需要（分页模式下也需要 maxHeight 限制高度）
+  const needScrollContainer = useVirtualList || paginationEnabled;
 
   const visibleColIndexes = useMemo(() => {
     const hidden = props.hiddenColSet;
@@ -367,20 +407,20 @@ export default function TableRows(props: TableRowsProps) {
 
   /** 触控板惯性 / 自定义 wheel 单帧位移大时，固定小 overscan 易出现行间空白裂缝 */
   const virtualListOverscan = useMemo(() => {
-    if (!useBodyVirtual) return 8;
+    if (!useVirtualList) return 8;
     const h = props.bodyScrollMaxHeight ?? 520;
     return getTableBodyVirtualOverscan(h, typography.bodyVirtualRowEstimatePx);
-  }, [useBodyVirtual, props.bodyScrollMaxHeight, typography.bodyVirtualRowEstimatePx]);
+  }, [useVirtualList, props.bodyScrollMaxHeight, typography.bodyVirtualRowEstimatePx]);
 
   const rowVirtualizer = useVirtualizer({
-    count: useBodyVirtual ? virtualRowCount : 0,
+    count: useVirtualList ? virtualRowCount : 0,
     getScrollElement: () => scrollParentRef.current,
     estimateSize: (index) =>
       index === 0
         ? typography.headerVirtualRowEstimatePx
         : typography.bodyVirtualRowEstimatePx,
     overscan: virtualListOverscan,
-    enabled: useBodyVirtual,
+    enabled: useVirtualList,
     rangeExtractor: rangeExtractorPinHeader,
     observeElementRect: observeElementRectPatched,
     /** 将 RO 回调合并到 rAF，减轻与 scroll 同帧竞态导致的测量抖动 */
@@ -405,7 +445,7 @@ export default function TableRows(props: TableRowsProps) {
       displayRowCount,
       narrowWidth: props.narrowWidth,
       narrowLeadWidth,
-      minTextColWidth: effectiveMinResizableTextColWidth,
+      minResizableTextColWidth: effectiveMinResizableTextColWidth,
       defaultTextColWidth: props.defaultTextColWidth,
       frozenFooterRowEstimatePx: typography.bodyVirtualRowEstimatePx,
     };
@@ -415,15 +455,15 @@ export default function TableRows(props: TableRowsProps) {
         bodyRow,
         col,
         key,
-        useVirtual: useBodyVirtual,
-        scrollToVirtualRow: useBodyVirtual
+        useVirtual: useVirtualList,
+        scrollToVirtualRow: useVirtualList
           ? (virtualIndex, opts) => rowVirtualizerRef.current.scrollToIndex(virtualIndex, opts)
           : undefined,
         frozen,
       });
     };
   }, [
-    useBodyVirtual,
+    useVirtualList,
     displayRowCount,
     props.colCount,
     props.enableInsertRowCol,
@@ -506,12 +546,13 @@ export default function TableRows(props: TableRowsProps) {
 
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [displayRowCount, useBodyVirtual]);
+  }, [displayRowCount, useVirtualList]);
 
   const deleteColumnAt = useCallback(
     (colIndex: number) => {
       if (!props.enableInsertRowCol || colIndex < 0 || colIndex >= props.colCount) return;
-      if (props.enableFreezeFirstCol && colIndex === 0) return;
+      // 冻结首列时：列数 > 2 允许删除首列（冻结取消，原 B 列变为首列）；列数 = 2 禁止删除
+      if (props.enableFreezeFirstCol && colIndex === 0 && props.colCount <= 2) return;
       if (props.enableFreezeLastCol && colIndex === props.colCount - 1) return;
       const minC = props.gridMinCount ?? 2;
       if (props.colCount <= minC) return;
@@ -603,7 +644,11 @@ export default function TableRows(props: TableRowsProps) {
   const onInsertRowWrapped = useCallback(() => {
     props.onInsertRow();
     scrollTableViewportToBottom();
-  }, [props.onInsertRow, scrollTableViewportToBottom]);
+    // 插入行后调整选中区域
+    const currentBodyRowCount = props.rowCount - 1; // 当前表体行数（不含表头）
+    const insertAtBodyRow = currentBodyRowCount > 0 ? currentBodyRowCount - 1 : 0;
+    editing.insertBodyRowAt(insertAtBodyRow, props.colCount);
+  }, [props.onInsertRow, scrollTableViewportToBottom, editing, props.rowCount, props.colCount]);
 
   const onInsertColumnWrapped = useCallback(() => {
     const scrollEl = scrollParentRef.current;
@@ -661,28 +706,30 @@ export default function TableRows(props: TableRowsProps) {
       imageUrlsByCell,
       appendImageFilesToCell,
       removeImageAtCell,
-      // 让表头/表体每一行都用“可见列 minWidth”，否则只改 scroll 容器无效
+      // 让表头/表体每一行都用”可见列 minWidth”，否则只改 scroll 容器无效
       rowMinWidth: effectiveRowMinWidth,
       onInsertRow: onInsertRowWrapped,
       onInsertColumn: onInsertColumnWrapped,
       deleteColumnAt,
       deleteBodyRowAt,
-      bodyVirtualized: useBodyVirtual,
+      bodyVirtualized: useVirtualList,
       typography,
       visibleColIndexes,
+      // 分页模式下当前页表体行范围（0-based bodyRowIndex）
+      pageBodyRowStart: paginationEnabled ? pageBodyStart : undefined,
+      pageBodyRowEnd: paginationEnabled ? pageBodyEnd : undefined,
     };
   }, [
     typography,
     visibleColIndexes,
     effectiveRowMinWidth,
-    useBodyVirtual,
+    useVirtualList,
     props.rowCount,
     props.colCount,
     props.enableInsertRowCol,
     props.enableEditMode,
     props.rowMinWidth,
     props.narrowWidth,
-    props.minTextColWidth,
     props.minResizableTextColWidth,
     props.enableColumnResize,
     props.enableVerticalCenter,
@@ -712,31 +759,35 @@ export default function TableRows(props: TableRowsProps) {
     imageUrlsByCell,
     appendImageFilesToCell,
     removeImageAtCell,
+    props.enablePagination,
+    props.paginationCurrent,
+    props.paginationPageSize,
+    props.onPaginationChange,
   ]);
 
   return (
     <BodyRowSelectionStoreContext.Provider value={props.bodyRowSelectionStore}>
       <TableRowHoverStoreContext.Provider value={hoverStore}>
         <TableGridConfigContext.Provider value={staticConfig}>
-          <TableGridEditingDispatchersRefContext.Provider value={editingDispatchersRef}>
-            <TableGridEditingStateContext.Provider value={editingStateSlice}>
-              {/**
-               * 虚拟与非虚拟共用同一 scrollport：横纵滚与 sticky 冻结参照一致；仅虚拟模式加 maxHeight。
-               */}
-              <div
+          <TableGridEditingContext.Provider value={editingStateSlice}>
+            {/**
+             * 虚拟与非虚拟共用同一 scrollport：横纵滚与 sticky 冻结参照一致。
+             * maxHeight：虚拟列表或分页模式都需要（限制高度以启用滚动）。
+             */}
+            <div
                 ref={scrollParentRef}
                 className="vc-biz-table-scrollport"
                 onScroll={onBodyScroll}
                 style={{
                   width: '100%',
                   minHeight: 0,
-                  maxHeight: useBodyVirtual ? props.bodyScrollMaxHeight : undefined,
+                  maxHeight: needScrollContainer ? props.bodyScrollMaxHeight : undefined,
                   overflow: 'auto',
                   scrollbarGutter: 'stable',
                   boxSizing: 'border-box',
                 }}
               >
-                {useBodyVirtual ? (
+                {useVirtualList ? (
                   <div
                     style={{
                       width: '100%',
@@ -787,43 +838,63 @@ export default function TableRows(props: TableRowsProps) {
                         );
                       })}
                     </div>
-                    <div
-                      style={
-                        props.enableFreezeLastRow && displayRowCount > 1
-                          ? FROZEN_FOOTER_WRAP_STYLE
-                          : { width: '100%', boxSizing: 'border-box' }
-                      }
-                      {...(props.enableFreezeLastRow && displayRowCount > 1
-                        ? { 'data-vc-biz-table-frozen-footer': '' }
-                        : {})}
-                    >
-                      <TableGridRow rowIndex={props.rowCount} />
-                    </div>
                   </div>
                 ) : (
-                  Array.from({ length: displayRowCount }).map((_, rowIndex) => {
-                    const isTailRow = rowIndex === props.rowCount;
-                    const freezeFooter =
-                      props.enableFreezeLastRow && isTailRow && displayRowCount > 1;
-                    if (!freezeFooter) {
-                      return <TableGridRow key={`row-${rowIndex}`} rowIndex={rowIndex} />;
-                    }
-                    return (
-                      <div
-                        key={`row-${rowIndex}`}
-                        data-vc-biz-table-frozen-footer=""
-                        style={FROZEN_FOOTER_WRAP_STYLE}
-                      >
-                        <TableGridRow rowIndex={rowIndex} />
-                      </div>
-                    );
-                  })
+                  <div
+                    style={{
+                      width: '100%',
+                      minWidth: effectiveRowMinWidth,
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {/* 表头：sticky 钉顶 */}
+                    <div
+                      style={{
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 6,
+                        width: '100%',
+                        isolation: 'isolate',
+                        background: vcTokens.color.neutral.background.layout,
+                        boxShadow: `inset 0 -1px 0 ${vcTokens.color.neutral.border.default}`,
+                      }}
+                      data-vc-biz-table-frozen-header=""
+                    >
+                      <TableGridRow key="row-0" rowIndex={0} />
+                    </div>
+                    {/* 表体行：分页模式下只显示当前页范围 */}
+                    {paginationEnabled
+                      ? Array.from({ length: pageBodyEnd - pageBodyStart + 1 }).map((_, idx) => {
+                          const bodyRowIndex = pageBodyStart + idx; // 0-based
+                          const rowIndex = bodyRowIndex + 1; // rowIndex: bodyRowIndex + 1
+                          return <TableGridRow key={`row-${rowIndex}`} rowIndex={rowIndex} />;
+                        })
+                      : Array.from({ length: props.rowCount - 1 }).map((_, idx) => {
+                          const rowIndex = idx + 1;
+                          return <TableGridRow key={`row-${rowIndex}`} rowIndex={rowIndex} />;
+                        })}
+                  </div>
                 )}
+                {/* 插入行：独立于表体横向滚动内容，sticky 定位 */}
+                <div
+                  style={{
+                    position: 'sticky',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    width: '100%',
+                    zIndex: 5,
+                    background: TABLE_BODY_BG_DEFAULT,
+                    boxSizing: 'border-box',
+                  }}
+                  data-vc-biz-table-frozen-footer=""
+                >
+                  <TableGridRow rowIndex={props.rowCount} />
+                </div>
               </div>
-            </TableGridEditingStateContext.Provider>
-          </TableGridEditingDispatchersRefContext.Provider>
-        </TableGridConfigContext.Provider>
-      </TableRowHoverStoreContext.Provider>
-    </BodyRowSelectionStoreContext.Provider>
-  );
-}
+            </TableGridEditingContext.Provider>
+          </TableGridConfigContext.Provider>
+        </TableRowHoverStoreContext.Provider>
+      </BodyRowSelectionStoreContext.Provider>
+    );
+  }

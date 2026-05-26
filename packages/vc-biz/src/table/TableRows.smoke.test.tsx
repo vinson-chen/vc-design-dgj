@@ -10,7 +10,7 @@ const COL_WIDTHS_SLOTS = 20;
 function createTableRowsProps(overrides: Partial<TableRowsProps> = {}): TableRowsProps {
   const colCount = overrides.colCount ?? 2;
   const narrowWidth = overrides.narrowWidth ?? 40;
-  const minTextColWidth = overrides.minTextColWidth ?? 100;
+  const minResizableTextColWidth = overrides.minResizableTextColWidth ?? 100;
   const defaultTextColWidth = overrides.defaultTextColWidth ?? 200;
   const enableInsertRowCol = overrides.enableInsertRowCol ?? false;
   const batchOn = overrides.enableBatchSelection !== false;
@@ -33,7 +33,7 @@ function createTableRowsProps(overrides: Partial<TableRowsProps> = {}): TableRow
     enableEditMode: false,
     rowMinWidth,
     narrowWidth,
-    minTextColWidth,
+    minResizableTextColWidth,
     defaultTextColWidth,
     enableColumnResize: false,
     enableVerticalCenter: true,
@@ -311,7 +311,7 @@ describe.skipIf(!perfEnabled)('TableRows perf smoke (opt-in)', () => {
     const bodyRows = 800;
     const colCount = 4;
     const narrowWidth = 40;
-    const minTextColWidth = 100;
+    const minResizableTextColWidth = 100;
 
     const { container } = render(
       <TableRows

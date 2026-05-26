@@ -22,6 +22,16 @@ export type VInputAttachedFile = Readonly<{
 /** @deprecated Use VInputAttachedFile instead */
 export type VcellInputAttachedFile = VInputAttachedFile;
 
+/** 指令标签 */
+export type VInputCommandTag = Readonly<{
+  id: string;
+  label: string;
+  /** 标签来源类型 */
+  type: 'slash' | 'hashtag';
+}>;
+/** @deprecated Use VInputCommandTag instead */
+export type VcellInputCommandTag = VInputCommandTag;
+
 function excelExtLabel(file: File): '.xlsx' | '.xls' | null {
   const n = file.name.toLowerCase();
   if (n.endsWith('.xlsx')) return '.xlsx';
@@ -41,6 +51,10 @@ export type VInputProps = {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
+  /** 取消发送回调（sending 时点击撤回按钮触发） */
+  onCancel?: () => void;
+  /** 当前是否正在发送（影响发送按钮图标） */
+  sending?: boolean;
   placeholder?: string;
   /** 禁用输入与发送（如请求中） */
   disabled?: boolean;
@@ -50,8 +64,15 @@ export type VInputProps = {
   /** 受控：已选 Excel 附件列表（须与 onAttachedFilesChange 同时使用） */
   attachedFiles?: VInputAttachedFile[];
   onAttachedFilesChange?: (files: VInputAttachedFile[]) => void;
+  /** 受控：指令标签列表（须与 onCommandTagsChange 同时使用） */
+  commandTags?: VInputCommandTag[];
+  onCommandTagsChange?: (tags: VInputCommandTag[]) => void;
   /** slash 按钮点击回调（打开 L0 预设面板） */
   onSlashClick?: () => void;
+  /** hashtag 按钮点击回调（打开选择范围面板） */
+  onHashtagClick?: () => void;
+  /** 选择面板是否打开（打开时锁定悬停态样式） */
+  paletteOpen?: boolean;
   /** 透传 Dropdown，默认使用包内样式类 */
   llmDropdownOverlayClassName?: string;
   className?: string;
@@ -65,6 +86,8 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
     value,
     onChange,
     onSend,
+    onCancel,
+    sending = false,
     placeholder = '',
     disabled = false,
     llmOptions,
@@ -72,7 +95,11 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
     onLlmChange,
     attachedFiles: attachedFilesProp,
     onAttachedFilesChange,
+    commandTags: commandTagsProp,
+    onCommandTagsChange,
     onSlashClick,
+    onHashtagClick,
+    paletteOpen = false,
     llmDropdownOverlayClassName = V_INPUT_LLM_DROPDOWN_CLASS,
     className,
     style,
@@ -83,6 +110,7 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
   const [hovered, setHovered] = useState(false);
   const [llmOpen, setLlmOpen] = useState(false);
   const [internalAttached, setInternalAttached] = useState<VInputAttachedFile[]>([]);
+  const [internalCommandTags, setInternalCommandTags] = useState<VInputCommandTag[]>([]);
   const innerRef = useRef<TextAreaRef>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const excelInputId = useId();
@@ -93,7 +121,12 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
   const attachedFiles = controlledAttach ? (attachedFilesProp ?? []) : internalAttached;
   const setAttachedFiles = controlledAttach ? onAttachedFilesChange : setInternalAttached;
 
-  const elevated = focused || hovered;
+  const controlledCommandTags = onCommandTagsChange != null;
+  const commandTags = controlledCommandTags ? (commandTagsProp ?? []) : internalCommandTags;
+  const setCommandTags = controlledCommandTags ? onCommandTagsChange : setInternalCommandTags;
+
+  // 面板打开时锁定悬停态，或实际悬停/聚焦时显示悬停态
+  const elevated = paletteOpen || focused || hovered;
 
   const llmLabel = useMemo(
     () => llmOptions.find((o) => o.value === llmValue)?.label ?? llmValue,
@@ -112,14 +145,15 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
 
   const runSend = useCallback(() => {
     if (disabled) return;
-    if (!value.trim() && attachedFiles.length === 0) return;
+    // 需要有内容（文本、指令标签或附件）才可发送
+    if (!value.trim() && commandTags.length === 0 && attachedFiles.length === 0) return;
     innerRef.current?.blur();
     setFocused(false);
     onSend();
     if (!controlledAttach) {
       setInternalAttached([]);
     }
-  }, [attachedFiles.length, controlledAttach, disabled, onSend, value]);
+  }, [attachedFiles.length, commandTags.length, controlledAttach, disabled, onSend, value]);
 
   const onExcelInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,6 +184,15 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
     [attachedFiles, setAttachedFiles]
   );
 
+  const removeCommandTag = useCallback(
+    (id: string) => {
+      setCommandTags(commandTags.filter((t) => t.id !== id));
+    },
+    [commandTags, setCommandTags]
+  );
+
+  const hasTags = attachedFiles.length > 0 || commandTags.length > 0;
+
   return (
     <div className={className} style={style}>
       <input
@@ -163,13 +206,14 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
       />
       <div
         className="vc-biz-vcell-input-shell"
+        data-keep-table-selection
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={
           {
             boxSizing: 'border-box',
             background: vcTokens.color.neutral.background.container,
-            border: `1px solid ${focused ? vcTokens.color.primary.default : vcTokens.color.neutral.border.default}`,
+            border: `1px solid ${vcTokens.color.neutral.border.default}`,
             borderRadius: 8,
             boxShadow: elevated ? vcTokens.style.boxShadowSecondary : 'none',
             transition: 'box-shadow 0.2s ease',
@@ -181,9 +225,37 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
           } as React.CSSProperties
         }
       >
-        {/* Tag 区：仅在有附件时渲染 */}
-        {attachedFiles.length > 0 && (
+        {/* Tag 区：指令标签和文件附件 */}
+        {hasTags && (
           <div className="vc-biz-vcell-input-tag-row">
+            {/* 指令标签 */}
+            {commandTags.map((tag) => (
+              <span key={tag.id} className="vc-biz-vcell-input-command-tag">
+                <button
+                  type="button"
+                  className="vc-biz-vcell-input-command-tag__icon-btn"
+                  aria-label={`移除 ${tag.label}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeCommandTag(tag.id);
+                  }}
+                >
+                  <VcIcon
+                    type={tag.type === 'slash' ? 'slash' : 'hashtag'}
+                    fontSize={14}
+                    className="vc-biz-vcell-input-command-tag__icon-default"
+                  />
+                  <VcIcon
+                    type="close"
+                    fontSize={14}
+                    className="vc-biz-vcell-input-command-tag__icon-close"
+                  />
+                </button>
+                <span className="vc-biz-vcell-input-tag__name">{tag.label}</span>
+              </span>
+            ))}
+            {/* 文件附件标签 */}
             {attachedFiles.map((a) => {
               const ext = excelExtLabel(a.file);
               if (!ext) return null;
@@ -202,12 +274,12 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
                   >
                     <VcIcon
                       type="file-1"
-                      fontSize={16}
+                      fontSize={14}
                       className="vc-biz-vcell-input-file-tag__icon-file"
                     />
                     <VcIcon
                       type="close"
-                      fontSize={16}
+                      fontSize={14}
                       className="vc-biz-vcell-input-file-tag__icon-close"
                     />
                   </button>
@@ -221,7 +293,7 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
         <div
           onMouseDown={(e) => {
             const t = e.target as HTMLElement;
-            if (t.closest('.vc-biz-vcell-input-file-tag__icon-btn')) return;
+            if (t.closest('.vc-biz-vcell-input-command-tag__icon-btn') || t.closest('.vc-biz-vcell-input-file-tag__icon-btn')) return;
             innerRef.current?.focus();
           }}
         >
@@ -235,7 +307,7 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             autoSize={{ minRows: 1, maxRows: 6 }}
-            style={{ fontSize: vcTokens.style.font.size.base }}
+            style={{ fontSize: vcTokens.style.font.size.base, lineHeight: '24px' }}
             disabled={disabled}
             onPressEnter={(e) => {
               if (!e.shiftKey) {
@@ -253,9 +325,7 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
             icon={<VcIcon type="hashtag" fontSize={16} />}
             aria-label="标签"
             disabled={disabled}
-            onClick={() => {
-              // TODO: 预留点击事件
-            }}
+            onClick={onHashtagClick}
             className="vc-biz-vcell-input-btn-hashtag"
           />
           <Button
@@ -305,15 +375,28 @@ const VInput = forwardRef<TextAreaRef, VInputProps>(function VInput(
               />
             </Button>
           </Dropdown>
-          <Button
-            type="primary"
-            size="small"
-            icon={<VcIcon type="arrow-up" fontSize={16} />}
-            aria-label="发送"
-            disabled={disabled || (!value.trim() && attachedFiles.length === 0)}
-            onClick={runSend}
-            className="vc-biz-vcell-input-btn-send"
-          />
+          {/* 发送/撤回按钮：sending + onCancel 时显示 rollback 图标 */}
+          {sending && onCancel ? (
+            <Button
+              type="primary"
+              size="small"
+              danger
+              icon={<VcIcon type="rollback" fontSize={16} />}
+              aria-label="撤回"
+              onClick={onCancel}
+              className="vc-biz-vcell-input-btn-cancel"
+            />
+          ) : (
+            <Button
+              type="primary"
+              size="small"
+              icon={<VcIcon type="arrow-up" fontSize={16} />}
+              aria-label="发送"
+              disabled={disabled || sending || (!value.trim() && commandTags.length === 0 && attachedFiles.length === 0)}
+              onClick={runSend}
+              className="vc-biz-vcell-input-btn-send"
+            />
+          )}
         </div>
       </div>
     </div>

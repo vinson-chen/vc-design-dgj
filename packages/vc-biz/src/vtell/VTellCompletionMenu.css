@@ -1,7 +1,21 @@
 /* L0 句式补全菜单样式 */
+.vc-biz-vtell-completion-menu {
+  /* 菜单宽度跟随输入区宽度 */
+  width: 100% !important;
+  /* 绝对定位在输入区容器上方 */
+  position: absolute !important;
+  bottom: 100% !important;
+  left: 0 !important;
+  top: auto !important;
+}
+
 .vc-biz-vtell-completion-menu .ant-dropdown-menu {
   padding: 4px;
   border-radius: 8px;
+  /* 菜单宽度继承父元素 */
+  width: 100%;
+  min-width: auto;
+  max-width: 100%;
 }
 
 .vc-biz-vtell-completion-menu .ant-dropdown-menu-item {
@@ -9,6 +23,10 @@
   font-size: 14px;
   line-height: 20px;
   border-radius: 6px;
+  /* 内容超出时截断并显示省略号 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .vc-biz-vtell-completion-menu .ant-dropdown-menu-item-selected {

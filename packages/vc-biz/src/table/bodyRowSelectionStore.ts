@@ -103,6 +103,20 @@ export class BodyRowSelectionStore {
     this.emitSelection();
   }
 
+  /** 范围全选/取消（用于分页模式下只操作当前页） */
+  toggleAllInRange(checked: boolean, startRow: number, endRow: number): void {
+    this.shiftAnchorBodyRow = null;
+    const lo = Math.max(0, Math.min(startRow, endRow));
+    const hi = Math.min(this.bodyRowCount - 1, Math.max(startRow, endRow));
+    for (let i = lo; i <= hi; i += 1) {
+      if (checked) this.checks.set(i, true);
+      else this.checks.delete(i);
+      this.emitRow(i);
+    }
+    this.emitHeader();
+    this.emitSelection();
+  }
+
   /** 删除表体行后压缩行号（与 TableArea deleteBodyRow 一致） */
   remapAfterDeleteBodyRow(deletedIndex: number): void {
     if (this.shiftAnchorBodyRow != null) {
@@ -131,6 +145,21 @@ export class BodyRowSelectionStore {
     }
     if (c === 0) return 1;
     if (c === n) return 2;
+    return 3;
+  }
+
+  /** 获取指定范围内的指纹（用于分页模式表头状态） */
+  getRangeFingerprint(start: number, end: number): number {
+    const lo = Math.max(0, Math.min(start, end));
+    const hi = Math.min(this.bodyRowCount - 1, Math.max(start, end));
+    if (lo > hi) return 0;
+    let c = 0;
+    const rangeSize = hi - lo + 1;
+    for (let i = lo; i <= hi; i += 1) {
+      if (this.getRow(i)) c += 1;
+    }
+    if (c === 0) return 1;
+    if (c === rangeSize) return 2;
     return 3;
   }
 

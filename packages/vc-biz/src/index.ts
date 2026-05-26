@@ -165,6 +165,7 @@ export type {
   VInputAttachedFile,
   VInputLlmOption,
   VInputProps,
+  VInputCommandTag,
 } from './vcell-input/VInput';
 /** @deprecated Use VInput instead */
 export { default as VcellInput } from './vcell-input/VInput';
@@ -180,8 +181,19 @@ export type {
 export { VTableCell, BizTableCell } from './table/VTableCell';
 export type { VTableCellProps, VTableCellVariant, BizTableCellProps, BizTableCellVariant } from './table/VTableCell';
 
+/** 表格单元格拆分组件（可独立使用） */
+export { TableCellEditing, getBodyEditTextareaStyle } from './table/TableCellEditing';
+export type { TableCellEditingProps } from './table/TableCellEditing';
+export { TableCellImage } from './table/TableCellImage';
+export type { TableCellImageProps } from './table/TableCellImage';
+export { TableHeaderCell, getColLetterIndex } from './table/TableHeaderCell';
+export type { TableHeaderCellProps } from './table/TableHeaderCell';
+
 /** 与 Icon Demo 对齐；图标集变更时请同步 demo 与 vc-design 资源 */
 export { iconTypes } from './internal/vcIconTypeNames';
+
+/** 店铺 Logo 图片映射（用于演示图片列） */
+export { storeLogoUrlByKey } from './generated/storeLogoUrls';
 
 /** VTell 对话区组件 */
 export {

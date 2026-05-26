@@ -1,6 +1,9 @@
 /** VTell 对话区组件类型定义 */
 
-import type { VInputLlmOption, VInputAttachedFile } from '../vcell-input/VInput';
+import type { VInputLlmOption, VInputAttachedFile, VInputCommandTag } from '../vcell-input/VInput';
+
+// 导出 VInputCommandTag 供外部使用
+export type { VInputCommandTag };
 
 /** 对话消息角色 */
 export type VTellMessageRole = 'user' | 'assistant';
@@ -17,6 +20,10 @@ export interface VTellMessage {
   content: string;
   /** 消息状态（仅 assistant 消息可设置） */
   status?: 'loading';
+  /** 消息携带的指令标签（仅 user 消息） */
+  tags?: VInputCommandTag[];
+  /** 消息携带的附件文件（仅 user 消息） */
+  files?: VTellAttachedFile[];
 }
 /** @deprecated Use VTellMessage instead */
 export type VtellMessage = VTellMessage;
@@ -38,7 +45,9 @@ export interface VTellProps {
   /** 当前对话是否正在发送 */
   sending?: boolean;
   /** 发送消息回调 */
-  onSend: (text: string, files: VTellAttachedFile[]) => void;
+  onSend: (text: string, files: VTellAttachedFile[], tags: VInputCommandTag[]) => void;
+  /** 取消发送回调（sending 时点击撤回按钮触发） */
+  onCancel?: () => void;
   /** 组件宽度（像素） */
   widthPx?: number;
   /** 最小宽度（像素） */
@@ -55,10 +64,20 @@ export interface VTellProps {
   l0Completions?: VTellCompletionItem[];
   /** L0 补全项点击回调 */
   onL0CompletionPick?: (text: string) => void;
+  /** hashtag 选择范围补全池（可选） */
+  hashtagCompletions?: VTellCompletionItem[];
+  /** hashtag 补全项点击回调 */
+  onHashtagPick?: (text: string) => void;
+  /** 命令标签列表（受控，与 onCommandTagsChange 成对使用） */
+  commandTags?: VInputCommandTag[];
+  /** 命令标签变更回调 */
+  onCommandTagsChange?: (tags: VInputCommandTag[]) => void;
   /** 是否禁用输入 */
   disabled?: boolean;
   /** 自定义类名 */
   className?: string;
+  /** 自定义样式（用于布局自适应） */
+  style?: React.CSSProperties;
 }
 /** @deprecated Use VTellProps instead */
 export type VtellProps = VTellProps;
@@ -109,6 +128,8 @@ export interface VTellCompletionItem {
   label: string;
   /** 图标名称（可选，用于 VcIcon） */
   icon?: string;
+  /** 同义词列表（用于模糊匹配） */
+  synonyms?: string[];
 }
 /** @deprecated Use VTellCompletionMenuProps instead */
 export type VtellCompletionMenuProps = VTellCompletionMenuProps;

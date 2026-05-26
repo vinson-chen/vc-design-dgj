@@ -8,6 +8,7 @@ import type { TableAreaUndoSnapshot } from './table/useTableAreaUndoRedo';
 import { snapshotTableAreaState, useTableAreaUndoRedo } from './table/useTableAreaUndoRedo';
 import { useColumnResize } from './table/useTableGridState';
 import TableRows from './table/TableRows';
+import type { CellSelectionStore } from './table/cellSelectionStore';
 import { GRID_MAX_COL, GRID_MAX_ROW, GRID_MIN } from './tableAreaGridLimits';
 const MIN_RESIZABLE_TEXT_COL_W = 100;
 const DEFAULT_TEXT_COL_W = 200;
@@ -36,6 +37,14 @@ export type TableAreaDemoOptions = Readonly<{
   bodyScrollMaxHeight?: number;
   /** 为 true 时由 TableAreaTableInstance / VTable 在表格外展示编辑模式快捷键说明 */
   showEditKeyboardHints?: boolean;
+  /** 单元格选中状态 store 回调 */
+  onCellSelectionStore?: (store: CellSelectionStore) => void;
+  /** 显示分页：默认关闭 */
+  initialEnablePagination?: boolean;
+  /** 初始页码（1-based），默认 1 */
+  initialPaginationCurrent?: number;
+  /** 每页条数，默认 20 */
+  initialPaginationPageSize?: number;
 }>;
 
 export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
@@ -84,6 +93,17 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   const [hiddenColSet, setHiddenColSet] = useState<Set<number>>(() => new Set());
   const [undoRedoNonce, setUndoRedoNonce] = useState(0);
   const [tableViewportClientWidth, setTableViewportClientWidth] = useState<number>(0);
+
+  // 分页状态
+  const [enablePagination, setEnablePagination] = useState(
+    options?.initialEnablePagination ?? true
+  );
+  const [paginationCurrent, setPaginationCurrent] = useState(
+    options?.initialPaginationCurrent ?? 1
+  );
+  const [paginationPageSize, setPaginationPageSize] = useState(
+    options?.initialPaginationPageSize ?? 50
+  );
 
   const colCountRef = useRef(colCount);
   const rowCountRef = useRef(rowCount);
@@ -197,8 +217,52 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
 
   const insertRow = useCallback(() => {
     recordIfNeeded();
-    setRowCount((prev) => Math.min(GRID_MAX_ROW, prev + 1));
-  }, [recordIfNeeded]);
+    const currentBodyRowCount = rowCountRef.current - 1; // 当前表体行数（不含表头）
+    const newRowTotalCount = Math.min(GRID_MAX_ROW, rowCountRef.current + 1);
+
+    // 分页开启时：新行作为当前页最后一行，原数据从该位置开始下移
+    if (enablePagination && paginationPageSize > 0) {
+      // 当前页的 bodyRowIndex 范围（0-based）
+      const pageBodyStart = (paginationCurrent - 1) * paginationPageSize;
+      const pageBodyEnd = Math.min(pageBodyStart + paginationPageSize - 1, currentBodyRowCount - 1);
+
+      // 新行插入位置：当前页最后一行位置（原最后一行数据下移到下一页第一行）
+      const insertAtBodyRow = pageBodyEnd >= 0 ? pageBodyEnd : 0;
+
+      // 数据重排：从 insertAtBodyRow 开始的所有行数据向下移动一行
+      setValueByCellBase((prev) => {
+        const next: Record<string, string> = {};
+        for (const [key, value] of Object.entries(prev)) {
+          if (key.startsWith('header-')) {
+            next[key] = value;
+            continue;
+          }
+          const m = /^(\d+)-(\d+)$/.exec(key);
+          if (!m) {
+            next[key] = value;
+            continue;
+          }
+          const r = Number(m[1]); // bodyRowIndex (0-based)
+          const c = Number(m[2]);
+          if (!Number.isFinite(r) || !Number.isFinite(c)) {
+            next[key] = value;
+            continue;
+          }
+          // 从 insertAtBodyRow 开始，所有行数据向下移动
+          if (r >= insertAtBodyRow) {
+            next[`${r + 1}-${c}`] = value;
+          } else {
+            next[key] = value;
+          }
+        }
+        return next;
+      });
+
+      setRowCount(newRowTotalCount);
+    } else {
+      setRowCount(newRowTotalCount);
+    }
+  }, [recordIfNeeded, enablePagination, paginationCurrent, paginationPageSize]);
 
   const insertColumn = useCallback(() => {
     recordIfNeeded();
@@ -250,6 +314,8 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       if (colCountRef.current <= GRID_MIN) return;
       removeColumnWidthAt(colIndex);
       setColCount((c) => c - 1);
+      // 注意：valueByCell 数据重排已由 TableRows.editing.removeColumnAt 调用 remapValueByCellAfterRemoveColumn 处理
+      // 此处仅需处理元数据：列宽、列数、隐藏列集合
       setHiddenColSet((prev) => {
         const next = new Set<number>();
         prev.forEach((idx) => {
@@ -340,8 +406,6 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     onColumnResizeStart,
     rowMinWidth,
     narrowWidth: NARROW_W,
-    // 兼容旧字段；新代码优先读取 minResizableTextColWidth。
-    minTextColWidth: MIN_RESIZABLE_TEXT_COL_W,
     minResizableTextColWidth: MIN_RESIZABLE_TEXT_COL_W,
     defaultTextColWidth: DEFAULT_TEXT_COL_W,
     valueByCell,
@@ -369,6 +433,18 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       setHiddenColSet(new Set(nextHiddenCols));
     },
     setTableViewportClientWidth,
+    onCellSelectionStore: options?.onCellSelectionStore,
+    // 分页
+    enablePagination,
+    setEnablePagination,
+    paginationCurrent,
+    setPaginationCurrent,
+    paginationPageSize,
+    setPaginationPageSize,
+    onPaginationChange: (page: number, pageSize: number) => {
+      setPaginationCurrent(page);
+      setPaginationPageSize(pageSize);
+    },
   };
 }
 
@@ -380,7 +456,6 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     colCount,
     rowMinWidth,
     narrowWidth,
-    minTextColWidth,
     minResizableTextColWidth,
     defaultTextColWidth,
     enableColumnResize,
@@ -413,6 +488,11 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     setColumnHidden,
     setAllColumnsHidden,
     setTableViewportClientWidth,
+    onCellSelectionStore,
+    enablePagination,
+    paginationCurrent,
+    paginationPageSize,
+    onPaginationChange,
   } = model;
 
   const rows = (
@@ -421,7 +501,6 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
       colCount={colCount}
       rowMinWidth={rowMinWidth}
       narrowWidth={narrowWidth}
-      minTextColWidth={minTextColWidth}
       minResizableTextColWidth={minResizableTextColWidth}
       defaultTextColWidth={defaultTextColWidth}
       enableColumnResize={enableColumnResize}
@@ -454,6 +533,11 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
       setColumnHidden={setColumnHidden}
       setAllColumnsHidden={setAllColumnsHidden}
       onViewportClientWidthChange={setTableViewportClientWidth}
+      onCellSelectionStore={onCellSelectionStore}
+      enablePagination={enablePagination}
+      paginationCurrent={paginationCurrent}
+      paginationPageSize={paginationPageSize}
+      onPaginationChange={onPaginationChange}
     />
   );
 
