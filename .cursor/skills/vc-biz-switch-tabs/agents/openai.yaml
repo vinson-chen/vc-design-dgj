@@ -1,0 +1,4 @@
+interface:
+  display_name: "VC 业务切换区组件落地"
+  short_description: "按 Figma 高还原实现 switch-tabs，并内置 more 收纳与 token 映射。"
+  default_prompt: "Use $vc-biz-switch-tabs to implement or refine a business switch-tabs component from Figma with token mapping, overflow-to-more behavior, and validation checks."

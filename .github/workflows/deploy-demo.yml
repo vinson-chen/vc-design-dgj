@@ -1,0 +1,42 @@
+# push 到 main 时自动构建 demo 并部署到 gh-pages，更新 https://vinson-chen.github.io/vc-design/
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Build vc-design
+        run: npm run build
+
+      - name: Build vc-biz
+        run: npm run build:vc-biz
+
+      - name: Install demo dependencies
+        run: cd demo && npm install
+
+      - name: Build demo
+        run: cd demo && npm run build
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./demo/dist
