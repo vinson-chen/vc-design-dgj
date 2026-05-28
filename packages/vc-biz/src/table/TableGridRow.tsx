@@ -10,6 +10,9 @@ import { useTableRowHoverStore } from './tableRowHoverStoreContext';
 import { getFreezeDividerStyle, getTableRowGridTemplateColumns } from './tableGridLayout';
 import type { TableGridStaticConfig } from './tableGridTypes';
 import { useTableGridEditingDispatchersRef } from './tableGridEditingContext';
+import { resolveVirtualRow } from './headless/tableGridGrouping';
+import TableGridGroupTitleRow from './TableGridGroupTitleRow';
+import { TABLE_BODY_BG_DEFAULT } from './tableGridConstants';
 
 /** 插入行尾统计：SSR 默认值 */
 const INSERT_TAIL_STATS_SSR: { total: number; selected: number } = { total: 0, selected: 0 };
@@ -203,7 +206,7 @@ function TableGridHeaderRow() {
             active={false}
             isLastRow={isLastRow}
             isFrozen={cfg.enableFreezeFirstCol}
-            showRightBorder={cfg.enableBodyCellRightBorder}
+            showRightBorder={false}
             contentPaddingX={NARROW_COL_PADDING_X}
             contentPaddingY={cfg.typography.headerCellPaddingY}
             contentAlignX="center"
@@ -356,6 +359,9 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
     ? `${footerSelected}/${footerTotal} 条数据`
     : `${footerTotal} 条数据`;
 
+  // 判断分组模式下是否隐藏 "+" 按钮（分组模式下只有组内插入行有 "+" 按钮）
+  const hideAddButtonInGroupingMode = cfg.enableGrouping && cfg.groupTitleRows && cfg.groupTitleRows.length > 0;
+
   return (
     <div
       role="row"
@@ -368,12 +374,12 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
         cursor: 'default',
       }}
     >
-      {/* 区域1：add 按钮区域，宽度与 checkbox 列一致，带右描边，悬停变色 */}
+      {/* 区域1：add 按钮区域，宽度与 checkbox 列一致，悬停变色 */}
       <div
         onMouseEnter={() => store.setHoveredRowIndex(isColumnResizeDragging() ? null : rowIndex)}
         onMouseLeave={() => store.setHoveredRowIndex(null)}
-        onClick={cfg.enableInsertRowCol ? onAddClick : undefined}
-        style={{ cursor: cfg.enableInsertRowCol ? 'pointer' : 'default' }}
+        onClick={cfg.enableInsertRowCol && !hideAddButtonInGroupingMode ? onAddClick : undefined}
+        style={{ cursor: cfg.enableInsertRowCol && !hideAddButtonInGroupingMode ? 'pointer' : 'default' }}
       >
         <VTableCell
           variant="tbody"
@@ -384,7 +390,7 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
           isLastRow
           isFrozen={cfg.enableFreezeFirstCol}
           suppressBottomBorder
-          showRightBorder
+          showRightBorder={false}
           contentPaddingX={0}
           contentPaddingY={cfg.typography.headerCellPaddingY}
           contentAlignX="center"
@@ -400,7 +406,7 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
             ...freezeTailShellTop,
           }}
         >
-        {cfg.enableInsertRowCol ? (
+        {cfg.enableInsertRowCol && !hideAddButtonInGroupingMode ? (
           <VcIcon
             type="add"
             fontSize={16}
@@ -596,14 +602,196 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
   );
 }
 
-function TableGridBodyRow({ rowIndex }: { rowIndex: number }) {
+/** 组内插入行：点击后自动填入分组值 */
+function TableGridGroupInsertTailRow({
+  rowIndex,
+  groupInfo,
+}: {
+  rowIndex: number;
+  groupInfo: { groupValue: string };
+}) {
+  const cfg = useTableGridConfigContext();
+  const store = useTableRowHoverStore();
+  const hovered = useRowHovered(rowIndex);
+  const rowHovered = !isColumnResizeDragging() && hovered;
+  const gridTemplateColumns = useRowGridTemplateColumns();
+
+  const onAddClick = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    // 组内插入：自动填入分组值
+    if (cfg.onInsertRowWithGroupValue) {
+      cfg.onInsertRowWithGroupValue(groupInfo.groupValue);
+    } else {
+      cfg.onInsertRow();
+    }
+  };
+
+  const visibleTextColCount = cfg.visibleColIndexes.length;
+  const showNarrowLead = cfg.narrowLeadWidth > 0;
+
+  return (
+    <div
+      role="row"
+      data-vc-biz-table-group-insert-tail-row=""
+      onMouseEnter={() => {
+        if (!isColumnResizeDragging()) {
+          store.setHoveredRowIndex(rowIndex);
+        }
+      }}
+      onMouseLeave={() => store.setHoveredRowIndex(null)}
+      onClick={onAddClick}
+      style={{
+        display: 'grid',
+        gridTemplateColumns,
+        width: '100%',
+        minWidth: cfg.rowMinWidth,
+        alignItems: 'stretch',
+        background: TABLE_BODY_BG_DEFAULT,
+        cursor: 'pointer',
+      }}
+    >
+      {/* 窄列：+ 按钮 */}
+      {showNarrowLead ? (
+        <div
+          style={{
+            display: 'flex',
+            minWidth: 0,
+            alignItems: 'stretch',
+            position: cfg.enableFreezeFirstCol ? 'sticky' : undefined,
+            left: cfg.enableFreezeFirstCol ? 0 : undefined,
+            zIndex: cfg.enableFreezeFirstCol ? 4 : undefined,
+            boxSizing: 'border-box',
+          }}
+        >
+          <VTableCell
+            variant="tbody"
+            hovered={rowHovered}
+            hoverByCell={false}
+            pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+            active={false}
+            isLastRow={false}
+            isFrozen={cfg.enableFreezeFirstCol}
+            showRightBorder={false}
+            contentPaddingX={0}
+            contentPaddingY={cfg.typography.headerCellPaddingY}
+            contentAlignX="center"
+            contentAlignY="center"
+            tbodyMinHeightPx={cfg.typography.theadCellMinHeightPx}
+            style={{ width: cfg.narrowLeadWidth }}
+          >
+            {cfg.enableInsertRowCol ? (
+              <VcIcon
+                type="add"
+                fontSize={16}
+                aria-label={`插入行到${groupInfo.groupValue || '空'}组`}
+                style={{
+                  lineHeight: 1,
+                  color: vcTokens.color.neutral.text.icon,
+                }}
+              />
+            ) : null}
+          </VTableCell>
+        </div>
+      ) : null}
+
+      {/* 其他列：空占位，第一列需要冻结 */}
+      {cfg.visibleColIndexes.map((realColIndex, viewColIndex) => {
+        const isFirstCol = viewColIndex === 0;
+        const isLastVisibleTextCol = viewColIndex === cfg.visibleColIndexes.length - 1;
+        // 只有冻结首列时的第一列、以及末列显示右描边
+        const showRightBorder = isFirstCol
+          ? cfg.enableFreezeFirstCol
+          : isLastVisibleTextCol;
+
+        return isFirstCol ? (
+          // 第一列：用 sticky div 包裹
+          <div
+            key={`group-insert-col-${realColIndex}`}
+            style={{
+              display: 'flex',
+              minWidth: 0,
+              alignItems: 'stretch',
+              position: cfg.enableFreezeFirstCol ? 'sticky' : undefined,
+              left: cfg.enableFreezeFirstCol ? cfg.narrowLeadWidth : undefined,
+              zIndex: cfg.enableFreezeFirstCol ? 4 : undefined,
+              boxSizing: 'border-box',
+            }}
+          >
+            <VTableCell
+              variant="tbody"
+              hovered={rowHovered}
+              hoverByCell={false}
+              pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+              active={false}
+              isLastRow={false}
+              isFrozen={cfg.enableFreezeFirstCol}
+              showRightBorder={showRightBorder}
+              contentPaddingX={0}
+              contentPaddingY={cfg.typography.headerCellPaddingY}
+              contentAlignX="center"
+              contentAlignY="center"
+              tbodyMinHeightPx={cfg.typography.theadCellMinHeightPx}
+            />
+          </div>
+        ) : (
+          // 其他列：正常渲染
+          <VTableCell
+            key={`group-insert-col-${realColIndex}`}
+            variant="tbody"
+            hovered={rowHovered}
+            hoverByCell={false}
+            pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+            active={false}
+            isLastRow={false}
+            isFrozen={false}
+            showRightBorder={showRightBorder}
+            contentPaddingX={0}
+            contentPaddingY={cfg.typography.headerCellPaddingY}
+            contentAlignX="center"
+            contentAlignY="center"
+            tbodyMinHeightPx={cfg.typography.theadCellMinHeightPx}
+          />
+        );
+      })}
+
+      {/* 插入列占位 */}
+      {cfg.enableInsertRowCol ? (
+        <VTableCell
+          variant="tbody"
+          hovered={false}
+          hoverByCell={false}
+          pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+          active={false}
+          isLastRow={false}
+          suppressBottomBorder
+          showRightBorder={false}
+          contentPaddingX={0}
+          contentPaddingY={cfg.typography.headerCellPaddingY}
+          contentAlignX="center"
+          contentAlignY="center"
+          tbodyMinHeightPx={cfg.typography.theadCellMinHeightPx}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function TableGridBodyRow({
+  rowIndex,
+  resolvedBodyRowIndex,
+  groupRelativeIndex,
+}: {
+  rowIndex: number;
+  resolvedBodyRowIndex?: number;
+  groupRelativeIndex?: number;
+}) {
   const cfg = useTableGridConfigContext();
   const gridTemplateColumns = useRowGridTemplateColumns();
   const store = useTableRowHoverStore();
   const hovered = useRowHovered(rowIndex);
   const hoverSuppressed = isColumnResizeDragging();
   const rowHovered = !hoverSuppressed && hovered;
-  const bodyRowIndex = rowIndex - 1;
+  const bodyRowIndex = resolvedBodyRowIndex ?? (rowIndex - 1);
   const selectionStore = useBodyRowSelectionStore();
   const active = useSyncExternalStore(
     (cb) => selectionStore.subscribeRow(bodyRowIndex, cb),
@@ -624,6 +812,9 @@ function TableGridBodyRow({ rowIndex }: { rowIndex: number }) {
   // 分页模式下：当前页最后一行隐藏下边框
   const isPaginationPageLastRow =
     cfg.pageBodyRowEnd != null && bodyRowIndex === cfg.pageBodyRowEnd;
+
+  // 计算序号：分组模式下使用组内序号，否则使用全局序号
+  const rowNumber = groupRelativeIndex != null ? groupRelativeIndex + 1 : bodyRowIndex + 1;
 
   // 有选中列时先取消选中列（选中行、选中列互斥）
   const clearColumnSelectionIfExists = () => {
@@ -692,7 +883,7 @@ function TableGridBodyRow({ rowIndex }: { rowIndex: number }) {
             isLastRow={isLastRow}
             isFrozen={cfg.enableFreezeFirstCol}
             suppressBottomBorder={suppressBottomForFrozenTail || isPaginationPageLastRow}
-            showRightBorder={cfg.enableBodyCellRightBorder}
+            showRightBorder={false}
             contentPaddingX={NARROW_COL_PADDING_X}
             contentPaddingY={cfg.typography.bodyCellPaddingY}
             contentAlignX="center"
@@ -711,7 +902,7 @@ function TableGridBodyRow({ rowIndex }: { rowIndex: number }) {
                     userSelect: 'none',
                   }}
                 >
-                  {bodyRowIndex + 1}
+                  {rowNumber}
                 </Typography.Text>
               ) : (
                 <Checkbox
@@ -742,7 +933,7 @@ function TableGridBodyRow({ rowIndex }: { rowIndex: number }) {
                   userSelect: 'none',
                 }}
               >
-                {bodyRowIndex + 1}
+                {rowNumber}
               </Typography.Text>
             ) : null}
           </VTableCell>
@@ -786,7 +977,37 @@ function TableGridBodyRow({ rowIndex }: { rowIndex: number }) {
 
 function TableGridRowInner({ rowIndex }: TableGridRowProps) {
   const rowCount = useContextSelector(TableGridConfigContext, (c) => c!.rowCount);
+  const enableGrouping = useContextSelector(TableGridConfigContext, (c) => c?.enableGrouping ?? false);
+  const groupTitleRows = useContextSelector(TableGridConfigContext, (c) => c?.groupTitleRows ?? []);
 
+  // 分组模式下的行类型判断
+  if (enableGrouping && groupTitleRows.length > 0) {
+    const resolved = resolveVirtualRow(rowIndex, rowCount, groupTitleRows);
+
+    if (resolved.type === 'header') {
+      return <TableGridHeaderRow />;
+    }
+    if (resolved.type === 'group-title' && resolved.groupInfo) {
+      return <TableGridGroupTitleRow groupInfo={resolved.groupInfo} rowIndex={rowIndex} />;
+    }
+    if (resolved.type === 'body') {
+      return (
+        <TableGridBodyRow
+          rowIndex={rowIndex}
+          resolvedBodyRowIndex={resolved.bodyRowIndex}
+          groupRelativeIndex={resolved.groupRelativeIndex}
+        />
+      );
+    }
+    if (resolved.type === 'group-insert-tail' && resolved.groupInfo) {
+      return <TableGridGroupInsertTailRow rowIndex={rowIndex} groupInfo={resolved.groupInfo} />;
+    }
+    if (resolved.type === 'insert-tail') {
+      return <TableGridInsertTailRow rowIndex={rowCount} />;
+    }
+  }
+
+  // 无分组时的默认逻辑
   if (rowIndex === 0) {
     return <TableGridHeaderRow />;
   }

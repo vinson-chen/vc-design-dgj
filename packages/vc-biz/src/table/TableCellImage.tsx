@@ -7,7 +7,7 @@ export type TableCellImageProps = Readonly<{
   bodyRowIndex: number;
   colIndex: number;
   imageUrls: ReadonlyArray<string>;
-  isHoverLocked: boolean;
+  isAnchor: boolean;
   enableEditMode: boolean;
   imagePreviewSize?: number;
   addButtonSize?: number;
@@ -21,7 +21,7 @@ export function TableCellImage({
   bodyRowIndex,
   colIndex,
   imageUrls,
-  isHoverLocked,
+  isAnchor,
   enableEditMode,
   imagePreviewSize = 32,
   addButtonSize = 32,
@@ -30,7 +30,7 @@ export function TableCellImage({
   removeImageAt,
 }: TableCellImageProps) {
   const imageFileInputRef = useRef<HTMLInputElement | null>(null);
-  const showAddButton = isHoverLocked && enableEditMode;
+  const showAddButton = isAnchor && enableEditMode;
 
   const onOpenFilePicker = useCallback(
     (e: React.MouseEvent) => {
@@ -62,23 +62,8 @@ export function TableCellImage({
 
   return (
     <div
-      className={
-        'vc-biz-table-image-cell-wrap' +
-        (isHoverLocked ? ' vc-biz-table-image-cell-wrap--hover-locked' : '')
-      }
-      style={
-        {
-          minHeight: imagePreviewSize,
-          ...(isHoverLocked
-            ? {
-                '--vc-biz-table-image-hover-mask': vcTokens.color.neutral.background.mask,
-                '--vc-biz-table-image-remove-icon': vcTokens.color.menu.textSecondaryOnNav,
-                '--vc-biz-table-image-remove-icon-hover': vcTokens.color.neutral.text.solid,
-                '--vc-biz-table-image-remove-icon-active': vcTokens.color.menu.textSecondaryOnNav,
-              }
-            : {}),
-        } as React.CSSProperties
-      }
+      className={'vc-biz-table-image-cell-wrap' + (isAnchor ? ' vc-biz-table-image-cell-wrap--hover-locked' : '')}
+      style={{ minHeight: imagePreviewSize } as React.CSSProperties}
     >
       {imageUrls.map((url, idx) => (
         <div
@@ -92,7 +77,7 @@ export function TableCellImage({
             draggable={false}
             className="vc-biz-table-image-item-preview"
           />
-          {enableEditMode && isHoverLocked ? (
+          {enableEditMode && isAnchor ? (
             <button
               type="button"
               className="vc-biz-table-image-remove-btn"

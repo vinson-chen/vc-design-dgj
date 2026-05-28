@@ -5,6 +5,42 @@ import type { TableGridTypographyMetrics } from './tableGridTypography';
 
 export type TableColumnFieldKind = 'text' | 'image';
 
+/** 分组配置 */
+export type TableGroupingConfig = Readonly<{
+  /** 分组列索引（undefined 表示无分组） */
+  groupedColIndex?: number;
+  /** 展开的分组值集合 */
+  expandedGroupKeys: ReadonlySet<string>;
+}>;
+
+/** 分组标题行信息 */
+export type TableGroupTitleRowInfo = Readonly<{
+  /** 分组值（空字符串表示空值组） */
+  groupValue: string;
+  /** 组内数据行数 */
+  groupCount: number;
+  /** 组内所有 bodyRowIndex 列表（0-based） */
+  bodyRows: ReadonlyArray<number>;
+  /** 是否展开 */
+  expanded: boolean;
+  /** 虚拟 rowIndex（分组标题行） */
+  virtualRowIndex: number;
+  /** 组内插入行的虚拟 rowIndex（仅展开状态有效） */
+  groupInsertTailVirtualIndex?: number;
+  /** 是否为空值组 */
+  isEmptyGroup?: boolean;
+}>;
+
+/** 分组计算结果 */
+export type TableGroupingComputeResult = Readonly<{
+  /** 非空分组标题行信息列表 */
+  groupTitleRows: Array<TableGroupTitleRowInfo>;
+  /** 空值组的 bodyRowIndex 列表 */
+  emptyGroupBodyRows: ReadonlyArray<number>;
+  /** 空值组插入行的虚拟 rowIndex */
+  emptyGroupInsertTailVirtualIndex: number;
+}>;
+
 export type TableRowsProps = Readonly<{
   rowCount: number;
   colCount: number;
@@ -88,6 +124,16 @@ export type TableRowsProps = Readonly<{
   pageBodyRowStart?: number;
   /** 当前页表体行结束索引（0-based），用于分页全选 */
   pageBodyRowEnd?: number;
+  /** 支持分组：默认开启 */
+  enableGrouping?: boolean;
+  /** 分组配置 */
+  groupingConfig?: TableGroupingConfig;
+  /** 分组列变更回调 */
+  onGroupingChange?: (colIndex: number | undefined) => void;
+  /** 展开状态变更回调 */
+  onGroupExpansionChange?: (groupKey: string, expanded: boolean) => void;
+  /** 组内插入行回调：自动填入分组值 */
+  onInsertRowWithGroupValue?: (groupValue: string) => void;
 }>;
 
 export type TableGridConfigValue = TableRowsProps & {
@@ -137,4 +183,16 @@ export type TableGridStaticConfig = Omit<
   pageBodyRowStart?: number;
   /** 当前页表体行结束索引（0-based），用于分页全选 */
   pageBodyRowEnd?: number;
+  /** 支持分组 */
+  enableGrouping?: boolean;
+  /** 分组配置 */
+  groupingConfig?: TableGroupingConfig;
+  /** 分组列变更回调 */
+  onGroupingChange?: (colIndex: number | undefined) => void;
+  /** 展开状态变更回调 */
+  onGroupExpansionChange?: (groupKey: string, expanded: boolean) => void;
+  /** 分组标题行信息列表 */
+  groupTitleRows?: ReadonlyArray<TableGroupTitleRowInfo>;
+  /** 组内插入行回调：自动填入分组值 */
+  onInsertRowWithGroupValue?: (groupValue: string) => void;
 };

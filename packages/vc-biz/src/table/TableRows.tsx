@@ -36,6 +36,12 @@ import './tableBodyScroll.css';
 import { scrollTableActiveCellIntoView } from './tableGridScrollActiveCell';
 import type { TableGridEditingState } from './useTableGridEditing';
 import { useTableGridEditing } from './useTableGridEditing';
+import {
+  computeGroupTitleRows,
+  computeTotalVirtualRows,
+  resolveVirtualRow,
+} from './headless/tableGridGrouping';
+import type { TableGroupTitleRowInfo } from './tableGridTypes';
 
 export type { TableRowsProps } from './tableGridTypes';
 
@@ -55,6 +61,16 @@ function rangeExtractorPinHeader(range: Range) {
   const base = defaultRangeExtractor(range);
   if (base.includes(0)) return base;
   return [0, ...base].sort((a, b) => a - b);
+}
+
+/** 辅助函数：根据虚拟 rowIndex 解析行类型（用于虚拟列表 estimateSize） */
+/** 辅助函数：根据虚拟 rowIndex 解析行类型（用于虚拟列表 estimateSize） */
+function resolveVirtualRowByIndex(
+  virtualRowIndex: number,
+  rowCount: number,
+  groupTitleRows: ReadonlyArray<TableGroupTitleRowInfo>
+) {
+  return resolveVirtualRow(virtualRowIndex, rowCount, groupTitleRows);
 }
 
 function canScrollElementByDelta(el: HTMLElement, dX: number, dY: number): boolean {
@@ -355,6 +371,28 @@ export default function TableRows(props: TableRowsProps) {
     return 0;
   }, [enableBatchSelection, props.enableShowRowIndex, props.narrowWidth]);
 
+  // 分组逻辑：分组与分页互斥
+  const groupingEnabled = props.enableGrouping && props.groupingConfig?.groupedColIndex != null;
+  const groupedColIndex = props.groupingConfig?.groupedColIndex;
+
+  const groupTitleRows = useMemo(() => {
+    if (!groupingEnabled || paginationEnabled) return [];
+    if (groupedColIndex == null) return [];
+    return computeGroupTitleRows(
+      editing.valueByCell,
+      groupedColIndex,
+      bodyRowCount,
+      props.groupingConfig?.expandedGroupKeys ?? new Set()
+    );
+  }, [
+    groupingEnabled,
+    paginationEnabled,
+    groupedColIndex,
+    editing.valueByCell,
+    bodyRowCount,
+    props.groupingConfig?.expandedGroupKeys,
+  ]);
+
   const effectiveRowMinWidth = useMemo(() => {
     // 关键：隐藏列后行的 minWidth 必须随“可见列”收缩，否则可视区足够也会残留横向滚动条，
     // 并引发表头/末列视觉错位（cell 轨道与强制 minWidth 的横滚叠加）。
@@ -403,7 +441,14 @@ export default function TableRows(props: TableRowsProps) {
   }, [props.bodyScrollMaxHeight]);
 
   /** 虚拟化不含末行：末行若在 absolute 子树内做 sticky bottom，浏览器无法相对外层 scrollport 粘底 */
-  const virtualRowCount = props.rowCount;
+  // 总虚拟行数（包含 insert-tail）
+  const virtualRowCount = groupingEnabled
+    ? computeTotalVirtualRows(props.rowCount, groupTitleRows)
+    : props.rowCount + 1;
+  // 拟列表使用的行数（不含 insert-tail）
+  const virtualRowCountForVirtualizer = groupingEnabled
+    ? virtualRowCount - 1
+    : props.rowCount;
 
   /** 触控板惯性 / 自定义 wheel 单帧位移大时，固定小 overscan 易出现行间空白裂缝 */
   const virtualListOverscan = useMemo(() => {
@@ -413,12 +458,19 @@ export default function TableRows(props: TableRowsProps) {
   }, [useVirtualList, props.bodyScrollMaxHeight, typography.bodyVirtualRowEstimatePx]);
 
   const rowVirtualizer = useVirtualizer({
-    count: useVirtualList ? virtualRowCount : 0,
+    count: useVirtualList ? virtualRowCountForVirtualizer : 0,
     getScrollElement: () => scrollParentRef.current,
-    estimateSize: (index) =>
-      index === 0
-        ? typography.headerVirtualRowEstimatePx
-        : typography.bodyVirtualRowEstimatePx,
+    estimateSize: (index) => {
+      if (index === 0) return typography.headerVirtualRowEstimatePx;
+      if (groupingEnabled) {
+        // 分组模式下需要判断是分组标题行还是数据行
+        const resolved = resolveVirtualRowByIndex(index, props.rowCount, groupTitleRows);
+        if (resolved.type === 'group-title' || resolved.type === 'group-insert-tail') {
+          return typography.headerVirtualRowEstimatePx; // 分组标题行/组内插入行高度与表头类似
+        }
+      }
+      return typography.bodyVirtualRowEstimatePx;
+    },
     overscan: virtualListOverscan,
     enabled: useVirtualList,
     rangeExtractor: rangeExtractorPinHeader,
@@ -562,6 +614,19 @@ export default function TableRows(props: TableRowsProps) {
         setColumnFieldKindByCol((prev) => remapColumnFieldKindsAfterRemoveColumn(prev, colIndex));
         setImageUrlsByCell((prev) => remapImageUrlsByCellAfterRemoveColumn(prev, colIndex));
         props.onDeleteColumn?.(colIndex);
+
+        // 分组场景：处理分组列变化
+        const groupedColIndex = props.groupingConfig?.groupedColIndex;
+        if (groupedColIndex != null) {
+          if (colIndex === groupedColIndex) {
+            // 删除分组列：直接取消分组
+            props.onGroupingChange?.(undefined);
+          } else if (colIndex < groupedColIndex) {
+            // 删除分组列左侧的列：分组列索引减1
+            props.onGroupingChange?.(groupedColIndex - 1);
+          }
+          // 删除分组列右侧的列：分组列索引不变
+        }
       } finally {
         props.endUndoBatch?.();
       }
@@ -576,6 +641,8 @@ export default function TableRows(props: TableRowsProps) {
       props.gridMinCount,
       props.onDeleteColumn,
       props.startUndoBatch,
+      props.groupingConfig?.groupedColIndex,
+      props.onGroupingChange,
     ]
   );
 
@@ -718,6 +785,10 @@ export default function TableRows(props: TableRowsProps) {
       // 分页模式下当前页表体行范围（0-based bodyRowIndex）
       pageBodyRowStart: paginationEnabled ? pageBodyStart : undefined,
       pageBodyRowEnd: paginationEnabled ? pageBodyEnd : undefined,
+      // 分组标题行信息
+      groupTitleRows,
+      // 组内插入行回调
+      onInsertRowWithGroupValue: props.onInsertRowWithGroupValue,
     };
   }, [
     typography,
@@ -763,6 +834,7 @@ export default function TableRows(props: TableRowsProps) {
     props.paginationCurrent,
     props.paginationPageSize,
     props.onPaginationChange,
+    groupTitleRows,
   ]);
 
   return (
@@ -862,17 +934,57 @@ export default function TableRows(props: TableRowsProps) {
                     >
                       <TableGridRow key="row-0" rowIndex={0} />
                     </div>
-                    {/* 表体行：分页模式下只显示当前页范围 */}
-                    {paginationEnabled
-                      ? Array.from({ length: pageBodyEnd - pageBodyStart + 1 }).map((_, idx) => {
-                          const bodyRowIndex = pageBodyStart + idx; // 0-based
-                          const rowIndex = bodyRowIndex + 1; // rowIndex: bodyRowIndex + 1
-                          return <TableGridRow key={`row-${rowIndex}`} rowIndex={rowIndex} />;
-                        })
-                      : Array.from({ length: props.rowCount - 1 }).map((_, idx) => {
-                          const rowIndex = idx + 1;
-                          return <TableGridRow key={`row-${rowIndex}`} rowIndex={rowIndex} />;
-                        })}
+                    {/* 表体行：分组模式、分页模式、普通模式 */}
+                    {groupingEnabled
+                      ? // 分组模式：按分组结构遍历
+                        (() => {
+                          const rows: React.ReactNode[] = [];
+                          let virtualIdx = 1; // 表头是 0，表体从 1 开始
+                          for (const groupInfo of groupTitleRows) {
+                            // 分组标题行
+                            rows.push(
+                              <TableGridRow
+                                key={`group-title-${groupInfo.groupValue}`}
+                                rowIndex={virtualIdx}
+                              />
+                            );
+                            virtualIdx += 1;
+                            // 组内数据行（仅展开状态）
+                            if (groupInfo.expanded) {
+                              for (let i = 0; i < groupInfo.groupCount; i++) {
+                                const bodyRowIndex = groupInfo.bodyRows[i];
+                                rows.push(
+                                  <TableGridRow
+                                    key={`body-${bodyRowIndex}`}
+                                    rowIndex={virtualIdx}
+                                  />
+                                );
+                                virtualIdx += 1;
+                              }
+                              // 组内插入行
+                              rows.push(
+                                <TableGridRow
+                                  key={`group-insert-${groupInfo.groupValue}`}
+                                  rowIndex={virtualIdx}
+                                />
+                              );
+                              virtualIdx += 1;
+                            }
+                          }
+                          return rows;
+                        })()
+                      : paginationEnabled
+                        ? // 分页模式：只显示当前页范围
+                          Array.from({ length: pageBodyEnd - pageBodyStart + 1 }).map((_, idx) => {
+                            const bodyRowIndex = pageBodyStart + idx; // 0-based
+                            const rowIndex = bodyRowIndex + 1; // rowIndex: bodyRowIndex + 1
+                            return <TableGridRow key={`row-${rowIndex}`} rowIndex={rowIndex} />;
+                          })
+                        : // 普通模式：显示所有表体行
+                          Array.from({ length: props.rowCount - 1 }).map((_, idx) => {
+                            const rowIndex = idx + 1;
+                            return <TableGridRow key={`row-${rowIndex}`} rowIndex={rowIndex} />;
+                          })}
                   </div>
                 )}
                 {/* 插入行：独立于表体横向滚动内容，sticky 定位 */}
@@ -889,7 +1001,7 @@ export default function TableRows(props: TableRowsProps) {
                   }}
                   data-vc-biz-table-frozen-footer=""
                 >
-                  <TableGridRow rowIndex={props.rowCount} />
+                  <TableGridRow rowIndex={groupingEnabled ? virtualRowCount - 1 : props.rowCount} />
                 </div>
               </div>
             </TableGridEditingContext.Provider>

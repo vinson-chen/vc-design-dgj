@@ -369,15 +369,13 @@ function TableGridTextCellInner({
     colIndex < cfg.colCount &&
     (isBody || isHeader);
 
-  const isHoverLocked = useTableGridEditingStateSelector((s) => {
-    if (!canLockCell) return false;
-    return s.hoverLockedCell?.r === cellR && s.hoverLockedCell?.c === colIndex;
-  });
-  const showImageAddButton = isImageColumnBodyCell && isHoverLocked;
+  // 锚点格：单击选中/框选锚点（蓝描边 + 白底）
+  const isAnchorCell = !isHeader && isSelectedAny;
+  const showImageAddButton = isImageColumnBodyCell && isAnchorCell && cfg.enableEditMode;
 
-  const isBodySelectionCell = !isHeader && (isSelectedAny || isNonAnchorMultiSelected);
+  // 选中态：多选区域内非锚点格（浅蓝背景）；锚点格不显示浅蓝背景，用 inset panel 蓝描边表示
+  const isBodySelectionCell = !isHeader && isNonAnchorMultiSelected;
   const cellActive = isInsertColPlaceholder ? false : active || isBodySelectionCell;
-  const bodyHoverLocked = !isHeader && isHoverLocked;
   const IMAGE_ADD_BUTTON_SIZE_PX = 32;
   const LOCKED_TEXT_PANEL_GAP_PX = 0;
   const LOCKED_TEXT_PANEL_CONTENT_GAP_PX = 6;
@@ -539,7 +537,11 @@ function TableGridTextCellInner({
     const lockedByFreezeForDelete =
       (cfg.enableFreezeFirstCol && colIndex === 0 && cfg.colCount <= 2) ||
       (cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1);
-    return [
+    // 分组：是否支持分组，当前列是否已分组
+    const canGroupByThisCol = cfg.enableGrouping && colIndex >= 0 && colIndex < cfg.colCount;
+    const isCurrentlyGrouped = cfg.groupingConfig?.groupedColIndex === colIndex;
+
+    const items: MenuProps['items'] = [
       {
         key: HEADER_COL_FIELD_TYPE_KEY,
         icon: <VcIcon type="edit" fontSize={16} />,
@@ -556,6 +558,17 @@ function TableGridTextCellInner({
           .filter(Boolean)
           .join(' '),
       },
+      // 分组选项（在编辑列下方）
+      ...(canGroupByThisCol
+        ? [
+            {
+              key: 'group-by-column',
+              icon: <VcIcon type="form" fontSize={16} />,
+              label: isCurrentlyGrouped ? '取消分组' : '设为分组',
+              className: isCurrentlyGrouped ? 'vc-biz-table-header-menu-item-active' : undefined,
+            },
+          ]
+        : []),
       {
         key: 'hide-column',
         icon: <VcIcon type="browse-off" fontSize={16} />,
@@ -570,11 +583,29 @@ function TableGridTextCellInner({
         disabled: cfg.colCount <= gridMin || lockedByFreezeForDelete,
       },
     ];
-  }, [canUseHeaderVisibilityMenu, cfg.colCount, colIndex, gridMin, headerFieldTypeSubOpen]);
+    return items;
+  }, [
+    canUseHeaderVisibilityMenu,
+    cfg.colCount,
+    cfg.enableGrouping,
+    cfg.groupingConfig?.groupedColIndex,
+    colIndex,
+    gridMin,
+    headerFieldTypeSubOpen,
+    cfg.enableFreezeFirstCol,
+    cfg.enableFreezeLastCol,
+  ]);
 
   const onHeaderColumnMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
     ({ key, domEvent }) => {
       domEvent.stopPropagation();
+      // 分组处理
+      if (key === 'group-by-column') {
+        const isCurrentlyGrouped = cfg.groupingConfig?.groupedColIndex === colIndex;
+        cfg.onGroupingChange?.(isCurrentlyGrouped ? undefined : colIndex);
+        setHeaderMenuOpen(false);
+        return;
+      }
       // 隐藏列：冻结列不允许隐藏
       const lockedByFreezeForHide =
         (cfg.enableFreezeFirstCol && colIndex === 0) ||
@@ -599,6 +630,8 @@ function TableGridTextCellInner({
       cfg.deleteColumnAt,
       cfg.enableFreezeFirstCol,
       cfg.enableFreezeLastCol,
+      cfg.groupingConfig?.groupedColIndex,
+      cfg.onGroupingChange,
       colIndex,
       gridMin,
       setHeaderColumnHidden,
@@ -675,13 +708,13 @@ function TableGridTextCellInner({
     [headerMenuCellClassName, isImageColumnBodyCell ? 'vc-biz-table-image-scroll-host' : '']
       .filter(Boolean)
       .join(' ') || undefined;
+  // 锚点态：蓝描边 + 白底（文本列和图片列共用）
   const useBodyTextInsetPanel =
-    bodyHoverLocked &&
+    isAnchorCell &&
     isBody &&
     !isInsertRowPlaceholder &&
     !isInsertColPlaceholder &&
-    colIndex < cfg.colCount &&
-    !isImageColumnBodyCell;
+    colIndex < cfg.colCount;
   const insetPanelAlignItems: React.CSSProperties['alignItems'] =
     !isHeader && cfg.enableVerticalCenter ? 'center' : 'flex-start';
   const tableCellOverflowStyle: React.CSSProperties | undefined =
@@ -708,7 +741,7 @@ function TableGridTextCellInner({
           paddingBottom: LOCKED_TEXT_PANEL_BOTTOM_GAP_PX,
         }
       : tableCellOverflowStyle;
-  const wrapBodyTextInsetPanel = (content: React.ReactNode): React.ReactNode =>
+  const wrapBodyTextInsetPanel = (content: React.ReactNode, setImageButtonVars?: boolean): React.ReactNode =>
     useBodyTextInsetPanel ? (
       <div
         style={{
@@ -726,7 +759,22 @@ function TableGridTextCellInner({
           borderRadius: 0,
           border: `2px solid ${vcTokens.color.primary.default}`,
           background: vcTokens.color.neutral.background.container,
-        }}
+          ...(setImageButtonVars ? {
+            '--vc-biz-table-image-hover-mask': vcTokens.color.neutral.background.mask,
+            '--vc-biz-table-image-remove-icon': vcTokens.color.menu.textSecondaryOnNav,
+            '--vc-biz-table-image-remove-icon-hover': vcTokens.color.neutral.text.solid,
+            '--vc-biz-table-image-remove-icon-active': vcTokens.color.menu.textSecondaryOnNav,
+            // Add 按钮：遵循 vc-design Button default 规范
+            '--vc-biz-table-image-add-bg': 'transparent',
+            '--vc-biz-table-image-add-bg-hover': vcTokens.color.neutral.fill.tertiary,
+            '--vc-biz-table-image-add-bg-active': vcTokens.color.neutral.fill.secondary,
+            '--vc-biz-table-image-add-icon': vcTokens.color.neutral.text.icon,
+            '--vc-biz-table-image-add-border-hover': vcTokens.color.neutral.border.default,
+            '--vc-biz-table-image-add-icon-hover': vcTokens.color.neutral.text.icon,
+            '--vc-biz-table-image-add-border-active': vcTokens.color.neutral.border.default,
+            '--vc-biz-table-image-add-icon-active': vcTokens.color.neutral.text.icon,
+          } : {}),
+        } as React.CSSProperties}
       >
         {content}
       </div>
@@ -734,19 +782,28 @@ function TableGridTextCellInner({
       content
     );
 
+  // 分组列表头：顶部加 2px 描边（颜色与其他描边一致）
+  const isGroupedColHeader = isHeader && !isInsertColPlaceholder && cfg.groupingConfig?.groupedColIndex === colIndex;
+  const groupedColTopBorderStyle: React.CSSProperties | undefined = isGroupedColHeader
+    ? { borderTop: `2px solid ${vcTokens.color.neutral.border.default}` }
+    : undefined;
+
   const tableCell = (
     <VTableCell
       variant={isHeader ? 'thead' : 'tbody'}
       pointerHoverResetNonce={cfg.pointerHoverResetNonce}
       className={tableCellClassName}
       hovered={
-        (isInsertColPlaceholder && !isHeader) || (isHeader && isHeaderFullColumnSelected)
-          ? false
-          : hovered || isHoverLocked || isHeaderSelectedLocked || isNonAnchorMultiSelected
+        // 选中列时表头显示悬停态颜色；其他情况按原有逻辑
+        isHeader && isHeaderFullColumnSelected
+          ? true
+          : (isInsertColPlaceholder && !isHeader) || (isHeader && isHeaderFullColumnSelected)
+            ? false
+            : hovered || isAnchorCell || isHeaderSelectedLocked || isNonAnchorMultiSelected
       }
-      hoverByCell={isHeader && !isHeaderSelectedLocked}
+      hoverByCell={isHeader && !isHeaderSelectedLocked && !isHeaderFullColumnSelected}
       active={cellActive}
-      bodyHoverLocked={bodyHoverLocked}
+      isAnchor={isAnchorCell}
       bodyRowHovered={!isHeader && hovered}
       /** 编辑表头时勿开 zoom：否则 zoom 分支会加大右侧 padding，与展示态不一致 */
       zoom={canResizeHeaderTextCol && !isHeaderEditing}
@@ -794,7 +851,7 @@ function TableGridTextCellInner({
             ? 'flex-start'
             : 'center'
       }
-      style={tableCellStyle}
+      style={{ ...tableCellStyle, ...groupedColTopBorderStyle }}
     >
       {isHeader ? (
         <TableHeaderCell
@@ -881,18 +938,22 @@ function TableGridTextCellInner({
           </Typography.Text>
         </div>
       ) : isInsertRowPlaceholder ? null : isImageColumnBodyCell ? (
-        <TableCellImage
-          bodyRowIndex={bodyRowIndex}
-          colIndex={colIndex}
-          imageUrls={imageUrls}
-          isHoverLocked={isHoverLocked}
-          enableEditMode={cfg.enableEditMode}
-          imagePreviewSize={imagePreviewSize}
-          addButtonSize={IMAGE_ADD_BUTTON_SIZE_PX}
-          editingApi={ed}
-          appendImageFiles={(r, c, files) => cfg.appendImageFilesToCell(r, c, files)}
-          removeImageAt={(r, c, idx) => cfg.removeImageAtCell(r, c, idx)}
-        />
+        wrapBodyTextInsetPanel(
+          <TableCellImage
+            bodyRowIndex={bodyRowIndex}
+            colIndex={colIndex}
+            imageUrls={imageUrls}
+            isAnchor={isAnchorCell}
+            enableEditMode={cfg.enableEditMode}
+            imagePreviewSize={imagePreviewSize}
+            addButtonSize={IMAGE_ADD_BUTTON_SIZE_PX}
+            editingApi={ed}
+            appendImageFiles={(r, c, files) => cfg.appendImageFilesToCell(r, c, files)}
+            removeImageAt={(r, c, idx) => cfg.removeImageAtCell(r, c, idx)}
+          />,
+          // 图片列锚点态需要设置按钮 CSS 变量
+          isAnchorCell
+        )
       ) : isEditing ? (
         <TableCellEditing
           bodyRowIndex={bodyRowIndex}
@@ -903,6 +964,7 @@ function TableGridTextCellInner({
           editingApi={ed}
           rowCount={cfg.rowCount}
           wrapWithInsetPanel={useBodyTextInsetPanel}
+          verticalCenter={cfg.enableVerticalCenter}
           onEnterNavigateDown={(nextR, nextC) => {
             ed.onKeyboardNavigateCell?.({ r: nextR, c: nextC, key: 'ArrowDown' });
           }}
@@ -1009,6 +1071,8 @@ function TableGridTextCellInner({
       }
       const api = edRef.current;
       if (!api) return;
+      // 阻止浏览器默认文本选择，让拖拽只针对单元格
+      e.preventDefault();
       const anchor = { r: bodyRowIndex, c: colIndex };
       bodyMouseDownWasSelectedRef.current =
         api.selectedCell?.r === anchor.r && api.selectedCell?.c === anchor.c;
@@ -1133,7 +1197,10 @@ function TableGridTextCellInner({
         !isInsertColPlaceholder &&
         colIndex < cfg.colCount
       ) {
-        ed.setHoverLockedCell({ r: bodyRowIndex, c: colIndex });
+        // 单击锁定单元格：选中该格（锚点态）
+        ed.setSelectedCell({ r: bodyRowIndex, c: colIndex });
+        ed.setSelectedCells(new Set([`${bodyRowIndex}:${colIndex}`]));
+        ed.setSelectionAnchor({ r: bodyRowIndex, c: colIndex });
       }
       if (isImageColumnBodyCell && cfg.enableEditMode) {
         e.stopPropagation();

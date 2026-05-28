@@ -17,6 +17,8 @@ export type TableCellEditingProps = Readonly<{
   onEnterNavigateDown?: (nextR: number, nextC: number) => void;
   /** 是否用 inset panel 包装（锁定态时的蓝色描边容器） */
   wrapWithInsetPanel?: boolean;
+  /** 是否垂直居中（与展示态对齐） */
+  verticalCenter?: boolean;
 }>;
 
 /** 编辑态 textarea 样式：无 padding，与展示态对齐 */
@@ -45,6 +47,7 @@ export function TableCellEditing({
   rowCount,
   onEnterNavigateDown,
   wrapWithInsetPanel = false,
+  verticalCenter = false,
 }: TableCellEditingProps) {
   const textareaRef = editingApi.editTextAreaRef;
   const style = getBodyEditTextareaStyle(typography);
@@ -85,7 +88,6 @@ export function TableCellEditing({
       editingApi.setSelectedCell(next);
       editingApi.setSelectedCells(new Set([`${next.r}:${next.c}`]));
       editingApi.setSelectionAnchor(next);
-      editingApi.setHoverLockedCell(next);
       onEnterNavigateDown?.(nextR, colIndex);
       return;
     }
@@ -138,7 +140,7 @@ export function TableCellEditing({
           alignSelf: 'stretch',
           boxSizing: 'border-box',
           display: 'flex',
-          alignItems: 'flex-start',
+          alignItems: verticalCenter ? 'center' : 'flex-start',
           paddingTop: 6,
           paddingRight: 6,
           paddingBottom: 5,

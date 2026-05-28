@@ -45,6 +45,8 @@ export type TableAreaDemoOptions = Readonly<{
   initialPaginationCurrent?: number;
   /** 每页条数，默认 20 */
   initialPaginationPageSize?: number;
+  /** 支持分组：默认开启 */
+  initialEnableGrouping?: boolean;
 }>;
 
 export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
@@ -104,6 +106,13 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   const [paginationPageSize, setPaginationPageSize] = useState(
     options?.initialPaginationPageSize ?? 50
   );
+
+  // 分组状态
+  const [enableGrouping, setEnableGrouping] = useState(
+    options?.initialEnableGrouping ?? true
+  );
+  const [groupedColIndex, setGroupedColIndex] = useState<number | undefined>(undefined);
+  const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(() => new Set());
 
   const colCountRef = useRef(colCount);
   const rowCountRef = useRef(rowCount);
@@ -445,6 +454,113 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       setPaginationCurrent(page);
       setPaginationPageSize(pageSize);
     },
+    // 分组
+    enableGrouping,
+    setEnableGrouping,
+    groupedColIndex,
+    setGroupedColIndex,
+    expandedGroupKeys,
+    setExpandedGroupKeys,
+    groupingConfig: {
+      groupedColIndex,
+      expandedGroupKeys: expandedGroupKeys as ReadonlySet<string>,
+    },
+    onGroupingChange: (colIndex: number | undefined) => {
+      setGroupedColIndex(colIndex);
+      // 切换分组列时，默认展开所有分组
+      if (colIndex != null) {
+        // 分组与分页互斥：选择分组时自动关闭分页
+        if (enablePagination) {
+          setEnablePagination(false);
+        }
+        const newExpanded = new Set<string>();
+        // 遍历该列所有值，添加到展开集合
+        for (let r = 0; r < rowCount - 1; r++) {
+          const val = valueByCellRef.current[`${r}-${colIndex}`];
+          if (val) newExpanded.add(val);
+        }
+        setExpandedGroupKeys(newExpanded);
+      } else {
+        setExpandedGroupKeys(new Set());
+      }
+    },
+    onGroupExpansionChange: (groupKey: string, expanded: boolean) => {
+      setExpandedGroupKeys((prev) => {
+        const next = new Set(prev);
+        if (expanded) next.add(groupKey);
+        else next.delete(groupKey);
+        return next;
+      });
+    },
+    onInsertRowWithGroupValue: (groupValue: string) => {
+      // 组内插入：找到该组最后一行，在其后插入新行，并自动填入分组值
+      recordIfNeeded();
+
+      // 计算该组最后一行的 bodyRowIndex
+      const groups = new Map<string, Array<number>>();
+      for (let r = 0; r < rowCountRef.current - 1; r++) {
+        const val = valueByCellRef.current[`${r}-${groupedColIndex!}`] ?? '(空)';
+        if (!groups.has(val)) groups.set(val, []);
+        groups.get(val)!.push(r);
+      }
+
+      const groupRows = groups.get(groupValue) ?? [];
+      const insertAtBodyRow = groupRows.length > 0
+        ? Math.max(...groupRows) + 1  // 该组最后一行之后
+        : rowCountRef.current - 1;    // 末尾
+
+      // 数据重排：从 insertAtBodyRow 开始的所有行数据向下移动一行
+      setValueByCellBase((prev) => {
+        const next: Record<string, string> = {};
+        for (const [key, value] of Object.entries(prev)) {
+          if (key.startsWith('header-')) {
+            next[key] = value;
+            continue;
+          }
+          const m = /^(\d+)-(\d+)$/.exec(key);
+          if (!m) {
+            next[key] = value;
+            continue;
+          }
+          const r = Number(m[1]);
+          const c = Number(m[2]);
+          if (!Number.isFinite(r) || !Number.isFinite(c)) {
+            next[key] = value;
+            continue;
+          }
+          if (r >= insertAtBodyRow) {
+            next[`${r + 1}-${c}`] = value;
+          } else {
+            next[key] = value;
+          }
+        }
+        // 设置新行的分组值
+        next[`${insertAtBodyRow}-${groupedColIndex!}`] = groupValue;
+        return next;
+      });
+
+      setRowCount(Math.min(GRID_MAX_ROW, rowCountRef.current + 1));
+
+      // 滚动到新插入行位置（空值组通常在末尾，不需要特殊滚动处理）
+      // 非空值组：滚动到该组标题行附近
+      if (groupValue) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const scrollport = document.querySelector('.vc-biz-table-scrollport');
+            if (scrollport) {
+              const groupTitleRows = scrollport.querySelectorAll('[data-vc-biz-table-group-title-row]');
+              for (const row of groupTitleRows) {
+                const label = row.querySelector('span');
+                if (label?.textContent?.includes(groupValue)) {
+                  row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                  break;
+                }
+              }
+            }
+          });
+        });
+      }
+    },
   };
 }
 
@@ -493,6 +609,13 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     paginationCurrent,
     paginationPageSize,
     onPaginationChange,
+    enableGrouping,
+    groupedColIndex,
+    expandedGroupKeys,
+    groupingConfig,
+    onGroupingChange,
+    onGroupExpansionChange,
+    onInsertRowWithGroupValue,
   } = model;
 
   const rows = (
@@ -538,6 +661,11 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
       paginationCurrent={paginationCurrent}
       paginationPageSize={paginationPageSize}
       onPaginationChange={onPaginationChange}
+      enableGrouping={enableGrouping}
+      groupingConfig={groupingConfig}
+      onGroupingChange={onGroupingChange}
+      onGroupExpansionChange={onGroupExpansionChange}
+      onInsertRowWithGroupValue={onInsertRowWithGroupValue}
     />
   );
 

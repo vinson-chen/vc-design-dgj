@@ -43,8 +43,6 @@ export type TableGridEditingState = {
   isCellMultiSelected: (r: number, c: number) => boolean;
   clearSelection: () => void;
   setRangeSelection: (anchor: { r: number; c: number }, current: { r: number; c: number }) => void;
-  hoverLockedCell: { r: number; c: number } | null;
-  setHoverLockedCell: Dispatch<SetStateAction<{ r: number; c: number } | null>>;
   editingCell: { r: number; c: number } | null;
   setEditingCell: Dispatch<SetStateAction<{ r: number; c: number } | null>>;
   /** 与 DOM 同步；勿放入 Context，否则每键入一字会扫全表 selector */
@@ -113,7 +111,6 @@ export function useTableGridEditing(
     selectedCell,
     selectedCells,
     selectionAnchor,
-    hoverLockedCell,
     editingCell,
   } = ui;
 
@@ -133,12 +130,6 @@ export function useTableGridEditing(
   const setSelectionAnchor = useCallback(
     (update: SetStateAction<{ r: number; c: number } | null>) => {
       dispatchUi({ type: 'setSelectionAnchor', update });
-    },
-    []
-  );
-  const setHoverLockedCell = useCallback(
-    (update: SetStateAction<{ r: number; c: number } | null>) => {
-      dispatchUi({ type: 'setHoverLockedCell', update });
     },
     []
   );
@@ -258,11 +249,9 @@ export function useTableGridEditing(
       setSelectedCells(newSelectedCells);
       setSelectedCell({ r: 0, c: colIndex });
       setSelectionAnchor({ r: 0, c: colIndex });
-      // 选中列时清除锁定单元格，避免首行显示锁定样式
-      setHoverLockedCell(null);
       editingDraftRef.current = '';
     },
-    [setSelectedCells, setSelectedCell, setSelectionAnchor, setHoverLockedCell]
+    [setSelectedCells, setSelectedCell, setSelectionAnchor]
   );
 
   /** 从选中集合中移除列（支持多列取消） */
@@ -386,8 +375,8 @@ export function useTableGridEditing(
   }, [enableEditMode]);
 
   useEffect(() => {
-    if (!hoverLockedCell) return;
-    const locked = hoverLockedCell;
+    if (!selectedCell) return;
+    const locked = selectedCell;
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target;
       if (!(target instanceof Node)) return;
@@ -400,15 +389,12 @@ export function useTableGridEditing(
         const r = Number(cell.getAttribute('data-body-row'));
         const c = Number(cell.getAttribute('data-col'));
         if (!Number.isNaN(r) && !Number.isNaN(c)) {
-          // 命中同一锁定格
+          // 命中同一锚点格，保持选中
           if (r === locked.r && c === locked.c) return;
-          // 列选择时（anchor 在 body，点击同列 header），视为仍在当前选择内，不清空
-          if (r === TABLE_GRID_HEADER_ROW_INDEX && c === locked.c && locked.r >= 0) return;
-          // 点击表格内的任何单元格，都不清除选中区域（保持选中列）
-          // 只有框选拖拽或点击表头切换列时才会取消选中列
-          return;
+          // 点击其他单元格，取消锚点态（后续 onClick 会设置新的锚点态）
         }
       }
+      // 点击表格外部或其他单元格，取消锚点态
       const wasEditing = editingCellRef.current != null;
       if (wasEditing) {
         exitEditingLikeEscape();
@@ -418,7 +404,7 @@ export function useTableGridEditing(
     };
     document.addEventListener('pointerdown', onPointerDown, true);
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [hoverLockedCell, exitEditingLikeEscape]);
+  }, [selectedCell, exitEditingLikeEscape]);
 
   useEffect(() => {
     if (!editingCell || !pendingFocusAfterKeyboardOpenRef.current) return;
@@ -440,9 +426,8 @@ export function useTableGridEditing(
     const onKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
       const ctx = {
-        hoverLockedCell,
-        editingCell,
         selectedCell,
+        editingCell,
         maxBodyRowIndex,
         maxColIndex,
         activeElement: activeEl,
@@ -505,7 +490,7 @@ export function useTableGridEditing(
         const headerInput = headerEditInputRef.current;
         if (headerInput && document.activeElement === headerInput) return;
 
-        const hasCellContext = editingCell != null || selectedCell != null || hoverLockedCell != null;
+        const hasCellContext = editingCell != null || selectedCell != null;
         if (hasCellContext) {
           if (keyOne === 'c') {
             e.preventDefault();
@@ -513,7 +498,6 @@ export function useTableGridEditing(
               {
                 editingCell,
                 selectedCell,
-                hoverLockedCell,
                 selectedCells,
                 valueByCell: valueByCellRef.current,
                 maxBodyRowIndex,
@@ -533,7 +517,6 @@ export function useTableGridEditing(
                 {
                   editingCell,
                   selectedCell,
-                  hoverLockedCell,
                   selectedCells,
                   valueByCell: valueByCellRef.current,
                   maxBodyRowIndex,
@@ -549,7 +532,7 @@ export function useTableGridEditing(
               }
 
               setValueByCell((prev) =>
-                applyPasteToValueByCell(prev, pasteInfo, maxBodyRowIndex, maxColIndex)
+                applyPasteToValueByCell(prev, pasteInfo, maxBodyRowIndex, maxColIndex, selectedCellsRef.current)
               );
 
               const ec = editingCellRef.current;
@@ -645,7 +628,6 @@ export function useTableGridEditing(
     selectedCell,
     selectedCells,
     editingCell,
-    hoverLockedCell,
     maxBodyRowIndex,
     maxColIndex,
     getEditingValueForSave,
@@ -665,8 +647,6 @@ export function useTableGridEditing(
       isCellMultiSelected,
       clearSelection,
       setRangeSelection,
-      hoverLockedCell,
-      setHoverLockedCell,
       editingCell,
       setEditingCell,
       setEditingDraft,
@@ -699,7 +679,6 @@ export function useTableGridEditing(
     selectedCell,
     selectedCells,
     selectionAnchor,
-    hoverLockedCell,
     editingCell,
     valueByCell,
     isCellMultiSelected,

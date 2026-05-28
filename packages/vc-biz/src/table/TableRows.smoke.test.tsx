@@ -88,7 +88,7 @@ async function switchFirstHeaderColumnToImageType() {
 }
 
 describe('TableRows smoke', () => {
-  it('switches first column to image type and renders add button in body cell', async () => {
+  it('switches first column to image type and renders add button in body cell when anchored', async () => {
     render(
       <TableRows
         {...createTableRowsProps({
@@ -104,13 +104,15 @@ describe('TableRows smoke', () => {
 
     await switchFirstHeaderColumnToImageType();
 
+    // 图片列 add 按钮只在锚点态显示
     expect(screen.queryByRole('button', { name: '添加图片' })).not.toBeInTheDocument();
     const bodyCell = document.querySelector(
       '[data-hover-lock-cell][data-body-row="0"][data-col="0"]'
     ) as HTMLElement | null;
     expect(bodyCell).toBeTruthy();
     fireEvent.click(bodyCell!);
-    expect(screen.getAllByRole('button', { name: '添加图片' }).length).toBeGreaterThan(0);
+    // 点击后进入锚点态，显示 add 按钮
+    expect(screen.getByRole('button', { name: '添加图片' })).toBeInTheDocument();
   });
 
   it('uploads multiple images and deletes one via close action', async () => {

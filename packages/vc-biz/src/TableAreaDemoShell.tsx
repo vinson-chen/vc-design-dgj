@@ -36,6 +36,8 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
     setEnableBatchSelection,
     enablePagination,
     setEnablePagination,
+    enableGrouping,
+    setEnableGrouping,
     enableInsertRowCol,
     setEnableInsertRowCol,
     enableEditMode,
@@ -182,6 +184,10 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>显示分页</Typography.Text>
             <Switch size="small" checked={enablePagination} onChange={setEnablePagination} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>支持分组</Typography.Text>
+            <Switch size="small" checked={enableGrouping} onChange={setEnableGrouping} />
           </div>
         </div>
       </div>

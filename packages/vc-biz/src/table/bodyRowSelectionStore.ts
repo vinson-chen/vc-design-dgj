@@ -117,6 +117,31 @@ export class BodyRowSelectionStore {
     this.emitSelection();
   }
 
+  /** 设置指定行号列表的选中状态（用于分组模式下只操作组内行） */
+  setRowsByIndices(indices: ReadonlyArray<number>, checked: boolean): void {
+    this.shiftAnchorBodyRow = null;
+    for (const i of indices) {
+      if (i < 0 || i >= this.bodyRowCount) continue;
+      if (checked) this.checks.set(i, true);
+      else this.checks.delete(i);
+      this.emitRow(i);
+    }
+    this.emitHeader();
+    this.emitSelection();
+  }
+
+  /** 获取指定行号列表的指纹（用于分组模式组内全选状态） */
+  getRowsFingerprint(indices: ReadonlyArray<number>): number {
+    if (indices.length === 0) return 0;
+    let c = 0;
+    for (const i of indices) {
+      if (i >= 0 && i < this.bodyRowCount && this.getRow(i)) c += 1;
+    }
+    if (c === 0) return 1;
+    if (c === indices.length) return 2;
+    return 3;
+  }
+
   /** 删除表体行后压缩行号（与 TableArea deleteBodyRow 一致） */
   remapAfterDeleteBodyRow(deletedIndex: number): void {
     if (this.shiftAnchorBodyRow != null) {

@@ -21,29 +21,31 @@ describe('editingGridUiReducer', () => {
     expect(s1.selectionAnchor).toEqual({ r: 0, c: 0 });
   });
 
-  it('lockedArrowNavigate syncs hover, selected, anchor', () => {
+  it('lockedArrowNavigate syncs selected and anchor', () => {
     const s1 = editingGridUiReducer(initialEditingGridUiState, {
       type: 'lockedArrowNavigate',
       next: { r: 2, c: 3 },
     });
     expect(s1.selectedCell).toEqual({ r: 2, c: 3 });
-    expect(s1.hoverLockedCell).toEqual({ r: 2, c: 3 });
     expect(s1.selectedCells.has(cellSelectionSetKey(2, 3))).toBe(true);
+    expect(s1.selectionAnchor).toEqual({ r: 2, c: 3 });
   });
 
-  it('pointerDownOutside clears when not editing', () => {
+  it('pointerDownOutside clears selection when not editing', () => {
     const s0 = {
       ...initialEditingGridUiState,
-      hoverLockedCell: { r: 0, c: 0 } as const,
       selectedCell: { r: 0, c: 0 } as const,
+      selectedCells: new Set([cellSelectionSetKey(0, 0)]),
+      selectionAnchor: { r: 0, c: 0 } as const,
     };
     const s1 = editingGridUiReducer(s0, {
       type: 'pointerDownOutside',
       wasEditing: false,
       exitCell: null,
     });
-    expect(s1.hoverLockedCell).toBeNull();
+    // 点击表格外部或其他单元格（非编辑状态）：清空选中状态
     expect(s1.selectedCell).toBeNull();
     expect(s1.selectedCells.size).toBe(0);
+    expect(s1.selectionAnchor).toBeNull();
   });
 });

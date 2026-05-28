@@ -16,7 +16,6 @@ export type EditingGridUiState = Readonly<{
   selectedCell: GridCellCoord | null;
   selectedCells: Set<string>;
   selectionAnchor: GridCellCoord | null;
-  hoverLockedCell: GridCellCoord | null;
   editingCell: GridCellCoord | null;
 }>;
 
@@ -24,7 +23,6 @@ export const initialEditingGridUiState: EditingGridUiState = {
   selectedCell: null,
   selectedCells: new Set<string>(),
   selectionAnchor: null,
-  hoverLockedCell: null,
   editingCell: null,
 };
 
@@ -36,7 +34,6 @@ export type EditingGridUiAction =
   | { type: 'setSelectedCell'; update: SetStateAction<GridCellCoord | null> }
   | { type: 'setSelectedCells'; update: SetStateAction<Set<string>> }
   | { type: 'setSelectionAnchor'; update: SetStateAction<GridCellCoord | null> }
-  | { type: 'setHoverLockedCell'; update: SetStateAction<GridCellCoord | null> }
   | { type: 'setEditingCell'; update: SetStateAction<GridCellCoord | null> }
   | { type: 'clearSelection' }
   | { type: 'resetAllForUndoOrDisable' }
@@ -44,9 +41,9 @@ export type EditingGridUiAction =
   | { type: 'afterRemoveColumn'; colIndex: number }
   | { type: 'afterRemoveBodyRow'; bodyRowIndex: number }
   | { type: 'lockedArrowNavigate'; next: GridCellCoord }
-  /** 表格外 pointerdown：已保存编辑态时落到该格；否则清空锁定与选区 */
+  /** 表格外 pointerdown：已保存编辑态时落到该格；否则清空选中与选区 */
   | { type: 'pointerDownOutside'; wasEditing: boolean; exitCell: GridCellCoord | null }
-  /** 仅结束编辑并保留选中/锁定在格上（配合外部 setValueByCell） */
+  /** 仅结束编辑并保留选中在格上（配合外部 setValueByCell） */
   | { type: 'commitEditExit'; cell: GridCellCoord }
   /** 插入行后调整选中集合 */
   | { type: 'afterInsertBodyRow'; bodyRowIndex: number; colCount: number };
@@ -65,11 +62,6 @@ export function editingGridUiReducer(
         ...state,
         selectionAnchor: resolveSetStateAction(state.selectionAnchor, action.update),
       };
-    case 'setHoverLockedCell':
-      return {
-        ...state,
-        hoverLockedCell: resolveSetStateAction(state.hoverLockedCell, action.update),
-      };
     case 'setEditingCell':
       return { ...state, editingCell: resolveSetStateAction(state.editingCell, action.update) };
     case 'clearSelection':
@@ -78,7 +70,6 @@ export function editingGridUiReducer(
         selectedCells: new Set<string>(),
         selectionAnchor: null,
         selectedCell: null,
-        hoverLockedCell: null,
       };
     case 'resetAllForUndoOrDisable':
       return { ...initialEditingGridUiState };
@@ -88,7 +79,6 @@ export function editingGridUiReducer(
         selectionAnchor: action.anchor,
         selectedCells: buildRectangularSelectionKeys(action.anchor, action.current),
         selectedCell: action.anchor,
-        hoverLockedCell: action.anchor,
         editingCell: null,
       };
     case 'afterRemoveColumn':
@@ -98,7 +88,6 @@ export function editingGridUiReducer(
         selectedCell: adjustCoordAfterRemoveColumn(state.selectedCell, action.colIndex),
         selectedCells: adjustSelectionSetAfterRemoveColumn(state.selectedCells, action.colIndex),
         selectionAnchor: adjustCoordAfterRemoveColumn(state.selectionAnchor, action.colIndex),
-        hoverLockedCell: adjustCoordAfterRemoveColumn(state.hoverLockedCell, action.colIndex),
       };
     case 'afterRemoveBodyRow':
       return {
@@ -107,12 +96,10 @@ export function editingGridUiReducer(
         selectedCell: adjustCoordAfterRemoveBodyRow(state.selectedCell, action.bodyRowIndex),
         selectedCells: adjustSelectionSetAfterRemoveBodyRow(state.selectedCells, action.bodyRowIndex),
         selectionAnchor: adjustCoordAfterRemoveBodyRow(state.selectionAnchor, action.bodyRowIndex),
-        hoverLockedCell: adjustCoordAfterRemoveBodyRow(state.hoverLockedCell, action.bodyRowIndex),
       };
     case 'lockedArrowNavigate':
       return {
         ...state,
-        hoverLockedCell: action.next,
         selectedCell: action.next,
         selectedCells: new Set([cellSelectionSetKey(action.next.r, action.next.c)]),
         selectionAnchor: action.next,
@@ -121,7 +108,6 @@ export function editingGridUiReducer(
       return {
         ...state,
         selectedCell: action.cell,
-        hoverLockedCell: action.cell,
         editingCell: null,
       };
     case 'pointerDownOutside':
@@ -129,12 +115,16 @@ export function editingGridUiReducer(
         return {
           ...state,
           selectedCell: action.exitCell,
-          hoverLockedCell: action.exitCell,
           editingCell: null,
         };
       }
-      // 点击表格外部（非编辑状态）：不做任何修改，保留选中列
-      return state;
+      // 点击表格外部或其他单元格（非编辑状态）：清空选中状态
+      return {
+        ...state,
+        selectedCell: null,
+        selectedCells: new Set<string>(),
+        selectionAnchor: null,
+      };
     case 'afterInsertBodyRow':
       return {
         ...state,
@@ -142,7 +132,6 @@ export function editingGridUiReducer(
         selectedCell: adjustCoordAfterInsertBodyRow(state.selectedCell, action.bodyRowIndex),
         selectedCells: adjustSelectionSetAfterInsertBodyRow(state.selectedCells, action.bodyRowIndex, action.colCount),
         selectionAnchor: adjustCoordAfterInsertBodyRow(state.selectionAnchor, action.bodyRowIndex),
-        hoverLockedCell: adjustCoordAfterInsertBodyRow(state.hoverLockedCell, action.bodyRowIndex),
       };
     default:
       return state;

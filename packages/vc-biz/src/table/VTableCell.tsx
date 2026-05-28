@@ -49,13 +49,15 @@ export interface VTableCellProps {
   tbodyMinHeightPx?: number;
   /** 与 TableRows 同步：递增时清空按格悬停（仅 hoverByCell 时有效） */
   pointerHoverResetNonce?: number;
-  /** 表体：键盘/编辑锁定格；底色固定为浅蓝（与选中行一致）；未选中行且行悬停时再叠悬停渐变 */
-  bodyHoverLocked?: boolean;
-  /** 表体：鼠标是否悬停在本行（与锁定格无关）；用于锁定格在行悬停时参与行悬停叠层 */
+  /** 表体：锚点态单元格（单击选中/框选锚点）；不叠加 hover overlay，外部用 inset panel 包蓝框 */
+  isAnchor?: boolean;
+  /** 表体：鼠标是否悬停在本行（用于选中态叠加 hover） */
   bodyRowHovered?: boolean;
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  /** 点击事件（用于组内插入行等） */
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 /** @deprecated Use VTableCellProps instead */
@@ -65,8 +67,7 @@ function theadBaseBackground() {
   return vcTokens.color.neutral.background.layout;
 }
 
-function tbodyBaseBackground(active: boolean, bodyHoverLocked: boolean) {
-  if (bodyHoverLocked) return vcTokens.color.primary.bg;
+function tbodyBaseBackground(active: boolean) {
   if (active) return vcTokens.color.primary.bg;
   return TABLE_BODY_BG_DEFAULT;
 }
@@ -106,11 +107,12 @@ export function VTableCell({
   theadMinHeightPx,
   tbodyMinHeightPx,
   pointerHoverResetNonce = 0,
-  bodyHoverLocked = false,
+  isAnchor = false,
   bodyRowHovered = false,
   children,
   className,
   style,
+  onClick,
 }: VTableCellProps) {
   const [cellHovered, setCellHovered] = useState(false);
   const [resizeHandleHovered, setResizeHandleHovered] = useState(false);
@@ -121,11 +123,12 @@ export function VTableCell({
   const baseBg =
     variant === 'thead'
       ? theadBaseBackground()
-      : tbodyBaseBackground(active, bodyHoverLocked);
+      : tbodyBaseBackground(active);
+  // 锚点态不叠加 hover overlay（外部用 inset panel 包蓝框）
   const hoverFillOverlay =
     hoverEffective &&
     !(variant === 'tbody' && active) &&
-    !(variant === 'tbody' && bodyHoverLocked && !bodyRowHovered) &&
+    !(variant === 'tbody' && isAnchor) &&
     vcTokens.color.neutral.fill.secondary;
   const borderColor = variant === 'thead' ? theadBorder() : tbodyBorder();
 
@@ -236,6 +239,7 @@ export function VTableCell({
         setCellHovered(true);
       }}
       onMouseLeave={() => setCellHovered(false)}
+      onClick={onClick}
     >
       {children}
 

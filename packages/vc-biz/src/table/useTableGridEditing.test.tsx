@@ -32,14 +32,15 @@ describe('useTableGridEditing', () => {
     expect(result.current.getEditingValueForSave()).toBe('draft');
   });
 
-  it('ArrowLeft moves hover lock and selection when cell is locked', async () => {
+  it('ArrowLeft moves selection anchor when cell is selected', async () => {
     const { result } = renderHook(() =>
       useTableGridEditing(true, { maxBodyRowIndex: 2, maxColIndex: 2 })
     );
 
     act(() => {
-      result.current.setHoverLockedCell({ r: 0, c: 1 });
       result.current.setSelectedCell({ r: 0, c: 1 });
+      result.current.setSelectedCells(new Set(['0:1']));
+      result.current.setSelectionAnchor({ r: 0, c: 1 });
     });
 
     act(() => {
@@ -49,7 +50,6 @@ describe('useTableGridEditing', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.hoverLockedCell).toEqual({ r: 0, c: 0 });
       expect(result.current.selectedCell).toEqual({ r: 0, c: 0 });
     });
   });
@@ -60,8 +60,9 @@ describe('useTableGridEditing', () => {
     );
 
     act(() => {
-      result.current.setHoverLockedCell({ r: 0, c: 1 });
       result.current.setSelectedCell({ r: 0, c: 1 });
+      result.current.setSelectedCells(new Set(['0:1']));
+      result.current.setSelectionAnchor({ r: 0, c: 1 });
     });
 
     act(() => {
@@ -71,19 +72,17 @@ describe('useTableGridEditing', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.hoverLockedCell).toEqual({ r: -1, c: 1 });
       expect(result.current.selectedCell).toEqual({ r: -1, c: 1 });
     });
   });
 
-  it('Delete clears header storage key when hoverLockedCell is on header row', async () => {
+  it('Delete clears header storage key when selectedCell is on header row', async () => {
     const { result } = renderHook(() =>
       useTableGridEditing(true, { maxBodyRowIndex: 2, maxColIndex: 2 })
     );
 
     act(() => {
       result.current.setValueByCell({ 'header-1': '列名' });
-      result.current.setHoverLockedCell({ r: -1, c: 1 });
       result.current.setSelectedCell({ r: -1, c: 1 });
     });
 
@@ -121,7 +120,7 @@ describe('useTableGridEditing', () => {
     expect(result.current.isCellMultiSelected(1, 2)).toBe(false);
   });
 
-  it('clearSelection clears selectedCell/hoverLockedCell/anchor/multi-set', () => {
+  it('clearSelection clears selectedCell/anchor/multi-set', () => {
     const { result } = renderHook(() =>
       useTableGridEditing(true, { maxBodyRowIndex: 10, maxColIndex: 10 })
     );
@@ -136,17 +135,17 @@ describe('useTableGridEditing', () => {
     });
 
     expect(result.current.selectedCell).toBeNull();
-    expect(result.current.hoverLockedCell).toBeNull();
     expect(result.current.selectionAnchor).toBeNull();
     expect(result.current.selectedCells.size).toBe(0);
   });
 
-  it('after pointerdown outside while editing, hover lock matches selected idle cell', async () => {
+  it('after pointerdown outside while editing, selectedCell remains', async () => {
     const { result } = renderHook(() => useTableGridEditing(true, { maxBodyRowIndex: 9, maxColIndex: 9 }));
 
     act(() => {
-      result.current.setHoverLockedCell({ r: 5, c: 1 });
       result.current.setSelectedCell({ r: 5, c: 1 });
+      result.current.setSelectedCells(new Set(['5:1']));
+      result.current.setSelectionAnchor({ r: 5, c: 1 });
       result.current.setEditingCell({ r: 5, c: 1 });
     });
 
@@ -157,7 +156,6 @@ describe('useTableGridEditing', () => {
     await waitFor(() => {
       expect(result.current.editingCell).toBeNull();
       expect(result.current.selectedCell).toEqual({ r: 5, c: 1 });
-      expect(result.current.hoverLockedCell).toEqual({ r: 5, c: 1 });
     });
   });
 
@@ -174,12 +172,11 @@ describe('useTableGridEditing', () => {
       });
     });
 
-    it('Ctrl+C copies locked cell value to clipboard', async () => {
+    it('Ctrl+C copies selected cell value to clipboard', async () => {
       const { result } = renderHook(() => useTableGridEditing(true));
 
       act(() => {
         result.current.setValueByCell({ '1-2': 'cell-a' });
-        result.current.setHoverLockedCell({ r: 1, c: 2 });
         result.current.setSelectedCell({ r: 1, c: 2 });
       });
 
@@ -199,12 +196,11 @@ describe('useTableGridEditing', () => {
       });
     });
 
-    it('Ctrl+V pastes clipboard into locked cell', async () => {
+    it('Ctrl+V pastes clipboard into selected cell', async () => {
       const { result } = renderHook(() => useTableGridEditing(true));
 
       act(() => {
         result.current.setValueByCell({ '0-0': 'old' });
-        result.current.setHoverLockedCell({ r: 0, c: 0 });
         result.current.setSelectedCell({ r: 0, c: 0 });
       });
 
@@ -260,7 +256,6 @@ describe('useTableGridEditing', () => {
 
       act(() => {
         result.current.setSelectedCell({ r: 2, c: 1 });
-        result.current.setHoverLockedCell({ r: 2, c: 1 });
       });
 
       act(() => {
@@ -315,7 +310,6 @@ describe('useTableGridEditing', () => {
 
       act(() => {
         result.current.setSelectedCell({ r: 1, c: 1 });
-        result.current.setHoverLockedCell({ r: 1, c: 1 });
       });
 
       act(() => {

@@ -21,6 +21,8 @@ export type TableGridTypographyMetrics = Readonly<{
   editTextareaChromePadPx: number;
   /** 表体编辑/失焦态 TextArea：与展示态文字左缘对齐（扣掉 Ant Input 约 1px 边框） */
   bodyCellTextareaContentPadX: number;
+  /** 分组标题行估计高度 */
+  groupTitleRowEstimatePx: number;
 }>;
 
 /** 与 Ant Design Input.TextArea 默认左边框宽度一致，用于与 `bodyCellPaddingX` 对齐 */
@@ -60,6 +62,8 @@ export function getTableGridTypographyMetrics(enableRegular: boolean): TableGrid
   const theadCellMinHeightPx = enableRegular ? 38 : 36;
   const headerVirtualRowEstimatePx = enableRegular ? 44 : 40;
   const bodyVirtualRowEstimatePx = Math.ceil(displayCellMaxHeightPx);
+  // 分组标题行高度与表头类似，使用相同估计值
+  const groupTitleRowEstimatePx = headerVirtualRowEstimatePx;
   return {
     fontSizePx,
     lineHeightPx,
@@ -76,6 +80,7 @@ export function getTableGridTypographyMetrics(enableRegular: boolean): TableGrid
     theadCellMinHeightPx,
     editTextareaChromePadPx,
     bodyCellTextareaContentPadX,
+    groupTitleRowEstimatePx,
   };
 }
 

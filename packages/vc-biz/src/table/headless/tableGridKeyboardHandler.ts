@@ -1,6 +1,6 @@
 import type { GridCellCoord } from './tableGridSparseRemap';
 import { stepLockedCell } from './tableGridSelectionGeometry';
-import { TABLE_GRID_HEADER_ROW_INDEX } from './tableGridCellAddress';
+import { cellStorageKey, TABLE_GRID_HEADER_ROW_INDEX } from './tableGridCellAddress';
 
 export type KeyboardNavigateResult = {
   next: GridCellCoord;
@@ -14,7 +14,6 @@ export type ClearCellResult = {
 };
 
 export type KeyboardHandlerContext = Readonly<{
-  hoverLockedCell: GridCellCoord | null;
   editingCell: GridCellCoord | null;
   selectedCell: GridCellCoord | null;
   maxBodyRowIndex: number;
@@ -50,7 +49,7 @@ export function handleArrowNavigation(
   ctx: KeyboardHandlerContext,
   key: string
 ): KeyboardNavigateResult | null {
-  if (!ctx.hoverLockedCell) return null;
+  if (!ctx.selectedCell) return null;
   if (!isArrowKey(key)) return null;
   if (ctx.maxBodyRowIndex < 0 || ctx.maxColIndex < 0) return null;
 
@@ -58,7 +57,7 @@ export function handleArrowNavigation(
   const taFocused = activeElementIsTextarea(ctx.activeElement);
   if (taFocused) return null;
 
-  const from = ctx.editingCell ?? ctx.selectedCell ?? ctx.hoverLockedCell;
+  const from = ctx.editingCell ?? ctx.selectedCell;
   const next = stepLockedCell(from.r, from.c, key, ctx.maxBodyRowIndex, ctx.maxColIndex);
   return { next, key };
 }
@@ -68,12 +67,12 @@ export function handleClearLockedCell(
   ctx: KeyboardHandlerContext,
   key: string
 ): ClearCellResult | null {
-  if (!ctx.hoverLockedCell) return null;
+  if (!ctx.selectedCell) return null;
   if (!isClearCellKey(key, ctx.editingCell != null)) return null;
   if (isExternalFieldFocused(ctx.activeElement)) return null;
 
-  const { r, c } = ctx.hoverLockedCell;
-  const cellKey = `${r}-${c}`;
+  const { r, c } = ctx.selectedCell;
+  const cellKey = cellStorageKey(r, c);
   return { r, c, cellKey };
 }
 

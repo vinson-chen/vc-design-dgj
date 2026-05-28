@@ -41,7 +41,7 @@ export function getTableRowGridTemplateColumns(p: TableRowGridColumnsParams): st
     parts.push(`${p.defaultTextColWidth}px`);
   }
 
-  // 末列不再自适应；开启插入列时，让“插入列右侧空白区”自适应填充可视区剩余宽度。
+  // 末列不再自适应；开启插入列时，让"插入列右侧空白区"自适应填充可视区剩余宽度。
   if (p.enableInsertRowCol) {
     parts.push('minmax(0px, 1fr)');
   }

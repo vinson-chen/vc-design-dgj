@@ -4,7 +4,6 @@ import { cellStorageKey, parseCellSelectionSetKey } from './tableGridCellAddress
 export type ClipboardHandlerContext = Readonly<{
   editingCell: { r: number; c: number } | null;
   selectedCell: { r: number; c: number } | null;
-  hoverLockedCell: { r: number; c: number } | null;
   selectedCells: ReadonlySet<string>;
   valueByCell: Record<string, string>;
   maxBodyRowIndex: number;
@@ -31,7 +30,7 @@ export function handleCopy(
   editingDraft: string
 ): CopyResult | null {
   const hasCellContext =
-    ctx.editingCell != null || ctx.selectedCell != null || ctx.hoverLockedCell != null;
+    ctx.editingCell != null || ctx.selectedCell != null;
 
   if (!hasCellContext) return null;
 
@@ -48,7 +47,7 @@ export function handleCopy(
   }
 
   // 单格选中：复制单元格值
-  const cell = ctx.selectedCell ?? ctx.hoverLockedCell;
+  const cell = ctx.selectedCell;
   if (!cell) return null;
 
   const text = ctx.valueByCell[cellStorageKey(cell.r, cell.c)] ?? '';
@@ -60,7 +59,7 @@ export function handlePaste(
   ctx: ClipboardHandlerContext,
   clipboardText: string
 ): PasteTarget | null {
-  const pasteTarget = ctx.selectedCell ?? ctx.hoverLockedCell ?? ctx.editingCell;
+  const pasteTarget = ctx.selectedCell ?? ctx.editingCell;
   if (!pasteTarget) return null;
 
   const anchor = ctx.selectedCell ?? pasteTarget;
@@ -86,7 +85,8 @@ export function applyPasteToValueByCell(
   prev: Record<string, string>,
   pasteInfo: PasteTarget,
   maxBodyRowIndex: number,
-  maxColIndex: number
+  maxColIndex: number,
+  selectedCells?: ReadonlySet<string>
 ): Record<string, string> {
   const next = { ...prev };
 
@@ -94,9 +94,9 @@ export function applyPasteToValueByCell(
     // 表头粘贴：单格
     const ck = cellStorageKey(pasteInfo.anchor.r, pasteInfo.anchor.c);
     next[ck] = pasteInfo.text;
-  } else if (pasteInfo.applySingleValueToRange) {
-    // 单值粘贴到多格选中区域
-    for (const key of Object.keys(prev)) {
+  } else if (pasteInfo.applySingleValueToRange && selectedCells) {
+    // 单值粘贴到多格选中区域：遍历选中集合
+    for (const key of selectedCells) {
       const p = parseCellSelectionSetKey(key);
       if (!p) continue;
       if (p.r < 0 || p.r > maxBodyRowIndex || p.c < 0 || p.c > maxColIndex) continue;
