@@ -63,16 +63,6 @@ function rangeExtractorPinHeader(range: Range) {
   return [0, ...base].sort((a, b) => a - b);
 }
 
-/** 辅助函数：根据虚拟 rowIndex 解析行类型（用于虚拟列表 estimateSize） */
-/** 辅助函数：根据虚拟 rowIndex 解析行类型（用于虚拟列表 estimateSize） */
-function resolveVirtualRowByIndex(
-  virtualRowIndex: number,
-  rowCount: number,
-  groupTitleRows: ReadonlyArray<TableGroupTitleRowInfo>
-) {
-  return resolveVirtualRow(virtualRowIndex, rowCount, groupTitleRows);
-}
-
 function canScrollElementByDelta(el: HTMLElement, dX: number, dY: number): boolean {
   const maxX = Math.max(0, el.scrollWidth - el.clientWidth);
   const maxY = Math.max(0, el.scrollHeight - el.clientHeight);
@@ -464,7 +454,7 @@ export default function TableRows(props: TableRowsProps) {
       if (index === 0) return typography.headerVirtualRowEstimatePx;
       if (groupingEnabled) {
         // 分组模式下需要判断是分组标题行还是数据行
-        const resolved = resolveVirtualRowByIndex(index, props.rowCount, groupTitleRows);
+        const resolved = resolveVirtualRow(index, props.rowCount, groupTitleRows);
         if (resolved.type === 'group-title' || resolved.type === 'group-insert-tail') {
           return typography.headerVirtualRowEstimatePx; // 分组标题行/组内插入行高度与表头类似
         }

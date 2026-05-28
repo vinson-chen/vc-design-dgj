@@ -31,16 +31,6 @@ export type TableGroupTitleRowInfo = Readonly<{
   isEmptyGroup?: boolean;
 }>;
 
-/** 分组计算结果 */
-export type TableGroupingComputeResult = Readonly<{
-  /** 非空分组标题行信息列表 */
-  groupTitleRows: Array<TableGroupTitleRowInfo>;
-  /** 空值组的 bodyRowIndex 列表 */
-  emptyGroupBodyRows: ReadonlyArray<number>;
-  /** 空值组插入行的虚拟 rowIndex */
-  emptyGroupInsertTailVirtualIndex: number;
-}>;
-
 export type TableRowsProps = Readonly<{
   rowCount: number;
   colCount: number;
