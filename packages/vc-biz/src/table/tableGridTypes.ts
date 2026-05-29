@@ -5,10 +5,17 @@ import type { TableGridTypographyMetrics } from './tableGridTypography';
 
 export type TableColumnFieldKind = 'text' | 'image';
 
+/** 表头单元格值：标题 + 可选的分组身份标识 */
+export type HeaderCellValue = {
+  title: string;
+  /** 分组列身份标识（存在则表示该列是分组列） */
+  groupId?: string;
+};
+
 /** 分组配置 */
 export type TableGroupingConfig = Readonly<{
-  /** 分组列索引（undefined 表示无分组） */
-  groupedColIndex?: number;
+  /** 分组列 groupId（undefined 表示无分组） */
+  groupedColId?: string;
   /** 展开的分组值集合 */
   expandedGroupKeys: ReadonlySet<string>;
 }>;
@@ -29,6 +36,8 @@ export type TableGroupTitleRowInfo = Readonly<{
   groupInsertTailVirtualIndex?: number;
   /** 是否为空值组 */
   isEmptyGroup?: boolean;
+  /** 分组列索引（基于 groupId 查找得到） */
+  groupedColIndex?: number;
 }>;
 
 export type TableRowsProps = Readonly<{
@@ -118,12 +127,14 @@ export type TableRowsProps = Readonly<{
   enableGrouping?: boolean;
   /** 分组配置 */
   groupingConfig?: TableGroupingConfig;
-  /** 分组列变更回调 */
-  onGroupingChange?: (colIndex: number | undefined) => void;
+  /** 分组列变更回调（切换分组列时触发，会重建展开状态） */
+  onGroupingChange?: (groupId: string | undefined) => void;
   /** 展开状态变更回调 */
   onGroupExpansionChange?: (groupKey: string, expanded: boolean) => void;
   /** 组内插入行回调：自动填入分组值 */
   onInsertRowWithGroupValue?: (groupValue: string) => void;
+  /** 列顺序变更回调 */
+  onColumnOrderChange?: (fromIndex: number, toIndex: number) => void;
 }>;
 
 export type TableGridConfigValue = TableRowsProps & {
@@ -177,8 +188,8 @@ export type TableGridStaticConfig = Omit<
   enableGrouping?: boolean;
   /** 分组配置 */
   groupingConfig?: TableGroupingConfig;
-  /** 分组列变更回调 */
-  onGroupingChange?: (colIndex: number | undefined) => void;
+  /** 分组列变更回调（切换分组列时触发，会重建展开状态） */
+  onGroupingChange?: (groupId: string | undefined) => void;
   /** 展开状态变更回调 */
   onGroupExpansionChange?: (groupKey: string, expanded: boolean) => void;
   /** 分组标题行信息列表 */

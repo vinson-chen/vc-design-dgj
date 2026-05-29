@@ -82,9 +82,17 @@
 }
 
 /** 拖拽列宽时隐藏下拉按钮，避免闪烁 */
-html.vc-biz-col-resizing .vc-biz-table-header-chevron-btn.ant-btn.ant-btn-text {
+html.vc-biz-col-resizing .vc-biz-table-header-chevron-btn.ant-btn.ant-btn-text,
+html.vc-biz-col-order-dragging .vc-biz-table-header-chevron-btn.ant-btn.ant-btn-text {
   opacity: 0 !important;
+  visibility: hidden !important;
   pointer-events: none !important;
+}
+
+/** 拖拽列宽或拖拽调整顺序时禁用表头悬停态（不缩短表头名称宽度） */
+html.vc-biz-col-resizing .vc-biz-table-header-with-menu:hover .vc-biz-table-header-cell-inner,
+html.vc-biz-col-order-dragging .vc-biz-table-header-with-menu:hover .vc-biz-table-header-cell-inner {
+  padding-right: 0;
 }
 
 /** 表头处于编辑态时隐藏下拉按钮，避免与输入框抢焦点/重叠 */

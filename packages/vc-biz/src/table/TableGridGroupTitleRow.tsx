@@ -103,8 +103,8 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
   }, [fullGroupLabel]);
 
   // 空值组不允许编辑
-  const canEditGroupTitle = !groupInfo.isEmptyGroup && cfg.enableEditMode && cfg.groupingConfig?.groupedColIndex != null;
-  const groupedColIndex = cfg.groupingConfig?.groupedColIndex;
+  const canEditGroupTitle = !groupInfo.isEmptyGroup && cfg.enableEditMode && groupInfo.groupedColIndex != null;
+  const groupedColIndex = groupInfo.groupedColIndex;
 
   // 双击进入编辑态
   const onGroupTitleDoubleClick = (e: React.MouseEvent) => {

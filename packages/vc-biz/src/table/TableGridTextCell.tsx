@@ -32,12 +32,33 @@ import { cellKey, EDIT_TEXTAREA_MAX_ROWS } from './tableGridConstants';
 import { tableTextClampNStyleFromMetrics } from './tableGridTypography';
 import { fitTableHeaderTextWithEllipsis } from './fitTableHeaderTextWithEllipsis';
 import { getFreezeDividerStyle, getTextColGridItemShellStyle } from './tableGridLayout';
+import { generateGroupId, getHeaderGroupId, getHeaderTitle, parseHeaderCellValue, setHeaderGroupId } from './headless/tableGridGroupingId';
+import type { HeaderCellValue } from './tableGridTypes';
 import './tableBodyEditNativeTextarea.css';
 import './tableBodyImageCell.css';
 import './tableHeaderContextMenu.css';
 
 /** 表体编辑/选中失焦态：VTableCell 描边 + 内层原生 textarea（与表头 wrap+input 同构） */
 const INSERT_TAIL_STATS_SSR: { total: number; selected: number } = { total: 0, selected: 0 };
+
+/** 列拖拽全局状态 */
+let columnDragState: {
+  isDragging: boolean;
+  dragStartX: number;
+  dragColIndex: number;
+  dropTargetColIndex: number;
+  /** 拖拽源列宽度 */
+  dragColWidth: number;
+  /** 表格顶部位置 */
+  tableTop: number;
+  /** 整列高度（从表头到表格底部） */
+  columnHeight: number;
+} | null = null;
+let columnDragDropIndicatorCol: number | null = null;
+/** 拖拽浮层 DOM 元素 */
+let columnDragGhostEl: HTMLDivElement | null = null;
+/** 放置指示线 DOM 元素 */
+let columnDragIndicatorEl: HTMLDivElement | null = null;
 
 function useInsertTailFooterStats(enabled: boolean) {
   const store = useBodyRowSelectionStore();
@@ -87,6 +108,11 @@ function TableGridTextCellInner({
   const dragSelectingRef = useRef(false);
   const suppressNextClickRef = useRef(false);
   const bodyMouseDownWasSelectedRef = useRef(false);
+
+  // 列拖拽相关状态
+  const [isColumnDraggingThis, setIsColumnDraggingThis] = useState(false);
+  const columnDragStartXRef = useRef<number | null>(null);
+  const cellShellRef = useRef<HTMLDivElement | null>(null);
 
   /** 内边距由 VTableCell 与默认态一致承担；textarea 无 padding/底，避免与展示态叠出位移 */
   const bodyEditNativeTextareaStyle = useMemo(
@@ -197,7 +223,7 @@ function TableGridTextCellInner({
   const headerTextRef = useRef<HTMLSpanElement | null>(null);
 
   const fullHeaderLabel = useMemo(
-    () => (isHeader && !isInsertColPlaceholder ? (headerStored ?? `列 ${colIndex + 1}`) : ''),
+    () => (isHeader && !isInsertColPlaceholder ? (getHeaderTitle(headerStored) ?? `列 ${colIndex + 1}`) : ''),
     [isHeader, isInsertColPlaceholder, headerStored, colIndex]
   );
 
@@ -232,6 +258,37 @@ function TableGridTextCellInner({
     (isSelectedAny || isHeaderFullColumnSelected);
 
   const isHeaderEditing = isHeader && cfg.enableEditMode && isEditingAny;
+
+  // 列拖拽条件：选中列、非冻结列、非插入列占位
+  const canDragColumnOrder =
+    isHeader &&
+    !isInsertColPlaceholder &&
+    isHeaderFullColumnSelected &&
+    cfg.onColumnOrderChange != null &&
+    !(cfg.enableFreezeFirstCol && colIndex === 0) &&
+    !(cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1);
+
+  // 表头列拖拽：监听全局拖拽状态更新本列状态
+  useEffect(() => {
+    if (!isHeader || isInsertColPlaceholder) return;
+    const checkDragState = () => {
+      if (columnDragState && columnDragState.isDragging) {
+        setIsColumnDraggingThis(columnDragState.dragColIndex === colIndex);
+      } else {
+        setIsColumnDraggingThis(false);
+      }
+    };
+    // 使用 rAF 轮询检查（避免频繁 setState）
+    let rafId: number | null = null;
+    const tick = () => {
+      checkDragState();
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [canDragColumnOrder, colIndex]);
 
   /** 按单元格宽度用「…」结尾重算展示文案（Unicode U+2026，与 CSS ellipsis 的半字观感区分） */
   useLayoutEffect(() => {
@@ -539,7 +596,9 @@ function TableGridTextCellInner({
       (cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1);
     // 分组：是否支持分组，当前列是否已分组
     const canGroupByThisCol = cfg.enableGrouping && colIndex >= 0 && colIndex < cfg.colCount;
-    const isCurrentlyGrouped = cfg.groupingConfig?.groupedColIndex === colIndex;
+    // 检查当前列是否是分组列（通过 groupId 匹配）
+    const currentHeaderGroupId = getHeaderGroupId(headerStored);
+    const isCurrentlyGrouped = currentHeaderGroupId != null && currentHeaderGroupId === cfg.groupingConfig?.groupedColId;
 
     const items: MenuProps['items'] = [
       {
@@ -588,21 +647,36 @@ function TableGridTextCellInner({
     canUseHeaderVisibilityMenu,
     cfg.colCount,
     cfg.enableGrouping,
-    cfg.groupingConfig?.groupedColIndex,
+    cfg.groupingConfig?.groupedColId,
     colIndex,
     gridMin,
     headerFieldTypeSubOpen,
     cfg.enableFreezeFirstCol,
     cfg.enableFreezeLastCol,
+    headerStored,
   ]);
 
   const onHeaderColumnMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
     ({ key, domEvent }) => {
       domEvent.stopPropagation();
+      const ed = edRef.current;
+      if (ed == null) return;
       // 分组处理
       if (key === 'group-by-column') {
-        const isCurrentlyGrouped = cfg.groupingConfig?.groupedColIndex === colIndex;
-        cfg.onGroupingChange?.(isCurrentlyGrouped ? undefined : colIndex);
+        const currentHeaderGroupId = getHeaderGroupId(headerStored);
+        const isCurrentlyGrouped = currentHeaderGroupId != null && currentHeaderGroupId === cfg.groupingConfig?.groupedColId;
+        if (isCurrentlyGrouped) {
+          // 取消分组：移除 groupId
+          const newHeaderValue = setHeaderGroupId(headerStored, undefined);
+          ed.setValueByCell((prev) => ({ ...prev, [`header-${colIndex}`]: newHeaderValue }));
+          cfg.onGroupingChange?.(undefined);
+        } else {
+          // 设为分组：添加 groupId
+          const newGroupId = generateGroupId();
+          const newHeaderValue = setHeaderGroupId(headerStored, newGroupId);
+          ed.setValueByCell((prev) => ({ ...prev, [`header-${colIndex}`]: newHeaderValue }));
+          cfg.onGroupingChange?.(newGroupId);
+        }
         setHeaderMenuOpen(false);
         return;
       }
@@ -630,11 +704,12 @@ function TableGridTextCellInner({
       cfg.deleteColumnAt,
       cfg.enableFreezeFirstCol,
       cfg.enableFreezeLastCol,
-      cfg.groupingConfig?.groupedColIndex,
+      cfg.groupingConfig?.groupedColId,
       cfg.onGroupingChange,
       colIndex,
       gridMin,
       setHeaderColumnHidden,
+      headerStored,
     ],
   );
 
@@ -782,8 +857,9 @@ function TableGridTextCellInner({
       content
     );
 
-  // 分组列表头：顶部加 2px 描边（颜色与其他描边一致）
-  const isGroupedColHeader = isHeader && !isInsertColPlaceholder && cfg.groupingConfig?.groupedColIndex === colIndex;
+  // 分组列表头：顶部加 2px 描边（通过 groupId 匹配）
+  const currentHeaderGroupId = getHeaderGroupId(headerStored);
+  const isGroupedColHeader = isHeader && !isInsertColPlaceholder && currentHeaderGroupId != null && currentHeaderGroupId === cfg.groupingConfig?.groupedColId;
   const groupedColTopBorderStyle: React.CSSProperties | undefined = isGroupedColHeader
     ? { borderTop: `2px solid ${vcTokens.color.neutral.border.default}` }
     : undefined;
@@ -1033,9 +1109,11 @@ function TableGridTextCellInner({
         cursor:
           isInsertRowTextClickable || (isHeader && isInsertColPlaceholder)
             ? 'pointer'
-            : isEditableBodyCell
-              ? 'default'
-              : undefined,
+            : isHeader && isHeaderFullColumnSelected && canDragColumnOrder
+              ? isColumnDraggingThis ? 'grabbing' : 'grab'
+              : isEditableBodyCell
+                ? 'default'
+                : undefined,
         ...freezeTailRowTopStyle,
       };
 
@@ -1059,6 +1137,156 @@ function TableGridTextCellInner({
     'data-col': canLockCell ? colIndex : undefined,
     'data-selection-kind': canLockCell ? selectionKind : undefined,
     onMouseDown: (e: React.MouseEvent) => {
+      // 表头列拖拽：按下后位移 4px 触发
+      if (canDragColumnOrder && e.button === 0) {
+        e.preventDefault();
+        const shellEl = cellShellRef.current;
+        if (!shellEl) return;
+        const shellRect = shellEl.getBoundingClientRect();
+        // 获取表格 scrollport 以计算整列高度
+        const scrollport = shellEl.closest('.vc-biz-table-scrollport') as HTMLElement | null;
+        if (!scrollport) return;
+        const scrollportRect = scrollport.getBoundingClientRect();
+        columnDragStartXRef.current = e.clientX;
+        columnDragState = {
+          isDragging: false,
+          dragStartX: e.clientX,
+          dragColIndex: colIndex,
+          dropTargetColIndex: colIndex,
+          dragColWidth: shellRect.width,
+          tableTop: scrollportRect.top,
+          columnHeight: scrollportRect.height,
+        };
+        let hasStartedDrag = false;
+        const onMove = (ev: MouseEvent) => {
+          if (!columnDragState || columnDragState.dragColIndex !== colIndex) return;
+          const dx = ev.clientX - columnDragState.dragStartX;
+          if (!hasStartedDrag && Math.abs(dx) >= 4) {
+            hasStartedDrag = true;
+            columnDragState.isDragging = true;
+            setIsColumnDraggingThis(true);
+            // 添加全局拖拽 class，禁用所有悬停态
+            document.documentElement.classList.add('vc-biz-col-order-dragging');
+            // 创建拖拽浮层（整列高度）
+            if (columnDragGhostEl) {
+              columnDragGhostEl.remove();
+            }
+            const ghost = document.createElement('div');
+            ghost.style.cssText = `
+              position: fixed;
+              top: ${columnDragState.tableTop}px;
+              left: ${shellRect.left}px;
+              width: ${columnDragState.dragColWidth}px;
+              height: ${columnDragState.columnHeight}px;
+              background: rgba(0, 0, 0, 0.1);
+              z-index: 9999;
+              pointer-events: none;
+              box-sizing: border-box;
+            `;
+            document.body.appendChild(ghost);
+            columnDragGhostEl = ghost;
+            // 创建放置指示线（整列高度）
+            if (columnDragIndicatorEl) {
+              columnDragIndicatorEl.remove();
+            }
+            const indicator = document.createElement('div');
+            indicator.style.cssText = `
+              position: fixed;
+              top: ${columnDragState.tableTop}px;
+              left: 0px;
+              width: 2px;
+              height: ${columnDragState.columnHeight}px;
+              background: ${vcTokens.color.primary.default};
+              z-index: 10000;
+              pointer-events: none;
+              box-sizing: border-box;
+              display: none;
+            `;
+            document.body.appendChild(indicator);
+            columnDragIndicatorEl = indicator;
+          }
+          if (!hasStartedDrag) return;
+          // 更新浮层位置
+          if (columnDragGhostEl) {
+            const newX = shellRect.left + dx;
+            columnDragGhostEl.style.left = `${newX}px`;
+          }
+          // 检测放置目标列
+          if (typeof document.elementFromPoint !== 'function') {
+            if (columnDragIndicatorEl) columnDragIndicatorEl.style.display = 'none';
+            return;
+          }
+          const el = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null;
+          const cell = el?.closest('[data-hover-lock-cell]') as HTMLElement | null;
+          if (!cell) {
+            columnDragDropIndicatorCol = null;
+            if (columnDragIndicatorEl) columnDragIndicatorEl.style.display = 'none';
+            return;
+          }
+          const targetCol = Number(cell.getAttribute('data-col'));
+          if (Number.isNaN(targetCol) || targetCol < 0 || targetCol >= cfg.colCount) {
+            columnDragDropIndicatorCol = null;
+            if (columnDragIndicatorEl) columnDragIndicatorEl.style.display = 'none';
+            return;
+          }
+          // 冻结列互斥检查
+          if (cfg.enableFreezeFirstCol && targetCol === 0) {
+            columnDragDropIndicatorCol = null;
+            if (columnDragIndicatorEl) columnDragIndicatorEl.style.display = 'none';
+            return;
+          }
+          if (cfg.enableFreezeLastCol && targetCol === cfg.colCount - 1) {
+            columnDragDropIndicatorCol = null;
+            if (columnDragIndicatorEl) columnDragIndicatorEl.style.display = 'none';
+            return;
+          }
+          // 更新放置目标（判断插入位置：左边还是右边）
+          const cellRect = cell.getBoundingClientRect();
+          const cellCenterX = cellRect.left + cellRect.width / 2;
+          const insertPosition = ev.clientX < cellCenterX ? targetCol : targetCol + 1;
+          columnDragState.dropTargetColIndex = insertPosition;
+          columnDragDropIndicatorCol = insertPosition;
+          // 更新指示线位置
+          if (columnDragIndicatorEl) {
+            const indicatorX = ev.clientX < cellCenterX ? cellRect.left : cellRect.right;
+            columnDragIndicatorEl.style.left = `${indicatorX}px`;
+            columnDragIndicatorEl.style.display = 'block';
+          }
+        };
+        const onUp = (ev: MouseEvent) => {
+          window.removeEventListener('mousemove', onMove, true);
+          window.removeEventListener('mouseup', onUp, true);
+          // 移除全局拖拽 class，恢复悬停态
+          document.documentElement.classList.remove('vc-biz-col-order-dragging');
+          // 移除拖拽浮层和指示线
+          if (columnDragGhostEl) {
+            columnDragGhostEl.remove();
+            columnDragGhostEl = null;
+          }
+          if (columnDragIndicatorEl) {
+            columnDragIndicatorEl.remove();
+            columnDragIndicatorEl = null;
+          }
+          if (columnDragState && columnDragState.isDragging) {
+            const fromIndex = columnDragState.dragColIndex;
+            const toIndex = columnDragState.dropTargetColIndex;
+            // 计算最终放置位置
+            if (toIndex !== fromIndex && toIndex !== fromIndex + 1) {
+              // 调整 toIndex：如果向左拖，toIndex 保持；如果向右拖，toIndex - 1
+              const finalToIndex = toIndex > fromIndex ? toIndex - 1 : toIndex;
+              cfg.onColumnOrderChange?.(fromIndex, finalToIndex);
+            }
+          }
+          columnDragState = null;
+          columnDragDropIndicatorCol = null;
+          columnDragStartXRef.current = null;
+          setIsColumnDraggingThis(false);
+        };
+        window.addEventListener('mousemove', onMove, true);
+        window.addEventListener('mouseup', onUp, true);
+        return;
+      }
+      // 表体单元格框选拖拽
       if (
         !cfg.enableEditMode ||
         !isBody ||
@@ -1178,11 +1406,6 @@ function TableGridTextCellInner({
           ed.clearSelection();
           return;
         }
-        // 单击已选中列则取消选中
-        if (isHeaderFullColumnSelected) {
-          ed.clearSelection();
-          return;
-        }
         // 有选中行时先取消选中行
         if (bodyRowSelectionStore.getCheckedCount() > 0) {
           bodyRowSelectionStore.toggleAll(false);
@@ -1271,10 +1494,10 @@ function TableGridTextCellInner({
 
   return contextMenuItems != null ? (
     <Dropdown menu={{ items: contextMenuItems }} trigger={['contextMenu']}>
-      <div {...shellProps}>{shellInner}</div>
+      <div ref={cellShellRef} {...shellProps} style={shellProps.style}>{shellInner}</div>
     </Dropdown>
   ) : (
-    <div {...shellProps}>{shellInner}</div>
+    <div ref={cellShellRef} {...shellProps} style={shellProps.style}>{shellInner}</div>
   );
 }
 

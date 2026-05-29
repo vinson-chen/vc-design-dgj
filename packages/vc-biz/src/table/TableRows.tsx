@@ -28,6 +28,12 @@ import {
   remapImageUrlsByCellAfterRemoveColumn,
   remapImageUrlsByCellAfterRemoveBodyRow,
   remapColumnFieldKindsAfterRemoveColumn,
+  remapValueByCellAfterColumnOrderChange,
+  remapColumnFieldKindsAfterColumnOrderChange,
+  remapImageUrlsByCellAfterColumnOrderChange,
+  remapColWidthsAfterColumnOrderChange,
+  remapHiddenColSetAfterColumnOrderChange,
+  adjustSelectionSetAfterColumnOrderChange,
 } from './headless/tableGridSparseRemap';
 import { syncBodyEditTextareaHeight } from './bodyEditTextareaAutosize';
 import { getTableGridTypographyMetrics } from './tableGridTypography';
@@ -41,7 +47,8 @@ import {
   computeTotalVirtualRows,
   resolveVirtualRow,
 } from './headless/tableGridGrouping';
-import type { TableGroupTitleRowInfo } from './tableGridTypes';
+import { findGroupedColIndex } from './headless/tableGridGroupingId';
+import type { TableGroupTitleRowInfo, HeaderCellValue } from './tableGridTypes';
 
 export type { TableRowsProps } from './tableGridTypes';
 
@@ -362,23 +369,25 @@ export default function TableRows(props: TableRowsProps) {
   }, [enableBatchSelection, props.enableShowRowIndex, props.narrowWidth]);
 
   // 分组逻辑：分组与分页互斥
-  const groupingEnabled = props.enableGrouping && props.groupingConfig?.groupedColIndex != null;
-  const groupedColIndex = props.groupingConfig?.groupedColIndex;
+  const groupingEnabled = props.enableGrouping && props.groupingConfig?.groupedColId != null;
+  const groupedColId = props.groupingConfig?.groupedColId;
 
   const groupTitleRows = useMemo(() => {
     if (!groupingEnabled || paginationEnabled) return [];
-    if (groupedColIndex == null) return [];
+    if (groupedColId == null) return [];
     return computeGroupTitleRows(
       editing.valueByCell,
-      groupedColIndex,
+      groupedColId,
+      props.colCount,
       bodyRowCount,
       props.groupingConfig?.expandedGroupKeys ?? new Set()
     );
   }, [
     groupingEnabled,
     paginationEnabled,
-    groupedColIndex,
+    groupedColId,
     editing.valueByCell,
+    props.colCount,
     bodyRowCount,
     props.groupingConfig?.expandedGroupKeys,
   ]);
@@ -605,18 +614,9 @@ export default function TableRows(props: TableRowsProps) {
         setImageUrlsByCell((prev) => remapImageUrlsByCellAfterRemoveColumn(prev, colIndex));
         props.onDeleteColumn?.(colIndex);
 
-        // 分组场景：处理分组列变化
-        const groupedColIndex = props.groupingConfig?.groupedColIndex;
-        if (groupedColIndex != null) {
-          if (colIndex === groupedColIndex) {
-            // 删除分组列：直接取消分组
-            props.onGroupingChange?.(undefined);
-          } else if (colIndex < groupedColIndex) {
-            // 删除分组列左侧的列：分组列索引减1
-            props.onGroupingChange?.(groupedColIndex - 1);
-          }
-          // 删除分组列右侧的列：分组列索引不变
-        }
+        // 新方案：groupId 嵌入数据中，删除列时 groupId 随数据移动或消失
+        // 如果删除的是分组列，groupId 会被删除，分组自然消失
+        // 不需要显式处理 groupedColIndex 重映射
       } finally {
         props.endUndoBatch?.();
       }
@@ -631,8 +631,6 @@ export default function TableRows(props: TableRowsProps) {
       props.gridMinCount,
       props.onDeleteColumn,
       props.startUndoBatch,
-      props.groupingConfig?.groupedColIndex,
-      props.onGroupingChange,
     ]
   );
 
@@ -658,6 +656,80 @@ export default function TableRows(props: TableRowsProps) {
       props.onDeleteBodyRow,
       props.rowCount,
       props.startUndoBatch,
+    ]
+  );
+
+  const onColumnOrderChange = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (fromIndex === toIndex) return;
+      if (fromIndex < 0 || toIndex < 0 || fromIndex >= props.colCount || toIndex >= props.colCount) return;
+      // 冻结列互斥检查
+      if (props.enableFreezeFirstCol) {
+        if (fromIndex === 0 || toIndex === 0) return;
+      }
+      if (props.enableFreezeLastCol) {
+        const lastCol = props.colCount - 1;
+        if (fromIndex === lastCol || toIndex === lastCol) return;
+      }
+      props.startUndoBatch?.();
+      try {
+        // 重映射单元格值
+        editing.setValueByCell((prev) =>
+          remapValueByCellAfterColumnOrderChange(prev, fromIndex, toIndex)
+        );
+        // 重映射列字段类型
+        setColumnFieldKindByCol((prev) =>
+          remapColumnFieldKindsAfterColumnOrderChange(prev, fromIndex, toIndex)
+        );
+        // 重映射图片 URL
+        setImageUrlsByCell((prev) =>
+          remapImageUrlsByCellAfterColumnOrderChange(prev, fromIndex, toIndex)
+        );
+        // 重映射列宽
+        if (props.colWidths) {
+          const newColWidths = remapColWidthsAfterColumnOrderChange(props.colWidths, fromIndex, toIndex);
+          // 需要通过外部回调更新列宽（如果有）
+          // props.onColWidthsChange?.(newColWidths);
+        }
+        // 重映射隐藏列
+        if (props.hiddenColSet && props.setAllColumnsHidden) {
+          const newHiddenSet = remapHiddenColSetAfterColumnOrderChange(props.hiddenColSet, fromIndex, toIndex);
+          props.setAllColumnsHidden(newHiddenSet);
+        }
+        // 重映射选中集合
+        editing.setSelectedCells((prev) =>
+          adjustSelectionSetAfterColumnOrderChange(prev, fromIndex, toIndex)
+        );
+        // 更新选中单元格坐标
+        if (editing.selectedCell) {
+          const newC = editing.selectedCell.c === fromIndex
+            ? toIndex
+            : editing.selectedCell.c > fromIndex && editing.selectedCell.c <= toIndex
+              ? editing.selectedCell.c - 1
+              : editing.selectedCell.c >= toIndex && editing.selectedCell.c < fromIndex
+                ? editing.selectedCell.c + 1
+                : editing.selectedCell.c;
+          editing.setSelectedCell({ r: editing.selectedCell.r, c: newC });
+        }
+        // 新方案：groupId 嵌入数据中，列顺序调整时 groupId 随数据移动
+        // 不需要显式处理 groupedColIndex 重映射
+        // 通知外部
+        props.onColumnOrderChange?.(fromIndex, toIndex);
+      } finally {
+        props.endUndoBatch?.();
+      }
+    },
+    [
+      editing,
+      props.colCount,
+      props.enableFreezeFirstCol,
+      props.enableFreezeLastCol,
+      props.colWidths,
+      props.hiddenColSet,
+      props.setAllColumnsHidden,
+      props.onColumnOrderChange,
+      props.startUndoBatch,
+      props.endUndoBatch,
     ]
   );
 
@@ -779,6 +851,8 @@ export default function TableRows(props: TableRowsProps) {
       groupTitleRows,
       // 组内插入行回调
       onInsertRowWithGroupValue: props.onInsertRowWithGroupValue,
+      // 列顺序变更回调
+      onColumnOrderChange,
     };
   }, [
     typography,
@@ -825,6 +899,7 @@ export default function TableRows(props: TableRowsProps) {
     props.paginationPageSize,
     props.onPaginationChange,
     groupTitleRows,
+    onColumnOrderChange,
   ]);
 
   return (

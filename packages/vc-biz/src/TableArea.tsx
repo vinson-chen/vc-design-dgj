@@ -10,6 +10,7 @@ import { useColumnResize } from './table/useTableGridState';
 import TableRows from './table/TableRows';
 import type { CellSelectionStore } from './table/cellSelectionStore';
 import { GRID_MAX_COL, GRID_MAX_ROW, GRID_MIN } from './tableAreaGridLimits';
+import { generateGroupId, findGroupedColIndex, getHeaderGroupId } from './table/headless/tableGridGroupingId';
 const MIN_RESIZABLE_TEXT_COL_W = 100;
 const DEFAULT_TEXT_COL_W = 200;
 /** checkbox / 序号 / 插入列等窄格统一宽度（与 padding 0 下四位序号对齐，避免开关「显示序号」时列宽抖动） */
@@ -111,7 +112,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   const [enableGrouping, setEnableGrouping] = useState(
     options?.initialEnableGrouping ?? true
   );
-  const [groupedColIndex, setGroupedColIndex] = useState<number | undefined>(undefined);
+  const [groupedColId, setGroupedColId] = useState<string | undefined>(undefined);
   const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(() => new Set());
 
   const colCountRef = useRef(colCount);
@@ -457,29 +458,33 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     // 分组
     enableGrouping,
     setEnableGrouping,
-    groupedColIndex,
-    setGroupedColIndex,
+    groupedColId,
+    setGroupedColId,
     expandedGroupKeys,
     setExpandedGroupKeys,
     groupingConfig: {
-      groupedColIndex,
+      groupedColId,
       expandedGroupKeys: expandedGroupKeys as ReadonlySet<string>,
     },
-    onGroupingChange: (colIndex: number | undefined) => {
-      setGroupedColIndex(colIndex);
+    onGroupingChange: (groupId: string | undefined) => {
+      setGroupedColId(groupId);
       // 切换分组列时，默认展开所有分组
-      if (colIndex != null) {
+      if (groupId != null) {
         // 分组与分页互斥：选择分组时自动关闭分页
         if (enablePagination) {
           setEnablePagination(false);
         }
-        const newExpanded = new Set<string>();
-        // 遍历该列所有值，添加到展开集合
-        for (let r = 0; r < rowCount - 1; r++) {
-          const val = valueByCellRef.current[`${r}-${colIndex}`];
-          if (val) newExpanded.add(val);
+        // 根据 groupId 查找分组列索引
+        const groupedColIndex = findGroupedColIndex(valueByCellRef.current, groupId, colCount);
+        if (groupedColIndex != null) {
+          const newExpanded = new Set<string>();
+          // 遍历该列所有值，添加到展开集合
+          for (let r = 0; r < rowCount - 1; r++) {
+            const val = valueByCellRef.current[`${r}-${groupedColIndex}`];
+            if (val) newExpanded.add(val);
+          }
+          setExpandedGroupKeys(newExpanded);
         }
-        setExpandedGroupKeys(newExpanded);
       } else {
         setExpandedGroupKeys(new Set());
       }
@@ -496,10 +501,14 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       // 组内插入：找到该组最后一行，在其后插入新行，并自动填入分组值
       recordIfNeeded();
 
+      // 根据 groupId 查找分组列索引
+      const groupedColIndex = findGroupedColIndex(valueByCellRef.current, groupedColId!, colCount);
+      if (groupedColIndex == null) return;
+
       // 计算该组最后一行的 bodyRowIndex
       const groups = new Map<string, Array<number>>();
       for (let r = 0; r < rowCountRef.current - 1; r++) {
-        const val = valueByCellRef.current[`${r}-${groupedColIndex!}`] ?? '(空)';
+        const val = valueByCellRef.current[`${r}-${groupedColIndex}`] ?? '(空)';
         if (!groups.has(val)) groups.set(val, []);
         groups.get(val)!.push(r);
       }
@@ -535,7 +544,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
           }
         }
         // 设置新行的分组值
-        next[`${insertAtBodyRow}-${groupedColIndex!}`] = groupValue;
+        next[`${insertAtBodyRow}-${groupedColIndex}`] = groupValue;
         return next;
       });
 
@@ -610,7 +619,7 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     paginationPageSize,
     onPaginationChange,
     enableGrouping,
-    groupedColIndex,
+    groupedColId,
     expandedGroupKeys,
     groupingConfig,
     onGroupingChange,

@@ -3,10 +3,11 @@ import type { MenuProps, InputRef } from 'antd';
 import { Button, Dropdown, Input, Select, Space, Tooltip, Typography, VcIcon, vcTokens } from 'vc-design';
 import { DropdownMenuSidePanelCombo } from './DropdownMenuSidePanelCombo';
 import { VTableCell } from './VTableCell';
-import type { TableGridStaticConfig } from './tableGridTypes';
+import type { TableGridStaticConfig, HeaderCellValue } from './tableGridTypes';
 import type { TableGridEditingState } from './useTableGridEditing';
 import type { TableGridTypographyMetrics } from './tableGridTypography';
 import { fitTableHeaderTextWithEllipsis } from './fitTableHeaderTextWithEllipsis';
+import { getHeaderTitle, getHeaderGroupId, parseHeaderCellValue, setHeaderGroupId, serializeHeaderCellValue } from './headless/tableGridGroupingId';
 import './tableHeaderContextMenu.css';
 
 export const HEADER_COL_FIELD_TYPE_KEY = 'field-type';
@@ -76,7 +77,7 @@ export function TableHeaderCell({
   const headerTextRef = useRef<HTMLSpanElement | null>(null);
 
   const fullHeaderLabel = useMemo(
-    () => isInsertColPlaceholder ? '' : (headerStored ?? `列 ${colIndex + 1}`),
+    () => isInsertColPlaceholder ? '' : (getHeaderTitle(headerStored) ?? `列 ${colIndex + 1}`),
     [isInsertColPlaceholder, headerStored, colIndex]
   );
 
@@ -160,13 +161,16 @@ export function TableHeaderCell({
   const commitHeaderColumnEditPanel = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      const nextTitle = headerColEditDraftTitle.trim() || `列 ${colIndex + 1}`;
-      editingApi.setValueByCell((prev) => ({ ...prev, [headerEditKey]: nextTitle }));
+      const nextTitle = headerColEditDraftTitle.trim();
+      // 保留原有的 groupId，使用序列化函数
+      const parsed = parseHeaderCellValue(headerStored);
+      const newValue: HeaderCellValue = { title: nextTitle, groupId: parsed.groupId };
+      editingApi.setValueByCell((prev) => ({ ...prev, [headerEditKey]: serializeHeaderCellValue(newValue) }));
       setHeaderColumnFieldKind(headerColEditDraftKind);
       onHeaderFieldTypeSubOpenChange?.(false);
       onHeaderMenuOpenChange?.(false);
     },
-    [colIndex, headerColEditDraftKind, headerColEditDraftTitle, headerEditKey, editingApi, setHeaderColumnFieldKind, onHeaderFieldTypeSubOpenChange, onHeaderMenuOpenChange]
+    [colIndex, headerColEditDraftKind, headerColEditDraftTitle, headerEditKey, editingApi, setHeaderColumnFieldKind, onHeaderFieldTypeSubOpenChange, onHeaderMenuOpenChange, headerStored]
   );
 
   const cancelHeaderColumnEditPanel = useCallback((e: React.MouseEvent) => {
@@ -244,14 +248,22 @@ export function TableHeaderCell({
           }}
           onBlur={() => {
             if (editingApi.pendingBlurIgnoreCellKeyRef.current === headerEditKey) return;
-            const v = editingApi.getEditingValueForSave();
-            editingApi.setValueByCell((prev) => ({ ...prev, [headerEditKey]: v }));
+            const newTitle = editingApi.getEditingValueForSave();
+            // 保留原有的 groupId，使用序列化函数
+            const newHeaderValue = setHeaderGroupId(headerStored, getHeaderGroupId(headerStored));
+            // 更新 title
+            const parsed = parseHeaderCellValue(headerStored);
+            const newValue: HeaderCellValue = { title: newTitle, groupId: parsed.groupId };
+            editingApi.setValueByCell((prev) => ({ ...prev, [headerEditKey]: serializeHeaderCellValue(newValue) }));
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
-              const v = editingApi.getEditingValueForSave();
-              editingApi.setValueByCell((prev) => ({ ...prev, [headerEditKey]: v }));
+              const newTitle = editingApi.getEditingValueForSave();
+              // 保留原有的 groupId
+              const parsed = parseHeaderCellValue(headerStored);
+              const newValue: HeaderCellValue = { title: newTitle, groupId: parsed.groupId };
+              editingApi.setValueByCell((prev) => ({ ...prev, [headerEditKey]: serializeHeaderCellValue(newValue) }));
               editingApi.pendingBlurIgnoreCellKeyRef.current = headerEditKey;
               editingApi.scheduleClearEditCommitGuards();
               editingApi.setEditingCell(null);

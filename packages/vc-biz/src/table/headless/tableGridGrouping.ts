@@ -1,23 +1,30 @@
 import type { TableGroupTitleRowInfo } from '../tableGridTypes';
+import { findGroupedColIndex } from './tableGridGroupingId';
 
 /** 空值组标识 */
 const EMPTY_GROUP_KEY = '';
 
 /**
  * 计算分组结构
- * @param valueByCell 单元格数据（key: `${bodyRowIndex}-${colIndex}`）
- * @param groupedColIndex 分组列索引
+ * @param valueByCell 单元格数据（key: `${bodyRowIndex}-${colIndex}` 或 `header-${colIndex}`）
+ * @param groupedColId 分组列 groupId
+ * @param colCount 列数
  * @param bodyRowCount 表体行数
  * @param expandedGroupKeys 展开的分组值集合
  * @returns 分组标题行信息列表（包含空值组）
  */
 export function computeGroupTitleRows(
   valueByCell: Record<string, string>,
-  groupedColIndex: number,
+  groupedColId: string | undefined,
+  colCount: number,
   bodyRowCount: number,
   expandedGroupKeys: ReadonlySet<string>
 ): Array<TableGroupTitleRowInfo> {
-  if (groupedColIndex < 0 || bodyRowCount <= 0) return [];
+  if (groupedColId == null || bodyRowCount <= 0) return [];
+
+  // 根据 groupId 查找分组列索引
+  const groupedColIndex = findGroupedColIndex(valueByCell, groupedColId, colCount);
+  if (groupedColIndex == null || groupedColIndex < 0) return [];
 
   // 按 groupValue 收集所有 bodyRowIndex
   const groups = new Map<string, Array<number>>();
@@ -59,6 +66,7 @@ export function computeGroupTitleRows(
       expanded,
       virtualRowIndex,
       isEmptyGroup: groupValue === EMPTY_GROUP_KEY,
+      groupedColIndex,
     };
 
     virtualRowIndex += 1; // 分组标题行
@@ -81,10 +89,14 @@ export function computeGroupTitleRows(
  */
 export function getEmptyGroupBodyRows(
   valueByCell: Record<string, string>,
-  groupedColIndex: number,
+  groupedColId: string | undefined,
+  colCount: number,
   bodyRowCount: number
 ): Array<number> {
-  if (groupedColIndex < 0 || bodyRowCount <= 0) return [];
+  if (groupedColId == null || bodyRowCount <= 0) return [];
+
+  const groupedColIndex = findGroupedColIndex(valueByCell, groupedColId, colCount);
+  if (groupedColIndex == null || groupedColIndex < 0) return [];
 
   const bodyRows: Array<number> = [];
   for (let bodyRowIndex = 0; bodyRowIndex < bodyRowCount; bodyRowIndex++) {

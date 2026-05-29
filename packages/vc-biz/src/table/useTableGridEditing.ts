@@ -391,6 +391,8 @@ export function useTableGridEditing(
         if (!Number.isNaN(r) && !Number.isNaN(c)) {
           // 命中同一锚点格，保持选中
           if (r === locked.r && c === locked.c) return;
+          // 点击同列表头（列选中状态下），保持选中（后续 onClick 会处理）
+          if (r === TABLE_GRID_HEADER_ROW_INDEX && c === locked.c && locked.r >= 0) return;
           // 点击其他单元格，取消锚点态（后续 onClick 会设置新的锚点态）
         }
       }

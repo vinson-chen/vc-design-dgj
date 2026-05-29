@@ -86,6 +86,11 @@ function isGlobalColumnResizing(): boolean {
   return document.documentElement.classList.contains('vc-biz-col-resizing');
 }
 
+function isGlobalColumnOrderDragging(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.documentElement.classList.contains('vc-biz-col-order-dragging');
+}
+
 export function VTableCell({
   variant,
   active = false,
@@ -117,7 +122,7 @@ export function VTableCell({
   const [cellHovered, setCellHovered] = useState(false);
   const [resizeHandleHovered, setResizeHandleHovered] = useState(false);
   const [resizeDragging, setResizeDragging] = useState(false);
-  const hoverSuppressed = isGlobalColumnResizing();
+  const hoverSuppressed = isGlobalColumnResizing() || isGlobalColumnOrderDragging();
   const hoverEffective = hoverSuppressed ? false : hoverByCell ? cellHovered : !!hovered;
 
   const baseBg =
@@ -166,7 +171,7 @@ export function VTableCell({
   const activeResizeHighlight =
     variant === 'thead' &&
     zoom &&
-    (resizeDragging || (resizeHandleHovered && !globalColumnResizeDragging));
+    (resizeDragging || (resizeHandleHovered && !globalColumnResizeDragging && !isGlobalColumnOrderDragging()));
 
   const bottomDividerShadow = suppressBottomBorder
     ? undefined
@@ -272,7 +277,7 @@ export function VTableCell({
               onColumnResizeStart(e);
             }}
             onMouseEnter={() => {
-              if (globalColumnResizeDragging) return;
+              if (globalColumnResizeDragging || isGlobalColumnOrderDragging()) return;
               setResizeHandleHovered(true);
             }}
             onMouseLeave={() => setResizeHandleHovered(false)}
