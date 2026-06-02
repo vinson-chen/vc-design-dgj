@@ -15,12 +15,6 @@ import {
   type VInputLlmOption,
 } from 'vc-biz';
 
-const pageBoxStyle: React.CSSProperties = {
-  background: vcTokens.color.neutral.background.layout,
-  borderRadius: vcTokens.style.borderRadius.lg,
-  padding: 0,
-};
-
 const VCELL_COMP_LLM: VInputLlmOption[] = [
   { value: 'qwen', label: 'Qwen' },
   { value: 'deepseek', label: 'DeepSeek', disabled: true },
@@ -148,18 +142,25 @@ export default function Overview() {
         vc-design 基于 Ant Design 5.x，通过 VC Tokens（vcTokens）统一颜色、间距、圆角与字体。左侧导航可切换到不同组件进行规范检验。
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div
+        style={{
+          background: vcTokens.color.neutral.background.layout,
+          borderRadius: vcTokens.style.borderRadius.lg,
+          padding: 16,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
+        }}
+      >
         <section>
-          <div style={pageBoxStyle}>
-            <div style={{ background: vcTokens.color.neutral.background.container, padding: 0 }}>
-              <VSwitchTabs
-                items={storeItems}
-                activeKey={storeActiveKey}
-                onChange={handleStoreChange}
-                showIcon
-                showPanel={false}
-              />
-            </div>
+          <div style={{ background: vcTokens.color.neutral.background.container, borderRadius: vcTokens.style.borderRadius.lg }}>
+            <VSwitchTabs
+              items={storeItems}
+              activeKey={storeActiveKey}
+              onChange={handleStoreChange}
+              showIcon
+              showPanel={false}
+            />
           </div>
         </section>
 
@@ -174,7 +175,7 @@ export default function Overview() {
         </section>
 
         <section>
-          <div style={pageBoxStyle}>
+          <div style={{ background: vcTokens.color.neutral.background.container, borderRadius: vcTokens.style.borderRadius.lg }}>
             <VTableOperationBar
               segmentedOptions={stateItems.map((i) => i.key)}
               value={opSegValue}
@@ -189,7 +190,7 @@ export default function Overview() {
         </section>
 
         <section>
-          <div style={pageBoxStyle}>
+          <div style={{ background: vcTokens.color.neutral.background.container, borderRadius: vcTokens.style.borderRadius.lg }}>
             <div style={{ padding: 16 }}>
               <VInput
                 style={{ maxWidth: 440 }}
@@ -209,7 +210,7 @@ export default function Overview() {
         </section>
 
         <section>
-          <div style={pageBoxStyle}>
+          <div style={{ background: vcTokens.color.neutral.background.container, borderRadius: vcTokens.style.borderRadius.lg }}>
             <VBatchOperationBar
               checked={checkedCount > 0 && checkedCount === bodyRowCount}
               indeterminate={checkedCount > 0 && checkedCount < bodyRowCount}
