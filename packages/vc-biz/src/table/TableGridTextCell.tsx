@@ -12,6 +12,7 @@ import {
   Button,
   Dropdown,
   Input,
+  Popover,
   Select,
   Space,
   Tooltip,
@@ -204,6 +205,29 @@ function TableGridTextCellInner({
     !isInsertColPlaceholder &&
     colIndex < cfg.colCount &&
     columnFieldKind === 'image';
+  const isMultiFieldEnabledBodyCell =
+    isBody &&
+    !isInsertRowPlaceholder &&
+    !isInsertColPlaceholder &&
+    colIndex < cfg.colCount &&
+    (cfg.columnMultiFieldConfigByCol[colIndex]?.fields?.length ?? 0) > 0;
+
+  // 判断当前行是否在分组内（非分组标题行），分组内的行隐藏多字段按钮
+  const isInGroupBodyRow = useMemo(() => {
+    if (!isBody || isInsertRowPlaceholder) return false;
+    const groupTitleRows = cfg.groupTitleRows;
+    if (!groupTitleRows || groupTitleRows.length === 0) return false;
+    // 检查 bodyRowIndex 是否在某个分组的 bodyRows 中
+    for (const groupInfo of groupTitleRows) {
+      if (groupInfo.bodyRows.includes(bodyRowIndex)) {
+        return true;
+      }
+    }
+    return false;
+  }, [isBody, isInsertRowPlaceholder, cfg.groupTitleRows, bodyRowIndex]);
+
+  // 分组内的行隐藏多字段按钮
+  const shouldHideMultiFieldButton = isInGroupBodyRow && isMultiFieldEnabledBodyCell;
   const isEditableBodyCell =
     cfg.enableEditMode &&
     isBody &&
@@ -228,6 +252,35 @@ function TableGridTextCellInner({
   );
 
   const [headerFitLabel, setHeaderFitLabel] = useState(fullHeaderLabel);
+
+  // 多字段列编辑面板状态
+  const [multiFieldPanelOpen, setMultiFieldPanelOpen] = useState(false);
+  const multiFieldButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // 点击外部关闭多字段面板
+  useEffect(() => {
+    if (!multiFieldPanelOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Element;
+      // 使用 ref 检查按钮，避免全局选择器误伤其他单元格的面板
+      if (multiFieldButtonRef.current && multiFieldButtonRef.current.contains(target)) return;
+      // 使用唯一的 overlayClassName 检查面板
+      const panelEl = document.querySelector(`.vc-biz-table-multi-field-dropdown-${key}`);
+      if (panelEl && panelEl.contains(target)) return;
+      setMultiFieldPanelOpen(false);
+    };
+
+    // 延迟绑定避免立即关闭
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside, true);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClickOutside, true);
+    };
+  }, [multiFieldPanelOpen, key]);
 
   const isEditingAny = useTableGridEditingStateSelector((s) => {
     if (!s.editingCell) return false;
@@ -586,9 +639,9 @@ function TableGridTextCellInner({
 
   const headerContextMenuItems = useMemo((): MenuProps['items'] | undefined => {
     if (!canUseHeaderVisibilityMenu) return undefined;
-    // 隐藏列：冻结列不允许隐藏
+    // 隐藏列：首列不可隐藏，末列冻结时不可隐藏
     const lockedByFreezeForHide =
-      (cfg.enableFreezeFirstCol && colIndex === 0) ||
+      colIndex === 0 ||
       (cfg.enableFreezeLastCol && colIndex === cfg.colCount - 1);
     // 删除列：列数 > 2 时允许删除冻结首列（冻结取消，原 B 列变为首列）
     const lockedByFreezeForDelete =
@@ -600,7 +653,22 @@ function TableGridTextCellInner({
     const currentHeaderGroupId = getHeaderGroupId(headerStored);
     const isCurrentlyGrouped = currentHeaderGroupId != null && currentHeaderGroupId === cfg.groupingConfig?.groupedColId;
 
+    // 展开/收起分组：在首列且有分组时显示
+    const hasAnyCollapsed = cfg.groupTitleRows?.some(g => !g.expanded) ?? false;
+    const allExpanded = cfg.groupTitleRows?.length > 0 && !hasAnyCollapsed;
+    const showExpandCollapseItem = colIndex === 0 && cfg.groupingConfig?.groupedColId != null && cfg.groupTitleRows?.length > 0;
+
     const items: MenuProps['items'] = [
+      // 展开/收起分组（在编辑列上方）
+      ...(showExpandCollapseItem
+        ? [
+            {
+              key: 'toggle-all-group-expansion',
+              icon: <VcIcon type={hasAnyCollapsed ? 'unfold-more' : 'unfold-less'} fontSize={16} />,
+              label: hasAnyCollapsed ? '展开分组' : '收起分组',
+            },
+          ]
+        : []),
       {
         key: HEADER_COL_FIELD_TYPE_KEY,
         icon: <VcIcon type="edit" fontSize={16} />,
@@ -648,6 +716,7 @@ function TableGridTextCellInner({
     cfg.colCount,
     cfg.enableGrouping,
     cfg.groupingConfig?.groupedColId,
+    cfg.groupTitleRows,
     colIndex,
     gridMin,
     headerFieldTypeSubOpen,
@@ -661,6 +730,13 @@ function TableGridTextCellInner({
       domEvent.stopPropagation();
       const ed = edRef.current;
       if (ed == null) return;
+      // 展开/收起所有分组
+      if (key === 'toggle-all-group-expansion') {
+        const hasAnyCollapsed = cfg.groupTitleRows?.some(g => !g.expanded) ?? false;
+        cfg.onToggleAllGroupExpansion?.(hasAnyCollapsed);
+        setHeaderMenuOpen(false);
+        return;
+      }
       // 分组处理
       if (key === 'group-by-column') {
         const currentHeaderGroupId = getHeaderGroupId(headerStored);
@@ -705,7 +781,9 @@ function TableGridTextCellInner({
       cfg.enableFreezeFirstCol,
       cfg.enableFreezeLastCol,
       cfg.groupingConfig?.groupedColId,
+      cfg.groupTitleRows,
       cfg.onGroupingChange,
+      cfg.onToggleAllGroupExpansion,
       colIndex,
       gridMin,
       setHeaderColumnHidden,
@@ -863,6 +941,87 @@ function TableGridTextCellInner({
   const groupedColTopBorderStyle: React.CSSProperties | undefined = isGroupedColHeader
     ? { borderTop: `2px solid ${vcTokens.color.neutral.border.default}` }
     : undefined;
+
+  // 多字段列面板：Dropdown 渲染在 VTableCell 内层，面板通过 getPopupContainer 挂载到 body
+  // 编辑态时不显示按钮
+  const multiFieldFields = cfg.columnMultiFieldConfigByCol[colIndex]?.fields ?? [];
+  const multiFieldValues = cfg.multiFieldValueByCell[key] ?? multiFieldFields.map((f) => ({ name: f.name, content: '' }));
+
+  const multiFieldDropdown = isMultiFieldEnabledBodyCell && !isEditingAny && !shouldHideMultiFieldButton ? (
+    <Dropdown
+      open={multiFieldPanelOpen}
+      placement="bottomRight"
+      overlayClassName={`vc-biz-table-multi-field-dropdown vc-biz-table-multi-field-dropdown-${key}`}
+      overlayStyle={{
+        boxShadow: vcTokens.style.boxShadowSecondary,
+      }}
+      transitionName=""
+      trigger={[]}
+      getPopupContainer={() => document.body}
+      popupRender={() => (
+        <div
+          className="vc-biz-table-multi-field-panel-inner"
+          data-keep-table-selection=""
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="vc-biz-table-multi-field-panel-stack">
+            {/* 字段编辑区：字段名（文本） + 字段内容（输入框） */}
+            <div className="vc-biz-table-multi-field-panel-fields">
+              {multiFieldFields.map((field, idx) => (
+                <div key={idx} className="vc-biz-table-multi-field-panel-field-row">
+                  {/* 第一行：字段名（文本） */}
+                  <Typography.Text style={{ color: vcTokens.color.neutral.text.description, fontSize: vcTokens.style.font.size.sm, lineHeight: `${vcTokens.style.font.lineHeight.sm}px` }}>
+                    {field.name}
+                  </Typography.Text>
+                  {/* 第二行：字段内容输入框 */}
+                  <Input
+                    placeholder="字段内容"
+                    value={multiFieldValues[idx]?.content ?? ''}
+                    onChange={(e) => {
+                      cfg.setMultiFieldContentByCell(bodyRowIndex, colIndex, idx, e.target.value);
+                    }}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    >
+      <Button
+        type="text"
+        className={`vc-biz-table-multi-field-more-btn${!cfg.enableVerticalCenter ? ' vc-biz-table-multi-field-more-btn--align-top' : ''}`}
+        aria-label="多字段编辑"
+        aria-expanded={multiFieldPanelOpen}
+        ref={multiFieldButtonRef}
+        icon={
+          <VcIcon
+            type="bulletpoint"
+            fontSize={16}
+            style={{
+              lineHeight: 1,
+              display: 'block',
+              color: vcTokens.color.neutral.text.icon,
+            }}
+          />
+        }
+        onClick={(e) => {
+          e.stopPropagation();
+          // 退出锚点态/编辑态
+          ed.clearSelection();
+          ed.setEditingCell(null);
+          ed.editingDraftRef.current = '';
+          // 打开面板
+          setMultiFieldPanelOpen(true);
+        }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+        }}
+      />
+    </Dropdown>
+  ) : null;
 
   const tableCell = (
     <VTableCell
@@ -1047,7 +1206,7 @@ function TableGridTextCellInner({
         />
       ) : isSelectedIdle ? (
         wrapBodyTextInsetPanel(
-          <div className="vc-biz-table-body-edit-wrap">
+          <div className="vc-biz-table-body-edit-wrap" style={{ display: 'flex', alignItems: cfg.enableVerticalCenter ? 'center' : 'flex-start' }}>
             <textarea
               key={`sel-idle-${bodyRowIndex}-${colIndex}`}
               ref={selectedIdleTextareaRef}
@@ -1068,6 +1227,7 @@ function TableGridTextCellInner({
       ) : (
         wrapBodyTextInsetPanel(
           <div
+            className="vc-biz-table-body-text-display"
             style={{
               ...tableTextClampNStyleFromMetrics(EDIT_TEXTAREA_MAX_ROWS, m),
               width: '100%',
@@ -1078,6 +1238,7 @@ function TableGridTextCellInner({
           </div>
         )
       )}
+      {multiFieldDropdown}
     </VTableCell>
   );
 
@@ -1492,13 +1653,21 @@ function TableGridTextCellInner({
     </>
   );
 
-  return contextMenuItems != null ? (
-    <Dropdown menu={{ items: contextMenuItems }} trigger={['contextMenu']}>
+  const baseShell = contextMenuItems != null ? (
+    <Dropdown
+      menu={{ items: contextMenuItems }}
+      trigger={['contextMenu']}
+      overlayStyle={{
+        boxShadow: vcTokens.style.boxShadowSecondary,
+      }}
+    >
       <div ref={cellShellRef} {...shellProps} style={shellProps.style}>{shellInner}</div>
     </Dropdown>
   ) : (
     <div ref={cellShellRef} {...shellProps} style={shellProps.style}>{shellInner}</div>
   );
+
+  return baseShell;
 }
 
 const TableGridTextCell = React.memo(TableGridTextCellInner);

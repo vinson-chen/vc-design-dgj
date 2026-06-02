@@ -36,6 +36,11 @@ export function remapValueByCellAfterRemoveBodyRow(
 ): Record<string, string> {
   const next: Record<string, string> = {};
   for (const [k, v] of Object.entries(prev)) {
+    // 保留表头数据（header-${c} 格式）
+    if (k.startsWith('header-')) {
+      next[k] = v;
+      continue;
+    }
     const parts = k.split('-');
     if (parts.length !== 2) continue;
     const r = Number(parts[0]);

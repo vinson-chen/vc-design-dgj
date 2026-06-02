@@ -497,6 +497,22 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
         return next;
       });
     },
+    onToggleAllGroupExpansion: (expandAll: boolean) => {
+      if (expandAll) {
+        // 展开所有分组：添加所有 groupValue
+        const groupedColIndex = findGroupedColIndex(valueByCellRef.current, groupedColId!, colCount);
+        if (groupedColIndex == null) return;
+        const allGroupKeys = new Set<string>();
+        for (let r = 0; r < rowCountRef.current - 1; r++) {
+          const val = valueByCellRef.current[`${r}-${groupedColIndex}`] ?? '';
+          allGroupKeys.add(val);
+        }
+        setExpandedGroupKeys(allGroupKeys);
+      } else {
+        // 收起所有分组
+        setExpandedGroupKeys(new Set());
+      }
+    },
     onInsertRowWithGroupValue: (groupValue: string) => {
       // 组内插入：找到该组最后一行，在其后插入新行，并自动填入分组值
       recordIfNeeded();
@@ -624,6 +640,7 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     groupingConfig,
     onGroupingChange,
     onGroupExpansionChange,
+    onToggleAllGroupExpansion,
     onInsertRowWithGroupValue,
   } = model;
 
@@ -674,6 +691,7 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
       groupingConfig={groupingConfig}
       onGroupingChange={onGroupingChange}
       onGroupExpansionChange={onGroupExpansionChange}
+      onToggleAllGroupExpansion={onToggleAllGroupExpansion}
       onInsertRowWithGroupValue={onInsertRowWithGroupValue}
     />
   );

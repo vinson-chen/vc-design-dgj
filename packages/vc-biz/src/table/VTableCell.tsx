@@ -237,8 +237,9 @@ export function VTableCell({
 
   return (
     <div
-      className={className}
+      className={`vc-biz-vtable-cell${className ? ` ${className}` : ''}`}
       style={rootStyle}
+      data-is-anchor={isAnchor ? '' : undefined}
       onMouseEnter={() => {
         if (hoverSuppressed) return;
         setCellHovered(true);

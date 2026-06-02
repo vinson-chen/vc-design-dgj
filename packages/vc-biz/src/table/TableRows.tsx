@@ -17,7 +17,7 @@ import TableGridRow from './TableGridRow';
 import { TableRowHoverStoreContext } from './tableRowHoverStoreContext';
 import { createTableRowHoverStore } from './tableRowHoverStore';
 import type { TableGridStaticConfig } from './tableGridTypes';
-import type { TableColumnFieldKind, TableRowsProps } from './tableGridTypes';
+import type { TableColumnFieldKind, TableRowsProps, ColumnMultiFieldConfig, MultiFieldValueByCell } from './tableGridTypes';
 import {
   EDIT_TEXTAREA_MAX_ROWS,
   cellKey,
@@ -100,6 +100,10 @@ export default function TableRows(props: TableRowsProps) {
   const [columnFieldKindByCol, setColumnFieldKindByCol] = useState<Record<number, TableColumnFieldKind>>(
     {}
   );
+  const [columnMultiFieldConfigByCol, setColumnMultiFieldConfigByCol] = useState<Record<number, ColumnMultiFieldConfig>>(
+    {}
+  );
+  const [multiFieldValueByCell, setMultiFieldValueByCell] = useState<MultiFieldValueByCell>({});
   const [imageUrlsByCell, setImageUrlsByCell] = useState<Record<string, ReadonlyArray<string>>>({});
   const effectiveMinResizableTextColWidth = props.minResizableTextColWidth;
 
@@ -142,6 +146,30 @@ export default function TableRows(props: TableRowsProps) {
         next[colIndex] = kind;
       }
       return next;
+    });
+  }, []);
+
+  const setColumnMultiFieldFields = useCallback((colIndex: number, fields: Array<{ name: string }>) => {
+    if (colIndex < 0) return;
+    setColumnMultiFieldConfigByCol((prev) => {
+      const next = { ...prev };
+      if (fields.length > 0) {
+        next[colIndex] = { fields };
+      } else {
+        delete next[colIndex];
+      }
+      return next;
+    });
+  }, []);
+
+  const setMultiFieldContentByCell = useCallback((bodyRowIndex: number, colIndex: number, fieldIndex: number, content: string) => {
+    if (bodyRowIndex < 0 || colIndex < 0) return;
+    const key = `${bodyRowIndex}-${colIndex}`;
+    setMultiFieldValueByCell((prev) => {
+      const current = prev[key] ?? [];
+      const next = [...current];
+      next[fieldIndex] = { ...next[fieldIndex], name: next[fieldIndex]?.name ?? '', content };
+      return { ...prev, [key]: next };
     });
   }, []);
 
@@ -391,6 +419,21 @@ export default function TableRows(props: TableRowsProps) {
     bodyRowCount,
     props.groupingConfig?.expandedGroupKeys,
   ]);
+
+  const syncMultiFieldToGroup = useCallback((groupValue: string, colIndex: number, fieldsContent: Array<{ name: string; content: string }>) => {
+    if (colIndex < 0) return;
+    // 从 groupTitleRows 找到分组内的所有 bodyRowIndex
+    const groupInfo = groupTitleRows.find((g) => g.groupValue === groupValue);
+    if (!groupInfo || groupInfo.bodyRows.length === 0) return;
+    setMultiFieldValueByCell((prev) => {
+      const next = { ...prev };
+      for (const bodyRowIndex of groupInfo.bodyRows) {
+        const key = `${bodyRowIndex}-${colIndex}`;
+        next[key] = fieldsContent;
+      }
+      return next;
+    });
+  }, [groupTitleRows]);
 
   const effectiveRowMinWidth = useMemo(() => {
     // 关键：隐藏列后行的 minWidth 必须随“可见列”收缩，否则可视区足够也会残留横向滚动条，
@@ -770,6 +813,39 @@ export default function TableRows(props: TableRowsProps) {
     });
   }, []);
 
+  // 包装组内插入行回调：插入后自动复制组内第一行的多字段内容到新行
+  const onInsertRowWithGroupValueWrapped = useCallback((groupValue: string) => {
+    // 先调用原回调插入行
+    props.onInsertRowWithGroupValue?.(groupValue);
+
+    // 找到该分组的信息
+    const groupInfo = groupTitleRows.find((g) => g.groupValue === groupValue);
+    if (!groupInfo || groupInfo.bodyRows.length === 0 || groupInfo.groupedColIndex == null) return;
+
+    // 分组列是否配置了多字段
+    const groupedColIndex = groupInfo.groupedColIndex;
+    const hasMultiField = (columnMultiFieldConfigByCol[groupedColIndex]?.fields?.length ?? 0) > 0;
+    if (!hasMultiField) return;
+
+    // 组内第一行的多字段内容
+    const firstBodyRowIndex = groupInfo.bodyRows[0];
+    const sourceKey = `${firstBodyRowIndex}-${groupedColIndex}`;
+    const sourceValues = multiFieldValueByCell[sourceKey];
+    if (!sourceValues || sourceValues.length === 0) return;
+
+    // 计算新行的 bodyRowIndex（组内最后一行之后）
+    const lastBodyRowIndex = Math.max(...groupInfo.bodyRows);
+    const newBodyRowIndex = lastBodyRowIndex + 1;
+
+    // 复制多字段内容到新行
+    const targetKey = `${newBodyRowIndex}-${groupedColIndex}`;
+    setMultiFieldValueByCell((prev) => {
+      const next = { ...prev };
+      next[targetKey] = sourceValues.map((v) => ({ ...v }));
+      return next;
+    });
+  }, [props.onInsertRowWithGroupValue, groupTitleRows, columnMultiFieldConfigByCol, multiFieldValueByCell, setMultiFieldValueByCell]);
+
   const onInsertRowWrapped = useCallback(() => {
     props.onInsertRow();
     scrollTableViewportToBottom();
@@ -832,6 +908,11 @@ export default function TableRows(props: TableRowsProps) {
       regularTableFont,
       columnFieldKindByCol,
       setColumnFieldKind,
+      columnMultiFieldConfigByCol,
+      setColumnMultiFieldFields,
+      multiFieldValueByCell,
+      setMultiFieldContentByCell,
+      syncMultiFieldToGroup,
       imageUrlsByCell,
       appendImageFilesToCell,
       removeImageAtCell,
@@ -849,8 +930,10 @@ export default function TableRows(props: TableRowsProps) {
       pageBodyRowEnd: paginationEnabled ? pageBodyEnd : undefined,
       // 分组标题行信息
       groupTitleRows,
-      // 组内插入行回调
-      onInsertRowWithGroupValue: props.onInsertRowWithGroupValue,
+      // 组内插入行回调（包装后自动复制多字段内容）
+      onInsertRowWithGroupValue: onInsertRowWithGroupValueWrapped,
+      // 批量展开/收起分组回调
+      onToggleAllGroupExpansion: props.onToggleAllGroupExpansion,
       // 列顺序变更回调
       onColumnOrderChange,
     };
@@ -891,6 +974,11 @@ export default function TableRows(props: TableRowsProps) {
     regularTableFont,
     columnFieldKindByCol,
     setColumnFieldKind,
+    columnMultiFieldConfigByCol,
+    setColumnMultiFieldFields,
+    multiFieldValueByCell,
+    setMultiFieldContentByCell,
+    syncMultiFieldToGroup,
     imageUrlsByCell,
     appendImageFilesToCell,
     removeImageAtCell,
@@ -899,6 +987,9 @@ export default function TableRows(props: TableRowsProps) {
     props.paginationPageSize,
     props.onPaginationChange,
     groupTitleRows,
+    onInsertRowWithGroupValueWrapped,
+    props.onInsertRowWithGroupValue,
+    props.onToggleAllGroupExpansion,
     onColumnOrderChange,
   ]);
 

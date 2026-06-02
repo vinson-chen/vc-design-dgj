@@ -5,6 +5,14 @@ import type { TableGridTypographyMetrics } from './tableGridTypography';
 
 export type TableColumnFieldKind = 'text' | 'image';
 
+/** 列多字段配置：字段名列表 */
+export type ColumnMultiFieldConfig = {
+  fields: Array<{ name: string }>;
+};
+
+/** 表体单元格多字段内容（key 形如 `${bodyRow}-${col}`） */
+export type MultiFieldValueByCell = Record<string, Array<{ name: string; content: string }>>;
+
 /** 表头单元格值：标题 + 可选的分组身份标识 */
 export type HeaderCellValue = {
   title: string;
@@ -131,6 +139,8 @@ export type TableRowsProps = Readonly<{
   onGroupingChange?: (groupId: string | undefined) => void;
   /** 展开状态变更回调 */
   onGroupExpansionChange?: (groupKey: string, expanded: boolean) => void;
+  /** 批量展开/收起所有分组 */
+  onToggleAllGroupExpansion?: (expandAll: boolean) => void;
   /** 组内插入行回调：自动填入分组值 */
   onInsertRowWithGroupValue?: (groupValue: string) => void;
   /** 列顺序变更回调 */
@@ -168,6 +178,14 @@ export type TableGridStaticConfig = Omit<
   /** 列字段类型（默认 text） */
   columnFieldKindByCol: Readonly<Record<number, TableColumnFieldKind>>;
   setColumnFieldKind: (colIndex: number, kind: TableColumnFieldKind) => void;
+  /** 列多字段配置：字段名列表 */
+  columnMultiFieldConfigByCol: Readonly<Record<number, ColumnMultiFieldConfig>>;
+  setColumnMultiFieldFields: (colIndex: number, fields: Array<{ name: string }>) => void;
+  /** 表体单元格多字段内容 */
+  multiFieldValueByCell: MultiFieldValueByCell;
+  setMultiFieldContentByCell: (bodyRowIndex: number, colIndex: number, fieldIndex: number, content: string) => void;
+  /** 分组场景：同步多字段内容到分组内所有行 */
+  syncMultiFieldToGroup: (groupValue: string, colIndex: number, fieldsContent: Array<{ name: string; content: string }>) => void;
   /** 图片列：表体格内图片预览 URL 列表（key 形如 `${bodyRow}-${col}`） */
   imageUrlsByCell: Readonly<Record<string, ReadonlyArray<string>>>;
   appendImageFilesToCell: (bodyRowIndex: number, colIndex: number, files: readonly File[]) => void;
@@ -192,6 +210,8 @@ export type TableGridStaticConfig = Omit<
   onGroupingChange?: (groupId: string | undefined) => void;
   /** 展开状态变更回调 */
   onGroupExpansionChange?: (groupKey: string, expanded: boolean) => void;
+  /** 批量展开/收起所有分组 */
+  onToggleAllGroupExpansion?: (expandAll: boolean) => void;
   /** 分组标题行信息列表 */
   groupTitleRows?: ReadonlyArray<TableGroupTitleRowInfo>;
   /** 组内插入行回调：自动填入分组值 */

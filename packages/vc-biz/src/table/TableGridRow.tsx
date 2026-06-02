@@ -457,7 +457,10 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
             onOpenChange={setStatsPanelOpen}
             placement="bottomLeft"
             overlayClassName="vc-biz-table-stats-dropdown"
-            dropdownRender={() => (
+            overlayStyle={{
+              boxShadow: vcTokens.style.boxShadowSecondary,
+            }}
+            popupRender={() => (
               <div
                 className="vc-biz-table-stats-panel-inner"
                 onMouseDown={(e) => e.stopPropagation()}

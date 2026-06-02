@@ -3,7 +3,7 @@ import type { MenuProps, InputRef } from 'antd';
 import { Button, Dropdown, Input, Select, Space, Tooltip, Typography, VcIcon, vcTokens } from 'vc-design';
 import { DropdownMenuSidePanelCombo } from './DropdownMenuSidePanelCombo';
 import { VTableCell } from './VTableCell';
-import type { TableGridStaticConfig, HeaderCellValue } from './tableGridTypes';
+import type { TableGridStaticConfig, HeaderCellValue, TableColumnFieldKind } from './tableGridTypes';
 import type { TableGridEditingState } from './useTableGridEditing';
 import type { TableGridTypographyMetrics } from './tableGridTypography';
 import { fitTableHeaderTextWithEllipsis } from './fitTableHeaderTextWithEllipsis';
@@ -130,8 +130,13 @@ export function TableHeaderCell({
   // 列编辑面板状态（由父组件管理，通过回调更新）
   const headerFieldTypeSubOpenPrevRef = useRef(false);
   const [headerColEditDraftTitle, setHeaderColEditDraftTitle] = useState('');
-  const [headerColEditDraftKind, setHeaderColEditDraftKind] = useState<'text' | 'image'>('text');
+  const [headerColEditDraftKind, setHeaderColEditDraftKind] = useState<TableColumnFieldKind>('text');
+  const [headerColEditDraftFields, setHeaderColEditDraftFields] = useState<Array<{ name: string }>>([]);
+  // 字段拖拽状态
+  const [fieldDragState, setFieldDragState] = useState<{ dragIndex: number; dropIndex: number | null } | null>(null);
+  const fieldRowRectsRef = useRef<Array<{ top: number; height: number }> | null>(null);
   const headerColumnFieldKind = cfg.columnFieldKindByCol[colIndex] ?? 'text';
+  const headerColumnMultiFieldFields = cfg.columnMultiFieldConfigByCol[colIndex]?.fields ?? [];
 
   useEffect(() => {
     const prev = headerFieldTypeSubOpenPrevRef.current;
@@ -139,8 +144,9 @@ export function TableHeaderCell({
     if (headerFieldTypeSubOpen && !prev) {
       setHeaderColEditDraftTitle(fullHeaderLabel);
       setHeaderColEditDraftKind(headerColumnFieldKind);
+      setHeaderColEditDraftFields(headerColumnMultiFieldFields);
     }
-  }, [headerFieldTypeSubOpen, fullHeaderLabel, headerColumnFieldKind]);
+  }, [headerFieldTypeSubOpen, fullHeaderLabel, headerColumnFieldKind, headerColumnMultiFieldFields]);
 
   const headerColEditInputRef = useRef<InputRef | null>(null);
 
@@ -154,7 +160,7 @@ export function TableHeaderCell({
   );
 
   const setHeaderColumnFieldKind = useCallback(
-    (kind: 'text' | 'image') => cfg.setColumnFieldKind(colIndex, kind),
+    (kind: TableColumnFieldKind) => cfg.setColumnFieldKind(colIndex, kind),
     [cfg, colIndex]
   );
 
@@ -167,10 +173,11 @@ export function TableHeaderCell({
       const newValue: HeaderCellValue = { title: nextTitle, groupId: parsed.groupId };
       editingApi.setValueByCell((prev) => ({ ...prev, [headerEditKey]: serializeHeaderCellValue(newValue) }));
       setHeaderColumnFieldKind(headerColEditDraftKind);
+      cfg.setColumnMultiFieldFields(colIndex, headerColEditDraftFields);
       onHeaderFieldTypeSubOpenChange?.(false);
       onHeaderMenuOpenChange?.(false);
     },
-    [colIndex, headerColEditDraftKind, headerColEditDraftTitle, headerEditKey, editingApi, setHeaderColumnFieldKind, onHeaderFieldTypeSubOpenChange, onHeaderMenuOpenChange, headerStored]
+    [colIndex, headerColEditDraftKind, headerColEditDraftTitle, headerColEditDraftFields, headerEditKey, editingApi, setHeaderColumnFieldKind, onHeaderFieldTypeSubOpenChange, onHeaderMenuOpenChange, headerStored, cfg]
   );
 
   const cancelHeaderColumnEditPanel = useCallback((e: React.MouseEvent) => {
@@ -370,6 +377,7 @@ export function TableHeaderCell({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="vc-biz-table-header-col-edit-stack">
+                {/* 列标题 */}
                 <div className="vc-biz-table-header-col-edit-field">
                   <Typography.Text
                     className="vc-biz-table-header-col-edit-field-label"
@@ -384,6 +392,7 @@ export function TableHeaderCell({
                     style={{ width: 240 }}
                   />
                 </div>
+                {/* 列类型 */}
                 <div className="vc-biz-table-header-col-edit-field">
                   <Typography.Text
                     className="vc-biz-table-header-col-edit-field-label"
@@ -409,6 +418,129 @@ export function TableHeaderCell({
                     }
                   />
                 </div>
+                {/* 多字段配置组 */}
+                <div className="vc-biz-table-header-col-edit-field">
+                  <Typography.Text
+                    className="vc-biz-table-header-col-edit-field-label"
+                    style={headerColEditFieldLabelStyle}
+                  >
+                    多字段
+                  </Typography.Text>
+                  {/* 字段名列表 */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {headerColEditDraftFields.map((field, idx) => {
+                      const isDraggingThis = fieldDragState?.dragIndex === idx;
+                      const dropIndicatorAbove = fieldDragState?.dropIndex === idx && fieldDragState.dragIndex !== idx;
+                      const dropIndicatorBelow = fieldDragState?.dropIndex === idx + 1 && fieldDragState.dragIndex !== idx + 1 && idx === headerColEditDraftFields.length - 1;
+                      return (
+                        <React.Fragment key={idx}>
+                          {/* 放置指示线：上方 */}
+                          {dropIndicatorAbove ? (
+                            <div style={{ height: 2, background: vcTokens.color.primary.default, borderRadius: 1 }} />
+                          ) : null}
+                          <div
+                            className="vc-biz-table-header-field-row"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              opacity: isDraggingThis ? 0.3 : 1,
+                            }}
+                          >
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<VcIcon type="move" fontSize={14} style={{ lineHeight: 1, color: vcTokens.color.neutral.text.icon }} />}
+                              style={{ cursor: 'grab' }}
+                              onMouseDown={(e) => {
+                                if (e.button !== 0) return;
+                                e.preventDefault();
+                                // 立即获取所有行位置
+                                const fieldRows = document.querySelectorAll('.vc-biz-table-header-field-row');
+                                fieldRowRectsRef.current = Array.from(fieldRows).map((row) => {
+                                  const rect = row.getBoundingClientRect();
+                                  return { top: rect.top, height: rect.height };
+                                });
+                                setFieldDragState({ dragIndex: idx, dropIndex: null });
+                                const onMove = (ev: MouseEvent) => {
+                                  const rects = fieldRowRectsRef.current;
+                                  if (!rects) return;
+                                  // 查找最近的放置位置
+                                  let dropIdx: number | null = null;
+                                  for (let i = 0; i < rects.length; i++) {
+                                    const rect = rects[i];
+                                    const midY = rect.top + rect.height / 2;
+                                    if (ev.clientY < midY) {
+                                      dropIdx = i;
+                                      break;
+                                    }
+                                    if (i === rects.length - 1 && ev.clientY > midY) {
+                                      dropIdx = i + 1;
+                                    }
+                                  }
+                                  setFieldDragState((prev) => prev ? { ...prev, dropIndex: dropIdx } : prev);
+                                };
+                                const onUp = () => {
+                                  window.removeEventListener('mousemove', onMove);
+                                  window.removeEventListener('mouseup', onUp);
+                                  setFieldDragState((prev) => {
+                                    if (!prev) return null;
+                                    const { dragIndex, dropIndex } = prev;
+                                    if (dropIndex !== null && dragIndex !== dropIndex) {
+                                      const next = [...headerColEditDraftFields];
+                                      const [removed] = next.splice(dragIndex, 1);
+                                      const insertIdx = dropIndex > dragIndex ? dropIndex - 1 : dropIndex;
+                                      next.splice(insertIdx, 0, removed);
+                                      setHeaderColEditDraftFields(next);
+                                    }
+                                    return null;
+                                  });
+                                };
+                                window.addEventListener('mousemove', onMove);
+                                window.addEventListener('mouseup', onUp);
+                              }}
+                            />
+                            <Input
+                              placeholder="字段名"
+                              value={field.name}
+                              onChange={(e) => {
+                                const next = [...headerColEditDraftFields];
+                                next[idx] = { name: e.target.value };
+                                setHeaderColEditDraftFields(next);
+                              }}
+                              style={{ width: 180 }}
+                            />
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<VcIcon type="delete" fontSize={14} style={{ lineHeight: 1, color: vcTokens.color.neutral.text.icon }} />}
+                              onClick={() => {
+                                const next = headerColEditDraftFields.filter((_, i) => i !== idx);
+                                setHeaderColEditDraftFields(next);
+                              }}
+                            />
+                          </div>
+                          {/* 放置指示线：下方（仅最后一行） */}
+                          {dropIndicatorBelow ? (
+                            <div style={{ height: 2, background: vcTokens.color.primary.default, borderRadius: 1 }} />
+                          ) : null}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                  {/* 添加字段按钮：最多5个字段 */}
+                  {headerColEditDraftFields.length < 5 ? (
+                    <Button
+                      type="text"
+                      icon={<VcIcon type="add" fontSize={16} style={{ lineHeight: 1, color: vcTokens.color.neutral.text.icon }} />}
+                      onClick={() => setHeaderColEditDraftFields([...headerColEditDraftFields, { name: '' }])}
+                      style={{ marginTop: 4 }}
+                    >
+                      添加字段
+                    </Button>
+                  ) : null}
+                </div>
+                {/* 操作按钮 */}
                 <div className="vc-biz-table-header-col-edit-actions">
                   <Space size={8}>
                     <Button type="primary" aria-label="保存" onClick={commitHeaderColumnEditPanel}>

@@ -81,7 +81,7 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
             onOpenChange={setFieldConfigOpen}
             overlayClassName="vc-biz-table-field-config-dropdown"
             placement="bottomLeft"
-            dropdownRender={() => (
+            popupRender={() => (
               <TableFieldConfigPanel
                 open={fieldConfigOpen}
                 triggerRef={fieldConfigTriggerRef}
