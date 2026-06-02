@@ -129,7 +129,6 @@ export const navGroups: NavGroup[] = [
       { key: 'switch-area', label: 'VTypeTabs / VStateTabs / VCustomTabs 切换区' },
       { key: 'operation-bar', label: 'VTopOperationBar 等操作区' },
       { key: 'biz-table', label: 'VTable 表格区' },
-      { key: 'table-cell', label: 'TableCellEditing / TableCellImage / TableHeaderCell' },
       { key: 'vtell', label: 'VTell 对话区' },
       { key: 'list-page-shell', label: '列表页串联（多组件）' },
     ],
