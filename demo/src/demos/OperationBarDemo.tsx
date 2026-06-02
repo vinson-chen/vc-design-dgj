@@ -57,12 +57,10 @@ export default function OperationBarDemo() {
 
   return (
     <>
-      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>
-        TopOperationBar · TableOperationBar · BatchOperationBar
-      </h1>
+      <h1 style={{ marginBottom: 8, fontWeight: 600, fontSize: 18 }}>VOperationBar 操作区</h1>
       <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
-        本页演示 <code>TopOperationBar</code>、<code>TableOperationBar</code>、<code>BatchOperationBar</code>；
-        底层左右插槽为 <code>OperationBar</code>，右侧溢出按钮行为来自 <code>OverflowActions</code>。
+        本页演示 <code>VTopOperationBar</code>、<code>VTableOperationBar</code>、<code>VBatchOperationBar</code>；
+        底层左右插槽为 <code>VOperationBar</code>，右侧溢出按钮行为来自 <code>VOverflowActions</code>。
         设计对齐 Figma <code>operation_bar</code>（top / table / batch 三种形态）。
       </p>
 

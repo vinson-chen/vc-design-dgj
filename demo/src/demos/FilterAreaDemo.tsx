@@ -62,9 +62,9 @@ export default function FilterAreaDemo() {
 
   return (
     <>
-      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>FilterArea</h1>
+      <h1 style={{ marginBottom: 8, fontWeight: 600, fontSize: 18 }}>VFilterArea 筛选区</h1>
       <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
-        <code>FilterArea</code> 在外层提供 demo 布局容器，筛选项与查询/重置由内部 <code>FilterGroup</code> 实现。
+        <code>VFilterArea</code> 在外层提供 demo 布局容器，筛选项与查询/重置由内部 <code>VFilterGroup</code> 实现。
         设计对齐 Figma <code>filter_group</code>：筛选项无前缀文案；宽度 160~328px，可视宽度内等分栅格并换行；按钮跟随/贴右。
       </p>
 

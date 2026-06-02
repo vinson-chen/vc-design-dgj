@@ -71,7 +71,7 @@ export default function SwitchAreaDemo() {
 
   return (
     <>
-      <h1 style={{ marginBottom: 8, fontWeight: 600 }}>VTypeTabs · VStateTabs</h1>
+      <h1 style={{ marginBottom: 8, fontWeight: 600, fontSize: 18 }}>VTabs 切换区</h1>
       <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
         本页分别演示 <code>VTypeTabs</code>（Figma <code>store_tabs</code>，带图标）、<code>VStateTabs</code>（Figma{' '}
         <code>state_tabs</code>，无图标）与 <code>VCustomTabs</code>（Figma <code>CustomTabs</code> /{' '}
