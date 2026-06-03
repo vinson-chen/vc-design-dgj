@@ -50,13 +50,6 @@
   align-self: center;
 }
 
-.biz-custom-tabs--right-default-btn.ant-btn.ant-btn-text {
-  width: 32px;
-  min-width: 32px;
-  height: 32px;
-  padding: 0;
-  border-radius: var(--custom-tabs-item-radius);
-}
 
 .biz-custom-tabs--tab {
   flex: 0 0 auto;

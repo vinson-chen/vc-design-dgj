@@ -1,25 +1,17 @@
-import React, { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
-import { Pagination, Segmented, vcTokens, message } from 'vc-design';
+import React, { useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Button, Checkbox, Input, Pagination, Segmented, VcIcon, vcTokens, message } from 'vc-design';
 import {
-  VFilterArea,
+  VFilterGroup,
   type VFilterFieldConfig,
   VSwitchTabs,
   type VSwitchTabItemData,
-  VTableOperationBar,
-  VBatchOperationBar,
   type VOverflowActionItem,
+  VOperationBar,
+  VOverflowActions,
   TableAreaTableInstance,
   useTableAreaDemoState,
-  VInput,
-  type VInputAttachedFile,
-  type VInputLlmOption,
+  VMenu,
 } from 'vc-biz';
-
-const VCELL_COMP_LLM: VInputLlmOption[] = [
-  { value: 'qwen', label: 'Qwen' },
-  { value: 'deepseek', label: 'DeepSeek', disabled: true },
-  { value: 'automation_rules', label: '自动化规则', disabled: true },
-];
 
 export default function Overview() {
   // 筛选区状态（假数据）
@@ -88,30 +80,48 @@ export default function Overview() {
     [],
   );
 
+  const topBarItems = useMemo<VOverflowActionItem[]>(
+    () => [
+      { key: 'notify', label: '通知', icon: 'notification', type: 'text', onClick: () => message.info('点击：通知') },
+      { key: 'complaint', label: '投诉', icon: 'mail', type: 'text', onClick: () => message.info('点击：投诉') },
+      { key: 'service', label: '客服', icon: 'service', type: 'text', onClick: () => message.info('点击：客服') },
+      { key: 'order', label: '订购', icon: 'rocket', type: 'text', onClick: () => message.info('点击：订购') },
+      { key: 'phone', label: '15014050905', icon: 'user', type: 'text', onClick: () => message.info('点击：电话') },
+    ],
+    [],
+  );
+
   const tableDemo = useTableAreaDemoState();
-  const { importExcelFromFile } = tableDemo;
   const bodyRowCount = Math.max(0, tableDemo.rowCount - 1);
 
-  const [vcellDraft, setVcellDraft] = useState('');
-  const [vcellExcel, setVcellExcel] = useState<VInputAttachedFile[]>([]);
-  const [vcellLlm, setVcellLlm] = useState('qwen');
+  // 动态计算表格高度
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  const filterAreaRef = useRef<HTMLDivElement | null>(null);
+  const opBarRef = useRef<HTMLDivElement | null>(null);
+  const [tableBodyScrollMaxHeight, setTableBodyScrollMaxHeight] = useState(520);
 
-  const handleVcellSend = useCallback(async () => {
-    const text = vcellDraft.trim();
-    const files = vcellExcel;
-    if (files.length > 0) {
-      for (const a of files) {
-        await importExcelFromFile(a.file);
-      }
-      setVcellExcel([]);
-    }
-    if (text) {
-      void message.info(
-        `已发送（演示）：${text.slice(0, 80)}${text.length > 80 ? '…' : ''}`,
-      );
-      setVcellDraft('');
-    }
-  }, [importExcelFromFile, vcellDraft, vcellExcel]);
+  // 固定消耗 = scrollArea padding(16+16) + outer gap(16) + card padding(12+12) + card gap(12) = 84px
+  const HEIGHT_OVERHEAD = 84;
+
+  useLayoutEffect(() => {
+    const el = scrollAreaRef.current;
+    if (!el) return;
+
+    const calculateHeight = () => {
+      const filterH = filterAreaRef.current?.offsetHeight ?? 0;
+      const opBarH = opBarRef.current?.offsetHeight ?? 0;
+      const scrollAreaHeight = el.clientHeight;
+      const calculated = scrollAreaHeight - HEIGHT_OVERHEAD - filterH - opBarH;
+      setTableBodyScrollMaxHeight(Math.max(200, calculated));
+    };
+
+    calculateHeight();
+
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => calculateHeight());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const checkedCount = useSyncExternalStore(
     (cb) => tableDemo.bodyRowSelectionStore.subscribeSelection(cb),
@@ -131,107 +141,149 @@ export default function Overview() {
     [],
   );
 
-  const handleBatchCheckedChange = (next: boolean) => {
-    tableDemo.bodyRowSelectionStore.toggleAll(next);
-  };
-
   return (
-    <>
-      <h1 style={{ marginBottom: 8, fontWeight: 600, fontSize: 18 }}>组件总览</h1>
-      <p style={{ color: vcTokens.color.neutral.text.description, marginBottom: 24 }}>
-        vc-design 基于 Ant Design 5.x，通过 VC Tokens（vcTokens）统一颜色、间距、圆角与字体。左侧导航可切换到不同组件进行规范检验。
-      </p>
+    <div
+      style={{
+        background: vcTokens.color.neutral.background.layout,
+        border: `1px solid ${vcTokens.color.neutral.border.default}`,
+        borderRadius: vcTokens.style.borderRadius.lg,
+        display: 'flex',
+        height: 'calc(100vh - 48px)',
+        overflow: 'hidden',
+      }}
+    >
+        {/* 左列：导航区 */}
+        <div style={{ flexShrink: 0, overflowY: 'auto', background: 'rgb(66, 74, 87)', alignSelf: 'stretch' }}>
+          <VMenu />
+        </div>
 
-      <div
-        style={{
-          background: vcTokens.color.neutral.background.layout,
-          borderRadius: vcTokens.style.borderRadius.lg,
-          padding: 16,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
-        <section>
-          <div style={{ background: vcTokens.color.neutral.background.container, borderRadius: vcTokens.style.borderRadius.lg }}>
-            <VSwitchTabs
-              items={storeItems}
-              activeKey={storeActiveKey}
-              onChange={handleStoreChange}
-              showIcon
-              showPanel={false}
+        {/* 右列：内容区 */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          {/* 顶部区域：滚动时整体固定 */}
+          <section style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+            <div style={{ background: vcTokens.color.neutral.background.layout }}>
+              <VOperationBar
+                left={
+                  <Input.Search
+                    placeholder="请输入"
+                    style={{ width: 240 }}
+                    allowClear
+                    enterButton={<Button icon={<VcIcon type="search" fontSize={16} />} />}
+                    onSearch={(v) => message.info(`搜索：${v || '(空)'}`)}
+                />
+              }
+              right={
+                <div style={{ minWidth: 0, width: '100%' }}>
+                  <VOverflowActions items={topBarItems} iconOnlyMore />
+                </div>
+              }
+              style={{ width: '100%' }}
             />
-          </div>
-        </section>
-
-        <section>
-          <VFilterArea
-            fields={filterFields}
-            value={filterValue}
-            onChange={setFilterValue}
-            onSearch={() => message.info(`查询：${JSON.stringify(filterValue)}`)}
-            onReset={() => setFilterValue({})}
-          />
-        </section>
-
-        <section>
-          <div style={{ background: vcTokens.color.neutral.background.container, borderRadius: vcTokens.style.borderRadius.lg }}>
-            <VTableOperationBar
-              segmentedOptions={stateItems.map((i) => i.key)}
-              value={opSegValue}
-              onChange={(next) => {
-                setOpSegValue(next);
-                setStateActiveKey(next);
-              }}
-              primaryItems={actionItems}
-              maxVisibleWithMore={2}
-            />
-          </div>
-        </section>
-
-        <section>
-          <div style={{ background: vcTokens.color.neutral.background.container, borderRadius: vcTokens.style.borderRadius.lg }}>
-            <div style={{ padding: 16 }}>
-              <VInput
-                style={{ maxWidth: 440 }}
-                value={vcellDraft}
-                onChange={setVcellDraft}
-                onSend={handleVcellSend}
-                placeholder="输入指令，Shift+Enter 换行，Enter 发送；可附加 Excel 后点发送导入下方表格"
-                llmOptions={VCELL_COMP_LLM}
-                llmValue={vcellLlm}
-                onLlmChange={setVcellLlm}
-                attachedFiles={vcellExcel}
-                onAttachedFilesChange={setVcellExcel}
+            <div style={{ background: vcTokens.color.neutral.background.container }}>
+              <VSwitchTabs
+                items={storeItems}
+                activeKey={storeActiveKey}
+                onChange={handleStoreChange}
+                showIcon
+                showPanel={false}
               />
             </div>
-            <TableAreaTableInstance {...tableDemo} />
           </div>
-        </section>
+          </section>
 
-        <section>
-          <div style={{ background: vcTokens.color.neutral.background.container, borderRadius: vcTokens.style.borderRadius.lg }}>
-            <VBatchOperationBar
-              checked={checkedCount > 0 && checkedCount === bodyRowCount}
-              indeterminate={checkedCount > 0 && checkedCount < bodyRowCount}
-              selectedCount={checkedCount}
-              onCheckedChange={handleBatchCheckedChange}
-              items={batchItems}
-              maxVisibleWithMore={4}
-              paginationProps={{
-                current: page,
-                pageSize,
-                total: 500,
-                onChange: (p, ps) => {
-                  setPage(p);
-                  setPageSize(ps);
-                  message.info(`分页：第 ${p} 页 / ${ps} 条每页`);
-                },
-              }}
-            />
+          {/* 中间可滚动区域 */}
+          <div ref={scrollAreaRef} style={{ flex: 1, minWidth: 0, overflowY: 'auto', overscrollBehavior: 'none', display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
+            <div ref={filterAreaRef}>
+              <VFilterGroup
+                fields={filterFields}
+                value={filterValue}
+                onChange={setFilterValue}
+                onSearch={() => message.info(`查询：${JSON.stringify(filterValue)}`)}
+                onReset={() => setFilterValue({})}
+                style={{ border: 'none', borderRadius: 8, padding: 12, paddingBottom: 12 }}
+              />
+            </div>
+
+            <div style={{ background: vcTokens.color.neutral.background.container, borderRadius: vcTokens.style.borderRadius.lg, padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div ref={opBarRef}>
+                <VOperationBar
+                  style={{ borderBottom: 'none', background: 'transparent', padding: 0, minHeight: 'unset' }}
+                  left={
+                    <Segmented
+                      options={stateItems.map((i) => i.key)}
+                      value={opSegValue}
+                      onChange={(next) => {
+                        setOpSegValue(String(next));
+                        setStateActiveKey(String(next));
+                      }}
+                  />
+                }
+                right={
+                  <div style={{ minWidth: 0, width: '100%' }}>
+                    <VOverflowActions
+                      items={actionItems}
+                      maxVisibleWithMore={2}
+                      iconOnlyMore
+                      align="right"
+                    />
+                  </div>
+                }
+              />
+              </div>
+                <TableAreaTableInstance {...tableDemo} bodyScrollMaxHeight={tableBodyScrollMaxHeight} enablePagination={false} />
+              </div>
           </div>
-        </section>
+
+          {/* 底部批量操作栏：固定在页面容器底部 */}
+          <section style={{ position: 'sticky', bottom: 0, zIndex: 10, background: vcTokens.color.neutral.background.container, boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.08)' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                minWidth: 400,
+                rowGap: 8,
+                columnGap: 16,
+                minHeight: 48,
+                padding: '8px 16px',
+                boxSizing: 'border-box',
+              }}
+            >
+              <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto' }}>
+                <Checkbox
+                  checked={checkedCount > 0 && checkedCount === bodyRowCount}
+                  indeterminate={checkedCount > 0 && checkedCount < bodyRowCount}
+                  onChange={(e) => tableDemo.bodyRowSelectionStore.toggleAll(e.target.checked)}
+                >
+                  已选 {checkedCount} 条
+                </Checkbox>
+                <div style={{ minWidth: 0, flex: '0 1 auto' }}>
+                  <VOverflowActions
+                    items={batchItems}
+                    maxVisibleWithMore={4}
+                    iconOnlyMore
+                    align="left"
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginLeft: 'auto', flex: '0 0 auto' }}>
+                <Pagination
+                  simple
+                  current={page}
+                  pageSize={pageSize}
+                  total={500}
+                  onChange={(p, ps) => {
+                    setPage(p);
+                    setPageSize(ps);
+                    message.info(`分页：第 ${p} 页 / ${ps} 条每页`);
+                  }}
+                />
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
-    </>
   );
 }

@@ -1,6 +1,6 @@
 import type { InputRef, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Button, Dropdown, Input, Popconfirm, VcIcon, vcTokens } from 'vc-design';
+import { Dropdown, Input, Popconfirm, VcIcon, vcTokens } from 'vc-design';
 import { DropdownMenuSidePanelCombo } from '../table/DropdownMenuSidePanelCombo';
 import { TableFieldConfigPanel } from '../table/TableFieldConfigPanel';
 import { renderSwitchTabIcon } from './iconResolver';
@@ -972,18 +972,11 @@ export default function VCustomTabs({
               : { transform: `translateX(${inkBar.left}px)`, width: inkBar.width }
             }
           />
-          {!isVertical && (
+          {!isVertical && rightSlot ? (
             <div className="biz-custom-tabs--right" ref={rightRef}>
-              {rightSlot === undefined ? (
-                <Button
-                  type="text"
-                  icon={<VcIcon type="user" fontSize={16} />}
-                  className="biz-custom-tabs--right-default-btn"
-                  aria-label="用户"
-                />
-              ) : rightSlot}
+              {rightSlot}
             </div>
-          )}
+          ) : null}
         </div>
         {isVertical && (
           <div className="biz-custom-tabs--right" ref={rightRef}>

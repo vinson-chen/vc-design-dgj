@@ -5,6 +5,9 @@ demo/node_modules/
 dist/
 demo/dist/
 
+# Claude Code (personal settings)
+.claude/settings.local.json
+
 # OS / editor
 .DS_Store
 .idea/

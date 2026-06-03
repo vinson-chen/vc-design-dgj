@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, VcIcon, Dropdown, vcTokens } from 'vc-design';
+import { VcIcon, Dropdown, vcTokens } from 'vc-design';
 import { renderSwitchTabIcon } from './iconResolver';
 import './VSwitchTabs.css';
 
@@ -285,16 +285,11 @@ export default function VSwitchTabs({
             opacity: inkBarStyle.visible ? 1 : 0,
           }}
         />
-        <div className="biz-switch-tabs-right" ref={rightRef}>
-          {rightSlot ?? (
-            <Button
-              type="text"
-              icon={<VcIcon type="user" fontSize={16} />}
-              className="biz-switch-tabs-right-default-btn"
-              aria-label="用户"
-            />
-          )}
-        </div>
+        {rightSlot ? (
+          <div className="biz-switch-tabs-right" ref={rightRef}>
+            {rightSlot}
+          </div>
+        ) : null}
       </div>
 
       {showPanel ? (
