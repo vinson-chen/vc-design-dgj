@@ -101,9 +101,22 @@ export default function TableRows(props: TableRowsProps) {
     {}
   );
   const [columnMultiFieldConfigByCol, setColumnMultiFieldConfigByCol] = useState<Record<number, ColumnMultiFieldConfig>>(
-    {}
+    props.initialMultiFieldData?.columnMultiFieldConfigByCol ?? {}
   );
-  const [multiFieldValueByCell, setMultiFieldValueByCell] = useState<MultiFieldValueByCell>({});
+  const [multiFieldValueByCell, setMultiFieldValueByCell] = useState<MultiFieldValueByCell>(
+    props.initialMultiFieldData?.multiFieldValueByCell ?? {}
+  );
+
+  // 同步 props 更新（用于模拟数据加载）
+  useLayoutEffect(() => {
+    if (props.initialMultiFieldData?.columnMultiFieldConfigByCol) {
+      setColumnMultiFieldConfigByCol(props.initialMultiFieldData.columnMultiFieldConfigByCol);
+    }
+    if (props.initialMultiFieldData?.multiFieldValueByCell) {
+      setMultiFieldValueByCell(props.initialMultiFieldData.multiFieldValueByCell);
+    }
+  }, [props.initialMultiFieldData]);
+
   const [imageUrlsByCell, setImageUrlsByCell] = useState<Record<string, ReadonlyArray<string>>>({});
   const [linkDataByCell, setLinkDataByCell] = useState<Record<string, ReadonlyArray<CellLinkData>>>({});
   const effectiveMinResizableTextColWidth = props.minResizableTextColWidth;

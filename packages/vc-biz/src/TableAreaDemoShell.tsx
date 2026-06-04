@@ -189,6 +189,10 @@ export function TableAreaConfigPanel(model: TableAreaDemoModel) {
             <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>支持分组</Typography.Text>
             <Switch size="small" checked={enableGrouping} onChange={setEnableGrouping} />
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Typography.Text style={{ fontSize: 12, marginRight: 8 }}>模拟数据</Typography.Text>
+            <Switch size="small" checked={model.enableMockData} onChange={model.setEnableMockData} />
+          </div>
         </div>
       </div>
     </div>

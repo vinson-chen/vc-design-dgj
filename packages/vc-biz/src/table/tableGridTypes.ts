@@ -16,6 +16,14 @@ export type ColumnMultiFieldConfig = {
 /** 表体单元格多字段内容（key 形如 `${bodyRow}-${col}`） */
 export type MultiFieldValueByCell = Record<string, Array<{ name: string; content: string }>>;
 
+/** 初始化多字段配置（用于模拟数据等场景） */
+export type InitialMultiFieldData = {
+  /** 列多字段配置 */
+  columnMultiFieldConfigByCol?: Record<number, ColumnMultiFieldConfig>;
+  /** 表体单元格多字段内容 */
+  multiFieldValueByCell?: MultiFieldValueByCell;
+};
+
 /** 表头单元格值：标题 + 可选的分组身份标识 */
 export type HeaderCellValue = {
   title: string;
@@ -86,6 +94,8 @@ export type TableRowsProps = Readonly<{
   initialValueByCell?: Record<string, string>;
   valueByCell?: Record<string, string>;
   onValueByCellChange?: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  /** 初始化多字段配置（列配置 + 单元格内容） */
+  initialMultiFieldData?: InitialMultiFieldData;
   /**
    * 表格区域最大高度（px），设置后整表（含表头为虚拟第 0 行 + sticky 钉顶、插入行尾同列表）垂直虚拟滚动。
    * 不传则全量挂载所有行。
