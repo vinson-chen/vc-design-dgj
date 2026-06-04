@@ -427,8 +427,9 @@ html.vc-biz-col-order-dragging .vc-biz-table-header-with-menu:hover .vc-biz-tabl
   top: 50%;
   transform: translateY(-50%);
   width: 20px;
-  height: 20px;
+  height: calc(100% - 16px);
   min-width: 20px;
+  min-height: 20px;
   padding: 0;
   margin: 0;
   display: inline-flex;
@@ -438,7 +439,7 @@ html.vc-biz-col-order-dragging .vc-biz-table-header-with-menu:hover .vc-biz-tabl
   visibility: hidden;
   pointer-events: none;
   transition: none;
-  background: var(--vc-token-color-neutral-background-container, #fff);
+  background: #F0F1F2;
   border-radius: 4px;
 }
 
@@ -448,25 +449,25 @@ html.vc-biz-col-order-dragging .vc-biz-table-header-with-menu:hover .vc-biz-tabl
   transform: none;
 }
 
-/* 锚点态时显示按钮 */
-.vc-biz-vtable-cell[data-is-anchor] .vc-biz-table-multi-field-more-btn.ant-btn.ant-btn-text,
 /* 面板打开时显示按钮 */
 .vc-biz-table-multi-field-more-btn.ant-btn.ant-btn-text[aria-expanded="true"],
 /* 分组标题行 B 列多字段按钮始终显示 */
-[data-vc-biz-table-group-title-row] .vc-biz-table-multi-field-more-btn.ant-btn.ant-btn-text {
+[data-vc-biz-table-group-title-row] .vc-biz-table-multi-field-more-btn.ant-btn.ant-btn-text,
+/* 悬停单元格时显示按钮（锚点态除外） */
+.vc-biz-vtable-cell:not([data-is-anchor]):hover .vc-biz-table-multi-field-more-btn.ant-btn.ant-btn-text {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
 }
 
-/* 悬停状态：白色背景 + 半透明悬停色叠加 */
+/* 悬停状态：F0F1F2 背景 + 半透明悬停色叠加 */
 .vc-biz-table-multi-field-more-btn.ant-btn.ant-btn-text:not(:disabled):hover {
-  background: linear-gradient(var(--vc-token-color-neutral-fill-secondary, rgba(0, 0, 0, 0.08)), var(--vc-token-color-neutral-fill-secondary, rgba(0, 0, 0, 0.08))), var(--vc-token-color-neutral-background-container, #fff) !important;
+  background: linear-gradient(var(--vc-token-color-neutral-fill-secondary, rgba(0, 0, 0, 0.08)), var(--vc-token-color-neutral-fill-secondary, rgba(0, 0, 0, 0.08))), #F0F1F2 !important;
 }
 
-/* 按下状态：白色背景 + 半透明按下色叠加 */
+/* 按下状态：F0F1F2 背景 + 半透明按下色叠加 */
 .vc-biz-table-multi-field-more-btn.ant-btn.ant-btn-text:not(:disabled):active {
-  background: linear-gradient(var(--vc-token-color-neutral-fill-primary, rgba(0, 0, 0, 0.16)), var(--vc-token-color-neutral-fill-primary, rgba(0, 0, 0, 0.16))), var(--vc-token-color-neutral-background-container, #fff) !important;
+  background: linear-gradient(var(--vc-token-color-neutral-fill-primary, rgba(0, 0, 0, 0.16)), var(--vc-token-color-neutral-fill-primary, rgba(0, 0, 0, 0.16))), #F0F1F2 !important;
 }
 
 /** 多字段列编辑面板 */

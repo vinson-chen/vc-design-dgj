@@ -15,6 +15,7 @@ export const HEADER_COL_FIELD_TYPE_KEY = 'field-type';
 const HEADER_COL_TYPE_OPTIONS = [
   { label: '文本列', value: 'text' as const },
   { label: '图片列', value: 'image' as const },
+  { label: '链接列', value: 'link' as const },
 ];
 
 /** 将列索引转换为 A-Z 序号标记 */
@@ -574,7 +575,11 @@ export function TableHeaderCell({
               />
             }
             disabled={isHeaderEditing}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              // 点击表头下拉菜单按钮时关闭链接面板
+              editingApi.closeAllLinkPanels();
+            }}
           />
         </DropdownMenuSidePanelCombo>
       </div>

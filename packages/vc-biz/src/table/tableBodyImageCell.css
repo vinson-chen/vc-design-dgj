@@ -24,7 +24,16 @@
   height: 100%;
   object-fit: cover;
   user-select: none;
+}
+
+/* 锚点态时阻止图片点击，让用户可以操作删除按钮 */
+.vc-biz-table-image-cell-wrap--hover-locked .vc-biz-table-image-item .ant-image {
   pointer-events: none;
+}
+
+/* 预览打开时，恢复 pointer-events，支持预览层内切换图片 */
+.vc-biz-table-image-cell-wrap--preview-visible .vc-biz-table-image-item .ant-image {
+  pointer-events: auto;
 }
 
 /**
@@ -44,6 +53,11 @@
 
 .vc-biz-table-image-cell-wrap--hover-locked .vc-biz-table-image-item:hover::after {
   opacity: 1;
+}
+
+/* 预览打开时隐藏遮罩层 */
+.vc-biz-table-image-cell-wrap--preview-visible .vc-biz-table-image-item::after {
+  opacity: 0;
 }
 
 .vc-biz-table-image-remove-btn {
@@ -68,6 +82,11 @@
 
 .vc-biz-table-image-cell-wrap--hover-locked .vc-biz-table-image-item:hover .vc-biz-table-image-remove-btn {
   display: inline-flex;
+}
+
+/* 预览打开时隐藏删除按钮 */
+.vc-biz-table-image-cell-wrap--preview-visible .vc-biz-table-image-remove-btn {
+  display: none;
 }
 
 .vc-biz-table-image-remove-btn:hover .iconfont {

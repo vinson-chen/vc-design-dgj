@@ -9,6 +9,8 @@
   touch-action: pan-x pan-y;
   /* contain 仍会向父级传递边界感；none 去掉边缘橡皮筋/弹性拉伸，表格更稳 */
   overscroll-behavior: none;
+  /* 高度变化时的平滑过渡，例如配置面板展开/收起 */
+  transition: min-height 0.2s ease-out, max-height 0.2s ease-out;
 }
 
 .vc-biz-table-scrollport::-webkit-scrollbar {
@@ -79,4 +81,3 @@
   text-align: center !important;
   line-height: 22px !important;
 }
-

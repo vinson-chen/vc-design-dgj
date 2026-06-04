@@ -1,5 +1,5 @@
-import React, { useCallback, useRef } from 'react';
-import { Button, VcIcon, vcTokens } from 'vc-design';
+import React, { useCallback, useRef, useState } from 'react';
+import { Button, Image, VcIcon } from 'vc-design';
 import type { TableGridEditingState } from './useTableGridEditing';
 import './tableBodyImageCell.css';
 
@@ -32,6 +32,9 @@ export function TableCellImage({
   const imageFileInputRef = useRef<HTMLInputElement | null>(null);
   const showAddButton = isAnchor && enableEditMode;
 
+  // 追踪预览是否打开
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+
   const onOpenFilePicker = useCallback(
     (e: React.MouseEvent) => {
       if (!enableEditMode) return;
@@ -60,36 +63,59 @@ export function TableCellImage({
     [removeImageAt, bodyRowIndex, colIndex]
   );
 
+  // 预览状态变化时更新状态
+  const onPreviewVisibleChange = useCallback((visible: boolean) => {
+    setIsPreviewVisible(visible);
+  }, []);
+
   return (
     <div
-      className={'vc-biz-table-image-cell-wrap' + (isAnchor ? ' vc-biz-table-image-cell-wrap--hover-locked' : '')}
+      className={
+        'vc-biz-table-image-cell-wrap' +
+        (isAnchor ? ' vc-biz-table-image-cell-wrap--hover-locked' : '') +
+        (isPreviewVisible ? ' vc-biz-table-image-cell-wrap--preview-visible' : '')
+      }
       style={{ minHeight: imagePreviewSize } as React.CSSProperties}
     >
-      {imageUrls.map((url, idx) => (
-        <div
-          key={`${url}-${idx}`}
-          className="vc-biz-table-image-item"
-          style={{ width: imagePreviewSize, height: imagePreviewSize }}
-        >
-          <img
-            src={url}
-            alt={`图片 ${idx + 1}`}
-            draggable={false}
-            className="vc-biz-table-image-item-preview"
-          />
-          {enableEditMode && isAnchor ? (
-            <button
-              type="button"
-              className="vc-biz-table-image-remove-btn"
-              aria-label="删除图片"
-              onClick={(e) => onRemoveAt(idx, e)}
-            >
-              <VcIcon type="close-circle-filled" fontSize={14} />
-            </button>
-          ) : null}
-        </div>
-      ))}
-      {showAddButton ? (
+      <Image.PreviewGroup
+        preview={{
+          onVisibleChange: onPreviewVisibleChange,
+          maskClosable: false,
+        }}
+      >
+        {imageUrls.map((url, idx) => (
+          <div
+            key={`${url}-${idx}`}
+            className="vc-biz-table-image-item"
+            style={{ width: imagePreviewSize, height: imagePreviewSize }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={url}
+              alt={`图片 ${idx + 1}`}
+              width={imagePreviewSize}
+              height={imagePreviewSize}
+              className="vc-biz-table-image-item-preview"
+              style={{ objectFit: 'cover', borderRadius: 6 }}
+              preview={{
+                mask: false,
+              }}
+            />
+            {enableEditMode && isAnchor && !isPreviewVisible ? (
+              <button
+                type="button"
+                className="vc-biz-table-image-remove-btn"
+                aria-label="删除图片"
+                onClick={(e) => onRemoveAt(idx, e)}
+              >
+                <VcIcon type="close-circle-filled" fontSize={14} />
+              </button>
+            ) : null}
+          </div>
+        ))}
+      </Image.PreviewGroup>
+      {showAddButton && !isPreviewVisible ? (
         <Button
           type="default"
           className="vc-biz-table-image-add-btn"

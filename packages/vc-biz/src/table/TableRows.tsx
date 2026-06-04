@@ -17,7 +17,7 @@ import TableGridRow from './TableGridRow';
 import { TableRowHoverStoreContext } from './tableRowHoverStoreContext';
 import { createTableRowHoverStore } from './tableRowHoverStore';
 import type { TableGridStaticConfig } from './tableGridTypes';
-import type { TableColumnFieldKind, TableRowsProps, ColumnMultiFieldConfig, MultiFieldValueByCell } from './tableGridTypes';
+import type { TableColumnFieldKind, TableRowsProps, ColumnMultiFieldConfig, MultiFieldValueByCell, CellLinkData } from './tableGridTypes';
 import {
   EDIT_TEXTAREA_MAX_ROWS,
   cellKey,
@@ -105,6 +105,7 @@ export default function TableRows(props: TableRowsProps) {
   );
   const [multiFieldValueByCell, setMultiFieldValueByCell] = useState<MultiFieldValueByCell>({});
   const [imageUrlsByCell, setImageUrlsByCell] = useState<Record<string, ReadonlyArray<string>>>({});
+  const [linkDataByCell, setLinkDataByCell] = useState<Record<string, ReadonlyArray<CellLinkData>>>({});
   const effectiveMinResizableTextColWidth = props.minResizableTextColWidth;
 
   const gridNavMaxBodyRowIndex = props.rowCount >= 2 ? props.rowCount - 2 : -1;
@@ -205,7 +206,49 @@ export default function TableRows(props: TableRowsProps) {
     });
   }, []);
 
-  const imageUrlsByCellRef = useRef<Record<string, ReadonlyArray<string>>>({});
+  const appendLinkToCell = useCallback(
+    (bodyRowIndex: number, colIndex: number, data: CellLinkData) => {
+      if (bodyRowIndex < 0 || colIndex < 0) return;
+      setLinkDataByCell((prev) => {
+        const key = cellKey(bodyRowIndex, colIndex);
+        const existing = prev[key] ?? [];
+        return { ...prev, [key]: [...existing, data] };
+      });
+    },
+    []
+  );
+
+  const updateLinkAtCell = useCallback(
+    (bodyRowIndex: number, colIndex: number, linkIndex: number, data: CellLinkData) => {
+      if (bodyRowIndex < 0 || colIndex < 0 || linkIndex < 0) return;
+      setLinkDataByCell((prev) => {
+        const key = cellKey(bodyRowIndex, colIndex);
+        const existing = prev[key] ?? [];
+        if (linkIndex >= existing.length) return prev;
+        const nextList = [...existing];
+        nextList[linkIndex] = data;
+        return { ...prev, [key]: nextList };
+      });
+    },
+    []
+  );
+
+  const removeLinkAtCell = useCallback((bodyRowIndex: number, colIndex: number, linkIndex: number) => {
+    if (bodyRowIndex < 0 || colIndex < 0 || linkIndex < 0) return;
+    const key = cellKey(bodyRowIndex, colIndex);
+    setLinkDataByCell((prev) => {
+      const existing = prev[key] ?? [];
+      if (linkIndex >= existing.length) return prev;
+      const nextList = existing.filter((_, i) => i !== linkIndex);
+      if (nextList.length === 0) {
+        const { [key]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [key]: nextList };
+    });
+  }, []);
+
+  const imageUrlsByCellRef = useRef({} as Record<string, ReadonlyArray<string>>);
   useLayoutEffect(() => {
     const prev = imageUrlsByCellRef.current;
     const nextUrlSet = new Set<string>();
@@ -371,14 +414,6 @@ export default function TableRows(props: TableRowsProps) {
 
   /** 末行（插入行占位）始终渲染；「插入行列」只控制是否出现 + 与插入能力 */
   const displayRowCount = props.rowCount + 1;
-  // 虚拟列表：仅在非分页模式下启用
-  const useVirtualList =
-    !paginationEnabled &&
-    props.bodyScrollMaxHeight != null &&
-    props.bodyScrollMaxHeight > 0 &&
-    displayRowCount > 0;
-  // 滚动容器：虚拟列表或分页模式都需要（分页模式下也需要 maxHeight 限制高度）
-  const needScrollContainer = useVirtualList || paginationEnabled;
 
   const visibleColIndexes = useMemo(() => {
     const hidden = props.hiddenColSet;
@@ -419,6 +454,56 @@ export default function TableRows(props: TableRowsProps) {
     bodyRowCount,
     props.groupingConfig?.expandedGroupKeys,
   ]);
+
+  const estimatedScrollContentHeight = useMemo(() => {
+    const rowMinHeight = typography.theadCellMinHeightPx;
+    if (paginationEnabled) {
+      const pageBodyRows = Math.max(0, pageBodyEnd - pageBodyStart + 1);
+      return (
+        rowMinHeight +
+        pageBodyRows * rowMinHeight +
+        rowMinHeight
+      );
+    }
+    if (groupingEnabled && groupTitleRows.length > 0) {
+      let h = rowMinHeight;
+      for (const group of groupTitleRows) {
+        h += rowMinHeight;
+        if (group.expanded) {
+          h += group.groupCount * rowMinHeight;
+          h += rowMinHeight;
+        }
+      }
+      return h + rowMinHeight;
+    }
+    return (
+      rowMinHeight +
+      bodyRowCount * rowMinHeight +
+      rowMinHeight
+    );
+  }, [
+    bodyRowCount,
+    groupTitleRows,
+    groupingEnabled,
+    pageBodyEnd,
+    pageBodyStart,
+    paginationEnabled,
+    typography.theadCellMinHeightPx,
+  ]);
+
+  const scrollMaxHeight = props.bodyScrollMaxHeight;
+  const shouldClampToScrollMax =
+    scrollMaxHeight != null &&
+    scrollMaxHeight > 0 &&
+    estimatedScrollContentHeight > scrollMaxHeight;
+
+  const shouldFillScrollport = shouldClampToScrollMax;
+
+  // 虚拟列表：仅在内容超过可用高度后启用；少量行先自然撑高到 maxHeight。
+  const useVirtualList =
+    !paginationEnabled &&
+    shouldClampToScrollMax &&
+    displayRowCount > 0;
 
   const syncMultiFieldToGroup = useCallback((groupValue: string, colIndex: number, fieldsContent: Array<{ name: string; content: string }>) => {
     if (colIndex < 0) return;
@@ -916,6 +1001,10 @@ export default function TableRows(props: TableRowsProps) {
       imageUrlsByCell,
       appendImageFilesToCell,
       removeImageAtCell,
+      linkDataByCell,
+      appendLinkToCell,
+      updateLinkAtCell,
+      removeLinkAtCell,
       // 让表头/表体每一行都用”可见列 minWidth”，否则只改 scroll 容器无效
       rowMinWidth: effectiveRowMinWidth,
       onInsertRow: onInsertRowWrapped,
@@ -982,6 +1071,10 @@ export default function TableRows(props: TableRowsProps) {
     imageUrlsByCell,
     appendImageFilesToCell,
     removeImageAtCell,
+    linkDataByCell,
+    appendLinkToCell,
+    updateLinkAtCell,
+    removeLinkAtCell,
     props.enablePagination,
     props.paginationCurrent,
     props.paginationPageSize,
@@ -1000,7 +1093,8 @@ export default function TableRows(props: TableRowsProps) {
           <TableGridEditingContext.Provider value={editingStateSlice}>
             {/**
              * 虚拟与非虚拟共用同一 scrollport：横纵滚与 sticky 冻结参照一致。
-             * maxHeight：虚拟列表或分页模式都需要（限制高度以启用滚动）。
+             * maxHeight：限制表格最多吃满剩余空间；少量行先自然撑高，超过后滚动。
+             * minHeight：内容已超过剩余空间后撑满可视区，让底部插入行在布局动画中稳定钉底。
              */}
             <div
                 ref={scrollParentRef}
@@ -1008,8 +1102,8 @@ export default function TableRows(props: TableRowsProps) {
                 onScroll={onBodyScroll}
                 style={{
                   width: '100%',
-                  minHeight: 0,
-                  maxHeight: needScrollContainer ? props.bodyScrollMaxHeight : undefined,
+                  minHeight: shouldFillScrollport ? scrollMaxHeight : undefined,
+                  maxHeight: scrollMaxHeight,
                   overflow: 'auto',
                   scrollbarGutter: 'stable',
                   boxSizing: 'border-box',

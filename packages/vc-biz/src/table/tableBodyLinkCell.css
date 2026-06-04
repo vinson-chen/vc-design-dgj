@@ -1,0 +1,166 @@
+.vc-biz-table-link-cell-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  align-content: flex-start;
+}
+
+.vc-biz-table-link-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.vc-biz-table-link-btn.ant-btn-default {
+  height: 32px;
+  min-height: 32px;
+  /* 最小宽度确保编辑/删除按钮能完整显示 */
+  min-width: 64px;
+  padding: 0 12px;
+  line-height: 22px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.vc-biz-table-link-btn.ant-btn-default:hover {
+  color: var(--vc-token-color-primary-text-default, #1890ff);
+  border-color: var(--vc-token-color-primary-border-hover, #40a9ff);
+}
+
+/**
+ * 锚点态时的蒙层：hover 时显示半透明黑色遮罩 + 背景模糊
+ */
+.vc-biz-table-link-item-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease-out;
+}
+
+.vc-biz-table-link-cell-wrap--hover-locked .vc-biz-table-link-item:hover .vc-biz-table-link-item-mask {
+  opacity: 1;
+}
+
+/**
+ * 编辑/删除按钮：锚点态 hover 时显示在按钮居中位置
+ */
+.vc-biz-table-link-item-actions {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.vc-biz-table-link-cell-wrap--hover-locked .vc-biz-table-link-item:hover .vc-biz-table-link-item-actions {
+  display: inline-flex;
+}
+
+.vc-biz-table-link-edit-btn,
+.vc-biz-table-link-remove-btn {
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.vc-biz-table-link-edit-btn:hover,
+.vc-biz-table-link-remove-btn:hover {
+  color: #ffffff;
+}
+
+.vc-biz-table-link-add-btn {
+  flex: 0 0 auto;
+  border-radius: 6px;
+}
+
+.vc-biz-table-link-add-btn.ant-btn.ant-btn-default {
+  background: var(--vc-biz-table-image-add-bg, transparent);
+}
+
+.vc-biz-table-link-add-btn.ant-btn.ant-btn-default:hover {
+  background: var(--vc-biz-table-image-add-bg-hover, #f5f5f5);
+  border-color: var(--vc-biz-table-image-add-border-hover, #d9d9d9);
+}
+
+.vc-biz-table-link-add-btn.ant-btn.ant-btn-default:focus {
+  background: var(--vc-biz-table-image-add-bg, transparent);
+}
+
+.vc-biz-table-link-add-btn.ant-btn.ant-btn-default:active {
+  background: var(--vc-biz-table-image-add-bg-active, #f0f0f0);
+  border-color: var(--vc-biz-table-image-add-border-active, #d9d9d9);
+}
+
+.vc-biz-table-link-add-btn.ant-btn.ant-btn-default .iconfont {
+  color: var(--vc-biz-table-image-add-icon, inherit);
+}
+
+/** 添加/编辑链接下拉面板样式 */
+.vc-biz-table-link-add-dropdown {
+  z-index: 1050;
+  background: var(--vc-token-color-neutral-background-container, #fff);
+  border-radius: 8px;
+}
+
+.vc-biz-table-link-add-panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  padding: 12px;
+  gap: 12px;
+  background: var(--vc-token-color-neutral-background-container, #fff);
+  border-radius: 8px;
+}
+
+.vc-biz-table-link-add-panel-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--vc-token-color-neutral-text-default, rgba(0, 0, 0, 0.88));
+}
+
+.vc-biz-table-link-add-panel-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vc-biz-table-link-add-panel-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vc-biz-table-link-add-panel-label {
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--vc-token-color-neutral-text-description, rgba(0, 0, 0, 0.45));
+}
+
+.vc-biz-table-link-add-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}

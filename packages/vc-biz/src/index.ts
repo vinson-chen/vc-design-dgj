@@ -102,6 +102,10 @@ export type {
 export { TableFieldConfigPanel } from './table/TableFieldConfigPanel';
 export type { TableFieldConfigPanelProps } from './table/TableFieldConfigPanel';
 
+export { TableCellLink } from './table/TableCellLink';
+export type { TableCellLinkProps } from './table/TableCellLink';
+export type { CellLinkData } from './table/tableGridTypes';
+
 export { DropdownMenuSidePanelCombo } from './table/DropdownMenuSidePanelCombo';
 export type {
   DropdownMenuSidePanelComboProps,

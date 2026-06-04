@@ -14,7 +14,9 @@ const sectionBox: React.CSSProperties = {
 };
 
 export default function BizTableDemo() {
-  const { hostRef, bodyScrollMaxHeight } = useTableBodyScrollMaxHeight();
+  const { hostRef, bodyScrollMaxHeight } = useTableBodyScrollMaxHeight({
+    borderFudgePx: 34, // 补偿外层容器 padding: 16 (上下合计 32) + 边框 2
+  });
   const demo = useTableAreaDemoState({
     bodyScrollMaxHeight,
     /** 首屏优先表格高度，快捷键说明收进配置或文档即可 */
@@ -65,6 +67,7 @@ export default function BizTableDemo() {
       />
 
       <div
+        ref={hostRef}
         style={{
           flex: 1,
           minHeight: 0,
@@ -74,7 +77,7 @@ export default function BizTableDemo() {
           padding: 16,
         }}
       >
-        <div ref={hostRef} style={{ flex: 1, minHeight: 0, width: '100%' }}>
+        <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
           <TableAreaTableInstance {...demo} />
         </div>
       </div>

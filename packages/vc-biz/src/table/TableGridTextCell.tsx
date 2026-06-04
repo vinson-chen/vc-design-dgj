@@ -27,6 +27,7 @@ import { useTableGridEditingDispatchersRef, useTableGridEditingStateSelector } f
 import { useTableGridConfigContext } from './tableGridConfigContext';
 import { TableCellEditing, getBodyEditTextareaStyle } from './TableCellEditing';
 import { TableCellImage } from './TableCellImage';
+import { TableCellLink } from './TableCellLink';
 import { TableHeaderCell, getColLetterIndex, HEADER_COL_FIELD_TYPE_KEY } from './TableHeaderCell';
 import { syncBodyEditTextareaHeight } from './bodyEditTextareaAutosize';
 import { cellKey, EDIT_TEXTAREA_MAX_ROWS } from './tableGridConstants';
@@ -205,6 +206,12 @@ function TableGridTextCellInner({
     !isInsertColPlaceholder &&
     colIndex < cfg.colCount &&
     columnFieldKind === 'image';
+  const isLinkColumnBodyCell =
+    isBody &&
+    !isInsertRowPlaceholder &&
+    !isInsertColPlaceholder &&
+    colIndex < cfg.colCount &&
+    columnFieldKind === 'link';
   const isMultiFieldEnabledBodyCell =
     isBody &&
     !isInsertRowPlaceholder &&
@@ -234,7 +241,8 @@ function TableGridTextCellInner({
     !isInsertRowPlaceholder &&
     colIndex < cfg.colCount &&
     !isInsertColPlaceholder &&
-    !isImageColumnBodyCell;
+    !isImageColumnBodyCell &&
+    !isLinkColumnBodyCell;
 
   const cellR = isHeader ? -1 : bodyRowIndex;
 
@@ -412,6 +420,7 @@ function TableGridTextCellInner({
   );
   const imagePreviewSize = 32;
   const imageUrls = isImageColumnBodyCell ? (cfg.imageUrlsByCell[key] ?? []) : [];
+  const linkData = isLinkColumnBodyCell ? (cfg.linkDataByCell[key] ?? []) : [];
 
   const onOpenImageFilePicker = useCallback(
     (e: React.MouseEvent) => {
@@ -495,7 +504,8 @@ function TableGridTextCellInner({
     !isInsertRowPlaceholder &&
     !isInsertColPlaceholder &&
     colIndex < cfg.colCount &&
-    !isImageColumnBodyCell;
+    !isImageColumnBodyCell &&
+    !isLinkColumnBodyCell;
 
   const gridMin = cfg.gridMinCount ?? 2;
   const insertModeHeaderContextMenu =
@@ -858,7 +868,7 @@ function TableGridTextCellInner({
           .filter(Boolean)
           .join(' ') || undefined;
   const tableCellClassName =
-    [headerMenuCellClassName, isImageColumnBodyCell ? 'vc-biz-table-image-scroll-host' : '']
+    [headerMenuCellClassName, isImageColumnBodyCell ? 'vc-biz-table-image-scroll-host' : '', isLinkColumnBodyCell ? 'vc-biz-table-link-scroll-host' : '']
       .filter(Boolean)
       .join(' ') || undefined;
   // 锚点态：蓝描边 + 白底（文本列和图片列共用）
@@ -876,7 +886,7 @@ function TableGridTextCellInner({
           maxHeight: m.displayCellMaxHeightPx,
           overflow: 'auto',
         }
-      : isImageColumnBodyCell
+      : isImageColumnBodyCell || isLinkColumnBodyCell
         ? {
             maxHeight: m.displayCellMaxHeightPx,
             overflow: 'auto',
@@ -998,7 +1008,7 @@ function TableGridTextCellInner({
         ref={multiFieldButtonRef}
         icon={
           <VcIcon
-            type="bulletpoint"
+            type="more"
             fontSize={16}
             style={{
               lineHeight: 1,
@@ -1060,7 +1070,7 @@ function TableGridTextCellInner({
       }
       compactVerticalContent={isInsertColPlaceholder && isHeader}
       theadMinHeightPx={isHeader ? m.theadCellMinHeightPx : undefined}
-      tbodyMinHeightPx={!isHeader ? m.theadCellMinHeightPx : undefined}
+      tbodyMinHeightPx={!isHeader ? (isImageColumnBodyCell || isLinkColumnBodyCell ? 48 : m.theadCellMinHeightPx) : undefined}
       contentPaddingY={
         isHeader
           ? isHeaderEditing
@@ -1080,7 +1090,7 @@ function TableGridTextCellInner({
       contentPaddingLeft={isHeader && cfg.enableShowRowIndex && !isInsertColPlaceholder ? 2 : undefined}
       contentAlignX={isInsertTailFirstVisibleCol ? 'flex-start' : undefined}
       contentAlignY={
-        isImageColumnBodyCell
+        isImageColumnBodyCell || isLinkColumnBodyCell
           ? 'flex-start'
           : !isHeader && !cfg.enableVerticalCenter
             ? 'flex-start'
@@ -1187,6 +1197,21 @@ function TableGridTextCellInner({
             removeImageAt={(r, c, idx) => cfg.removeImageAtCell(r, c, idx)}
           />,
           // 图片列锚点态需要设置按钮 CSS 变量
+          isAnchorCell
+        )
+      ) : isLinkColumnBodyCell ? (
+        wrapBodyTextInsetPanel(
+          <TableCellLink
+            bodyRowIndex={bodyRowIndex}
+            colIndex={colIndex}
+            linkData={linkData}
+            isAnchor={isAnchorCell}
+            enableEditMode={cfg.enableEditMode}
+            editingApi={ed}
+            appendLink={(r, c, data) => cfg.appendLinkToCell(r, c, data)}
+            updateLink={(r, c, idx, data) => cfg.updateLinkAtCell(r, c, idx, data)}
+            removeLink={(r, c, idx) => cfg.removeLinkAtCell(r, c, idx)}
+          />,
           isAnchorCell
         )
       ) : isEditing ? (
@@ -1458,6 +1483,20 @@ function TableGridTextCellInner({
       ) {
         return;
       }
+      // 链接列：点击链接按钮时不进入锚点态
+      if (isLinkColumnBodyCell) {
+        const target = e.target as HTMLElement;
+        if (target.closest('.vc-biz-table-link-btn')) {
+          // 点击链接按钮，不进入锚点态，让链接跳转正常执行
+          return;
+        }
+      }
+      // 图片列：不进入框选拖拽逻辑，但允许 onClick 设置锚点态
+      if (isImageColumnBodyCell) {
+        // 不执行拖拽监听器绑定，直接返回
+        // onClick 中仍会设置 selectedCell
+        return;
+      }
       const api = edRef.current;
       if (!api) return;
       // 阻止浏览器默认文本选择，让拖拽只针对单元格
@@ -1551,6 +1590,11 @@ function TableGridTextCellInner({
         e.stopPropagation();
         return;
       }
+      // 排除 antd Image 预览层的点击（切换图片时不退出预览）
+      const target = e.target as HTMLElement;
+      if (target.closest('.ant-image-preview-wrap, .ant-image-preview-switch-left, .ant-image-preview-switch-right, .ant-image-preview-operations-wrapper, .rc-image-preview-wrap, .rc-image-preview-switch-left, .rc-image-preview-switch-right, .rc-image-preview-operations-wrapper, .ant-image-preview, .rc-image-preview')) {
+        return;
+      }
       if (!isHeader && isInsertColPlaceholder) {
         e.stopPropagation();
         return;
@@ -1581,6 +1625,15 @@ function TableGridTextCellInner({
         !isInsertColPlaceholder &&
         colIndex < cfg.colCount
       ) {
+        // 链接列：点击链接按钮时不进入锚点态
+        if (isLinkColumnBodyCell) {
+          const target = e.target as HTMLElement;
+          if (target.closest('.vc-biz-table-link-btn')) {
+            // 点击链接按钮，不进入锚点态
+            return;
+          }
+        }
+        // 图片列：TableCellImage 已阻止 onMouseDown 冒泡，onClick 不需要额外处理
         // 单击锁定单元格：选中该格（锚点态）
         ed.setSelectedCell({ r: bodyRowIndex, c: colIndex });
         ed.setSelectedCells(new Set([`${bodyRowIndex}:${colIndex}`]));

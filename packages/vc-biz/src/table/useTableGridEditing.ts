@@ -77,6 +77,10 @@ export type TableGridEditingState = {
   removeColumnFromSelection: (colIndex: number) => void;
   /** 插入行后调整选中区域 */
   insertBodyRowAt: (bodyRowIndex: number, colCount: number) => void;
+  /** 链接面板关闭 nonce：变化时通知所有链接面板关闭 */
+  linkPanelCloseNonce: number;
+  /** 关闭所有链接面板 */
+  closeAllLinkPanels: () => void;
 };
 
 export type UseTableGridEditingOptions = Readonly<{
@@ -382,8 +386,10 @@ export function useTableGridEditing(
       if (!(target instanceof Node)) return;
       const el = target instanceof Element ? target : target.parentElement;
       if (!el) return;
-      // 排除带有 data-keep-table-selection 属性的元素（如 VTell 输入框）
+      // 排除带有 data-keep-table-selection 属性的元素（如 VTell 输入框、链接编辑面板）
       if (el.closest('[data-keep-table-selection]')) return;
+      // 排除 antd/rc-image Image 预览层（点击预览层不退出锚点态，支持多图切换）
+      if (el.closest('[data-keep-table-selection], .ant-image-preview-wrap, .rc-image-preview-wrap')) return;
       const cell = el.closest('[data-hover-lock-cell]');
       if (cell) {
         const r = Number(cell.getAttribute('data-body-row'));
@@ -484,6 +490,12 @@ export function useTableGridEditing(
 
       const bodyTa = editTextAreaRef.current;
       if (bodyTa && document.activeElement === bodyTa) return;
+
+      // 检查是否在 data-keep-table-selection 区域内的输入框（如链接编辑面板）
+      const focusEl = document.activeElement;
+      if (focusEl instanceof HTMLElement && focusEl.closest('[data-keep-table-selection]')) {
+        return;
+      }
 
       // 复制/粘贴
       const mod = (e.ctrlKey || e.metaKey) && !e.altKey;
@@ -638,6 +650,12 @@ export function useTableGridEditing(
     options?.onKeyboardNavigateCell,
   ]);
 
+  const [linkPanelCloseNonce, setLinkPanelCloseNonce] = useState(0);
+
+  const closeAllLinkPanels = useCallback(() => {
+    setLinkPanelCloseNonce((n) => n + 1);
+  }, []);
+
   return useMemo(() => {
     const api = {
       selectedCell,
@@ -667,6 +685,8 @@ export function useTableGridEditing(
       removeBodyRowAt,
       addColumnToSelection,
       removeColumnFromSelection,
+      linkPanelCloseNonce,
+      closeAllLinkPanels,
       insertBodyRowAt: (bodyRowIndex: number, colCount: number) => {
         dispatchUi({ type: 'afterInsertBodyRow', bodyRowIndex, colCount });
       },
@@ -693,6 +713,8 @@ export function useTableGridEditing(
     removeBodyRowAt,
     addColumnToSelection,
     removeColumnFromSelection,
+    linkPanelCloseNonce,
+    closeAllLinkPanels,
     setEditingDraft,
     options?.onKeyboardNavigateCell,
   ]);

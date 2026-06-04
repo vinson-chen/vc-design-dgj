@@ -234,6 +234,39 @@ describe('TableRows smoke', () => {
     expect(rows.length).toBeGreaterThanOrEqual(1);
   });
 
+  it('lets short tables grow naturally up to bodyScrollMaxHeight', () => {
+    const { container } = render(
+      <TableRows
+        {...createTableRowsProps({
+          rowCount: 3,
+          bodyScrollMaxHeight: 400,
+        })}
+      />
+    );
+
+    const scrollport = container.querySelector('.vc-biz-table-scrollport') as HTMLElement | null;
+    expect(scrollport).toBeTruthy();
+    expect(scrollport!.style.maxHeight).toBe('400px');
+    expect(scrollport!.style.minHeight).toBe('');
+    expect(screen.getAllByRole('row')).toHaveLength(4);
+  });
+
+  it('clamps tall tables to bodyScrollMaxHeight before virtualizing', () => {
+    const { container } = render(
+      <TableRows
+        {...createTableRowsProps({
+          rowCount: 20,
+          bodyScrollMaxHeight: 200,
+        })}
+      />
+    );
+
+    const scrollport = container.querySelector('.vc-biz-table-scrollport') as HTMLElement | null;
+    expect(scrollport).toBeTruthy();
+    expect(scrollport!.style.maxHeight).toBe('200px');
+    expect(scrollport!.style.minHeight).toBe('200px');
+  });
+
   it('mounts insert-row placeholder when enableInsertRowCol is true', () => {
     render(
       <TableRows

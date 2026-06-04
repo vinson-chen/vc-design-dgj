@@ -3,7 +3,10 @@ import type { BodyRowSelectionStore } from './bodyRowSelectionStore';
 import type { CellSelectionStore } from './cellSelectionStore';
 import type { TableGridTypographyMetrics } from './tableGridTypography';
 
-export type TableColumnFieldKind = 'text' | 'image';
+export type TableColumnFieldKind = 'text' | 'image' | 'link';
+
+/** 链接列单元格数据 */
+export type CellLinkData = Readonly<{ name: string; url: string }>;
 
 /** 列多字段配置：字段名列表 */
 export type ColumnMultiFieldConfig = {
@@ -190,6 +193,11 @@ export type TableGridStaticConfig = Omit<
   imageUrlsByCell: Readonly<Record<string, ReadonlyArray<string>>>;
   appendImageFilesToCell: (bodyRowIndex: number, colIndex: number, files: readonly File[]) => void;
   removeImageAtCell: (bodyRowIndex: number, colIndex: number, imageIndex: number) => void;
+  /** 链接列：表体格内链接数据列表（key 形如 `${bodyRow}-${col}`） */
+  linkDataByCell: Readonly<Record<string, ReadonlyArray<CellLinkData>>>;
+  appendLinkToCell: (bodyRowIndex: number, colIndex: number, data: CellLinkData) => void;
+  updateLinkAtCell: (bodyRowIndex: number, colIndex: number, linkIndex: number, data: CellLinkData) => void;
+  removeLinkAtCell: (bodyRowIndex: number, colIndex: number, linkIndex: number) => void;
   /** 显示分页 */
   enablePagination?: boolean;
   /** 当前页码 */

@@ -39,7 +39,7 @@ export default function App() {
   }, []);
 
   /** VTable：主栏不滚动，仅表格内滚动；需固定高度链才能 flex 吃满剩余视口 */
-  const mainContentFillViewport = resolvedSelectedKey === 'biz-table';
+  const mainContentFillViewport = resolvedSelectedKey === 'vtable';
 
   return (
     <VcConfigProvider>
