@@ -200,8 +200,8 @@ function TableGridHeaderRow() {
         >
           <VTableCell
             variant="thead"
-            hovered={rowHovered}
-            hoverByCell
+            hovered={rowHovered || headerAllChecked || headerIndeterminate}
+            hoverByCell={!(headerAllChecked || headerIndeterminate)}
             pointerHoverResetNonce={cfg.pointerHoverResetNonce}
             active={false}
             isLastRow={isLastRow}

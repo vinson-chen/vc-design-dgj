@@ -17,7 +17,7 @@ import TableGridRow from './TableGridRow';
 import { TableRowHoverStoreContext } from './tableRowHoverStoreContext';
 import { createTableRowHoverStore } from './tableRowHoverStore';
 import type { TableGridStaticConfig } from './tableGridTypes';
-import type { TableColumnFieldKind, TableRowsProps, ColumnMultiFieldConfig, MultiFieldValueByCell, CellLinkData } from './tableGridTypes';
+import type { TableColumnFieldKind, TableRowsProps, ColumnMultiFieldConfig, MultiFieldValueByCell, CellLinkData, InitialImageData } from './tableGridTypes';
 import {
   EDIT_TEXTAREA_MAX_ROWS,
   cellKey,
@@ -98,7 +98,7 @@ export default function TableRows(props: TableRowsProps) {
   const hoverStore = hoverStoreRef.current;
   const [pointerHoverResetNonce, setPointerHoverResetNonce] = useState(0);
   const [columnFieldKindByCol, setColumnFieldKindByCol] = useState<Record<number, TableColumnFieldKind>>(
-    {}
+    props.initialImageData?.columnFieldKindByCol ?? {}
   );
   const [columnMultiFieldConfigByCol, setColumnMultiFieldConfigByCol] = useState<Record<number, ColumnMultiFieldConfig>>(
     props.initialMultiFieldData?.columnMultiFieldConfigByCol ?? {}
@@ -117,7 +117,23 @@ export default function TableRows(props: TableRowsProps) {
     }
   }, [props.initialMultiFieldData]);
 
-  const [imageUrlsByCell, setImageUrlsByCell] = useState<Record<string, ReadonlyArray<string>>>({});
+  const [imageUrlsByCell, setImageUrlsByCell] = useState<Record<string, ReadonlyArray<string>>>(
+    props.initialImageData?.imageUrlsByCell ?? {}
+  );
+
+  // 同步图片列初始数据（用于模拟数据加载）
+  useLayoutEffect(() => {
+    if (props.initialImageData) {
+      if (props.initialImageData.columnFieldKindByCol) {
+        setColumnFieldKindByCol(props.initialImageData.columnFieldKindByCol);
+      }
+      if (props.initialImageData.imageUrlsByCell) {
+        setImageUrlsByCell(props.initialImageData.imageUrlsByCell);
+      }
+    }
+  }, [props.initialImageData]);
+  // 追踪 blob URL，用于区分本地上传和外部链接，正确清理内存
+  const blobUrlSetRef = useRef<Set<string>>(new Set());
   const [linkDataByCell, setLinkDataByCell] = useState<Record<string, ReadonlyArray<CellLinkData>>>({});
   const effectiveMinResizableTextColWidth = props.minResizableTextColWidth;
 
@@ -193,10 +209,30 @@ export default function TableRows(props: TableRowsProps) {
       if (!files.length) return;
       const urls = files.map((f) => createObjectUrlSafe(f)).filter((u): u is string => !!u);
       if (!urls.length) return;
+      // 标记为 blob URL
+      urls.forEach((url) => blobUrlSetRef.current.add(url));
       setImageUrlsByCell((prev) => {
         const key = cellKey(bodyRowIndex, colIndex);
         const existing = prev[key] ?? [];
         return { ...prev, [key]: [...existing, ...urls] };
+      });
+    },
+    []
+  );
+
+  // 新增：追加外部图片 URL
+  const appendImageUrls = useCallback(
+    (bodyRowIndex: number, colIndex: number, urls: readonly string[]) => {
+      if (bodyRowIndex < 0 || colIndex < 0) return;
+      if (!urls.length) return;
+      // 过滤空字符串，去除首尾空格
+      const validUrls = urls.map((u) => u.trim()).filter(Boolean);
+      if (!validUrls.length) return;
+      // 外部 URL 不加入 blobUrlSet
+      setImageUrlsByCell((prev) => {
+        const key = cellKey(bodyRowIndex, colIndex);
+        const existing = prev[key] ?? [];
+        return { ...prev, [key]: [...existing, ...validUrls] };
       });
     },
     []
@@ -209,7 +245,11 @@ export default function TableRows(props: TableRowsProps) {
       const existing = prev[key] ?? [];
       if (imageIndex >= existing.length) return prev;
       const toRevoke = existing[imageIndex];
-      if (toRevoke) revokeObjectUrlSafe(toRevoke);
+      // 仅 revoke blob URL，外部链接不需要清理
+      if (toRevoke && blobUrlSetRef.current.has(toRevoke)) {
+        revokeObjectUrlSafe(toRevoke);
+        blobUrlSetRef.current.delete(toRevoke);
+      }
       const nextList = existing.filter((_, i) => i !== imageIndex);
       if (nextList.length === 0) {
         const { [key]: _, ...rest } = prev;
@@ -268,9 +308,13 @@ export default function TableRows(props: TableRowsProps) {
     for (const list of Object.values(imageUrlsByCell)) {
       for (const url of list) nextUrlSet.add(url);
     }
+    // 只 revoke blob URL，外部链接不需要清理
     for (const list of Object.values(prev)) {
       for (const url of list) {
-        if (!nextUrlSet.has(url)) revokeObjectUrlSafe(url);
+        if (!nextUrlSet.has(url) && blobUrlSetRef.current.has(url)) {
+          revokeObjectUrlSafe(url);
+          blobUrlSetRef.current.delete(url);
+        }
       }
     }
     imageUrlsByCellRef.current = imageUrlsByCell;
@@ -278,9 +322,11 @@ export default function TableRows(props: TableRowsProps) {
 
   useLayoutEffect(
     () => () => {
-      for (const list of Object.values(imageUrlsByCellRef.current)) {
-        for (const url of list) revokeObjectUrlSafe(url);
+      // 只清理 blob URL
+      for (const url of blobUrlSetRef.current) {
+        revokeObjectUrlSafe(url);
       }
+      blobUrlSetRef.current.clear();
     },
     []
   );
@@ -1013,6 +1059,7 @@ export default function TableRows(props: TableRowsProps) {
       syncMultiFieldToGroup,
       imageUrlsByCell,
       appendImageFilesToCell,
+      appendImageUrls,
       removeImageAtCell,
       linkDataByCell,
       appendLinkToCell,
@@ -1083,6 +1130,7 @@ export default function TableRows(props: TableRowsProps) {
     syncMultiFieldToGroup,
     imageUrlsByCell,
     appendImageFilesToCell,
+    appendImageUrls,
     removeImageAtCell,
     linkDataByCell,
     appendLinkToCell,
@@ -1261,6 +1309,8 @@ export default function TableRows(props: TableRowsProps) {
                     zIndex: 5,
                     background: TABLE_BODY_BG_DEFAULT,
                     boxSizing: 'border-box',
+                    // 分组模式下：最后一个分组与固定底部插入行之间保持 12px 间距
+                    marginTop: groupingEnabled && groupTitleRows.length > 0 ? vcTokens.size.padding.sm : 0,
                   }}
                   data-vc-biz-table-frozen-footer=""
                 >

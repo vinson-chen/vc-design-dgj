@@ -674,7 +674,7 @@ function TableGridTextCellInner({
         ? [
             {
               key: 'toggle-all-group-expansion',
-              icon: <VcIcon type={hasAnyCollapsed ? 'unfold-more' : 'unfold-less'} fontSize={16} />,
+              icon: <VcIcon type={hasAnyCollapsed ? 'chevron-right-rectangle' : 'chevron-down-rectangle'} fontSize={16} />,
               label: hasAnyCollapsed ? '展开分组' : '收起分组',
             },
           ]
@@ -706,12 +706,17 @@ function TableGridTextCellInner({
             },
           ]
         : []),
-      {
-        key: 'hide-column',
-        icon: <VcIcon type="browse-off" fontSize={16} />,
-        label: '隐藏列',
-        disabled: lockedByFreezeForHide,
-      },
+      // 非首列显示"隐藏列"选项
+      ...(colIndex !== 0
+        ? [
+            {
+              key: 'hide-column',
+              icon: <VcIcon type="browse-off" fontSize={16} />,
+              label: '隐藏列',
+              disabled: lockedByFreezeForHide,
+            },
+          ]
+        : []),
       {
         key: 'delete-column',
         danger: true,
@@ -1194,6 +1199,7 @@ function TableGridTextCellInner({
             addButtonSize={IMAGE_ADD_BUTTON_SIZE_PX}
             editingApi={ed}
             appendImageFiles={(r, c, files) => cfg.appendImageFilesToCell(r, c, files)}
+            appendImageUrls={(r, c, urls) => cfg.appendImageUrls(r, c, urls)}
             removeImageAt={(r, c, idx) => cfg.removeImageAtCell(r, c, idx)}
           />,
           // 图片列锚点态需要设置按钮 CSS 变量
