@@ -1,16 +1,62 @@
-import type { TableGroupTitleRowInfo } from '../tableGridTypes';
+import type { CellLinkData, TableColumnFieldKind, TableGroupTitleRowInfo } from '../tableGridTypes';
 import { findGroupedColIndex } from './tableGridGroupingId';
 
 /** 空值组标识 */
 const EMPTY_GROUP_KEY = '';
 
 /**
- * 计算分组结构
+ * 根据列类型提取分组键和原始值
+ */
+function getGroupValueForCell(
+  bodyRowIndex: number,
+  groupedColIndex: number,
+  groupColKind: TableColumnFieldKind,
+  valueByCell: Record<string, string>,
+  imageUrlsByCell?: Readonly<Record<string, ReadonlyArray<string>>>,
+  linkDataByCell?: Readonly<Record<string, ReadonlyArray<CellLinkData>>>
+): { groupKey: string; rawValue: unknown } {
+  const cellKey = `${bodyRowIndex}-${groupedColIndex}`;
+
+  if (groupColKind === 'image') {
+    const imageUrls = imageUrlsByCell?.[cellKey];
+    if (!imageUrls || imageUrls.length === 0) {
+      return { groupKey: EMPTY_GROUP_KEY, rawValue: [] };
+    }
+    // 图片列：按 URL 数组的完全一致性分组
+    return {
+      groupKey: JSON.stringify(imageUrls),
+      rawValue: imageUrls,
+    };
+  }
+
+  if (groupColKind === 'link') {
+    const linkData = linkDataByCell?.[cellKey];
+    if (!linkData || linkData.length === 0) {
+      return { groupKey: EMPTY_GROUP_KEY, rawValue: [] };
+    }
+    // 链接列：按 name 数组的完全一致性分组（忽略 URL）
+    const linkNames = linkData.map((link) => link.name);
+    return {
+      groupKey: JSON.stringify(linkNames),
+      rawValue: linkData,
+    };
+  }
+
+  // 文本列：原有逻辑
+  const textValue = valueByCell[cellKey] ?? EMPTY_GROUP_KEY;
+  return { groupKey: textValue, rawValue: textValue || null };
+}
+
+/**
+ * 计算分组结构（支持文本、图片、链接列）
  * @param valueByCell 单元格数据（key: `${bodyRowIndex}-${colIndex}` 或 `header-${colIndex}`）
  * @param groupedColId 分组列 groupId
  * @param colCount 列数
  * @param bodyRowCount 表体行数
  * @param expandedGroupKeys 展开的分组值集合
+ * @param columnFieldKindByCol 列类型配置（用于判断分组列是 text/image/link）
+ * @param imageUrlsByCell 图片列数据（key 形如 `${bodyRow}-${col}`）
+ * @param linkDataByCell 链接列数据（key 形如 `${bodyRow}-${col}`）
  * @returns 分组标题行信息列表（包含空值组）
  */
 export function computeGroupTitleRows(
@@ -18,7 +64,10 @@ export function computeGroupTitleRows(
   groupedColId: string | undefined,
   colCount: number,
   bodyRowCount: number,
-  expandedGroupKeys: ReadonlySet<string>
+  expandedGroupKeys: ReadonlySet<string>,
+  columnFieldKindByCol?: Readonly<Record<number, TableColumnFieldKind>>,
+  imageUrlsByCell?: Readonly<Record<string, ReadonlyArray<string>>>,
+  linkDataByCell?: Readonly<Record<string, ReadonlyArray<CellLinkData>>>
 ): Array<TableGroupTitleRowInfo> {
   if (groupedColId == null || bodyRowCount <= 0) return [];
 
@@ -26,18 +75,26 @@ export function computeGroupTitleRows(
   const groupedColIndex = findGroupedColIndex(valueByCell, groupedColId, colCount);
   if (groupedColIndex == null || groupedColIndex < 0) return [];
 
-  // 按 groupValue 收集所有 bodyRowIndex
-  const groups = new Map<string, Array<number>>();
+  // 获取分组列类型
+  const groupedColKind = columnFieldKindByCol?.[groupedColIndex] ?? 'text';
+
+  // 按 groupKey 收集所有 bodyRowIndex
+  const groups = new Map<string, { bodyRows: Array<number>; rawValue: unknown }>();
 
   for (let bodyRowIndex = 0; bodyRowIndex < bodyRowCount; bodyRowIndex++) {
-    const cellKey = `${bodyRowIndex}-${groupedColIndex}`;
-    // 空值用空字符串标识
-    const groupValue = valueByCell[cellKey] ?? EMPTY_GROUP_KEY;
+    const { groupKey, rawValue } = getGroupValueForCell(
+      bodyRowIndex,
+      groupedColIndex,
+      groupedColKind,
+      valueByCell,
+      imageUrlsByCell,
+      linkDataByCell
+    );
 
-    if (!groups.has(groupValue)) {
-      groups.set(groupValue, []);
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, { bodyRows: [], rawValue });
     }
-    groups.get(groupValue)!.push(bodyRowIndex);
+    groups.get(groupKey)!.bodyRows.push(bodyRowIndex);
   }
 
   // 按首次出现顺序排列分组（空值组排到最后）
@@ -46,8 +103,8 @@ export function computeGroupTitleRows(
     if (a[0] === EMPTY_GROUP_KEY) return 1;
     if (b[0] === EMPTY_GROUP_KEY) return -1;
     // 其他组按首次出现顺序
-    const aFirst = a[1][0];
-    const bFirst = b[1][0];
+    const aFirst = a[1].bodyRows[0];
+    const bFirst = b[1].bodyRows[0];
     return aFirst - bFirst;
   });
 
@@ -56,27 +113,36 @@ export function computeGroupTitleRows(
   let virtualRowIndex = 1; // 从 1 开始（rowIndex 0 是表头）
 
   // 处理所有分组（包括空值组）
-  for (const [groupValue, bodyRows] of sortedGroups) {
+  for (const [groupValue, { bodyRows, rawValue }] of sortedGroups) {
     const expanded = expandedGroupKeys.has(groupValue);
 
-    const groupInfo: TableGroupTitleRowInfo = {
-      groupValue,
-      groupCount: bodyRows.length,
-      bodyRows,
-      expanded,
-      virtualRowIndex,
-      isEmptyGroup: groupValue === EMPTY_GROUP_KEY,
-      groupedColIndex,
-    };
+    // 先计算所有需要的值
+    const isEmptyGroup = groupValue === EMPTY_GROUP_KEY;
+    let currentVirtualRowIndex = virtualRowIndex;
+    let groupInsertTailVirtualIndex: number | undefined;
 
     virtualRowIndex += 1; // 分组标题行
     if (expanded) {
       // 组内数据行
       virtualRowIndex += bodyRows.length;
       // 组内插入行
-      groupInfo.groupInsertTailVirtualIndex = virtualRowIndex;
+      groupInsertTailVirtualIndex = virtualRowIndex;
       virtualRowIndex += 1;
     }
+
+    // 一次性创建完整的 groupInfo 对象
+    const groupInfo: TableGroupTitleRowInfo = {
+      groupValue,
+      groupCount: bodyRows.length,
+      bodyRows,
+      expanded,
+      virtualRowIndex: currentVirtualRowIndex,
+      groupInsertTailVirtualIndex,
+      isEmptyGroup,
+      groupedColIndex,
+      groupedColKind,
+      groupRawValue: isEmptyGroup ? undefined : rawValue,
+    };
 
     result.push(groupInfo);
   }
@@ -91,18 +157,29 @@ export function getEmptyGroupBodyRows(
   valueByCell: Record<string, string>,
   groupedColId: string | undefined,
   colCount: number,
-  bodyRowCount: number
+  bodyRowCount: number,
+  columnFieldKindByCol?: Readonly<Record<number, TableColumnFieldKind>>,
+  imageUrlsByCell?: Readonly<Record<string, ReadonlyArray<string>>>,
+  linkDataByCell?: Readonly<Record<string, ReadonlyArray<CellLinkData>>>
 ): Array<number> {
   if (groupedColId == null || bodyRowCount <= 0) return [];
 
   const groupedColIndex = findGroupedColIndex(valueByCell, groupedColId, colCount);
   if (groupedColIndex == null || groupedColIndex < 0) return [];
 
+  const groupedColKind = columnFieldKindByCol?.[groupedColIndex] ?? 'text';
+
   const bodyRows: Array<number> = [];
   for (let bodyRowIndex = 0; bodyRowIndex < bodyRowCount; bodyRowIndex++) {
-    const cellKey = `${bodyRowIndex}-${groupedColIndex}`;
-    const groupValue = valueByCell[cellKey] ?? EMPTY_GROUP_KEY;
-    if (groupValue === EMPTY_GROUP_KEY) {
+    const { groupKey } = getGroupValueForCell(
+      bodyRowIndex,
+      groupedColIndex,
+      groupedColKind,
+      valueByCell,
+      imageUrlsByCell,
+      linkDataByCell
+    );
+    if (groupKey === EMPTY_GROUP_KEY) {
       bodyRows.push(bodyRowIndex);
     }
   }

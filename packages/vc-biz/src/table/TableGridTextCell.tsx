@@ -237,6 +237,7 @@ function TableGridTextCellInner({
   const shouldHideMultiFieldButton = isInGroupBodyRow && isMultiFieldEnabledBodyCell;
   const isEditableBodyCell =
     cfg.enableEditMode &&
+    !cfg.disabledEditColSet?.has(colIndex) &&
     isBody &&
     !isInsertRowPlaceholder &&
     colIndex < cfg.colCount &&
@@ -316,9 +317,10 @@ function TableGridTextCellInner({
   const isHeaderSelectedLocked =
     isHeader &&
     cfg.enableEditMode &&
+    !cfg.disabledEditColSet?.has(colIndex) &&
     (isSelectedAny || isHeaderFullColumnSelected);
 
-  const isHeaderEditing = isHeader && cfg.enableEditMode && isEditingAny;
+  const isHeaderEditing = isHeader && cfg.enableEditMode && !cfg.disabledEditColSet?.has(colIndex) && isEditingAny;
 
   // 列拖拽条件：选中列、非冻结列、非插入列占位
   const canDragColumnOrder =
@@ -424,11 +426,11 @@ function TableGridTextCellInner({
 
   const onOpenImageFilePicker = useCallback(
     (e: React.MouseEvent) => {
-      if (!cfg.enableEditMode) return;
+      if (!cfg.enableEditMode || cfg.disabledEditColSet?.has(colIndex)) return;
       e.stopPropagation();
       imageFileInputRef.current?.click();
     },
-    [cfg.enableEditMode]
+    [cfg.enableEditMode, cfg.disabledEditColSet, colIndex]
   );
   const onImageFilesSelected = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -483,6 +485,7 @@ function TableGridTextCellInner({
 
   const canLockCell =
     cfg.enableEditMode &&
+    !cfg.disabledEditColSet?.has(colIndex) &&
     !isInsertRowPlaceholder &&
     !isInsertColPlaceholder &&
     colIndex < cfg.colCount &&
@@ -490,7 +493,7 @@ function TableGridTextCellInner({
 
   // 锚点格：单击选中/框选锚点（蓝描边 + 白底）
   const isAnchorCell = !isHeader && isSelectedAny;
-  const showImageAddButton = isImageColumnBodyCell && isAnchorCell && cfg.enableEditMode;
+  const showImageAddButton = isImageColumnBodyCell && isAnchorCell && cfg.enableEditMode && !cfg.disabledEditColSet?.has(colIndex);
 
   // 选中态：多选区域内非锚点格（浅蓝背景）；锚点格不显示浅蓝背景，用 inset panel 蓝描边表示
   const isBodySelectionCell = !isHeader && isNonAnchorMultiSelected;
@@ -619,14 +622,14 @@ function TableGridTextCellInner({
 
   const onHeaderDoubleClick = useCallback(
     (e: React.MouseEvent) => {
-      if (!cfg.enableEditMode || !isHeader || isInsertColPlaceholder || colIndex >= cfg.colCount) return;
+      if (!cfg.enableEditMode || cfg.disabledEditColSet?.has(colIndex) || !isHeader || isInsertColPlaceholder || colIndex >= cfg.colCount) return;
       if (!canUseHeaderVisibilityMenu) return;
       e.stopPropagation();
       // 直接打开侧面板，不打开一级菜单
       setHeaderMenuOpen(false);
       setHeaderFieldTypeSubOpen(true);
     },
-    [cfg.enableEditMode, isHeader, isInsertColPlaceholder, colIndex, cfg.colCount, canUseHeaderVisibilityMenu]
+    [cfg.enableEditMode, cfg.disabledEditColSet, colIndex, isHeader, isInsertColPlaceholder, cfg.colCount, canUseHeaderVisibilityMenu]
   );
 
   useEffect(() => {
@@ -1194,7 +1197,7 @@ function TableGridTextCellInner({
             colIndex={colIndex}
             imageUrls={imageUrls}
             isAnchor={isAnchorCell}
-            enableEditMode={cfg.enableEditMode}
+            enableEditMode={cfg.enableEditMode && !cfg.disabledEditColSet?.has(colIndex)}
             imagePreviewSize={imagePreviewSize}
             addButtonSize={IMAGE_ADD_BUTTON_SIZE_PX}
             editingApi={ed}
@@ -1212,7 +1215,7 @@ function TableGridTextCellInner({
             colIndex={colIndex}
             linkData={linkData}
             isAnchor={isAnchorCell}
-            enableEditMode={cfg.enableEditMode}
+            enableEditMode={cfg.enableEditMode && !cfg.disabledEditColSet?.has(colIndex)}
             editingApi={ed}
             appendLink={(r, c, data) => cfg.appendLinkToCell(r, c, data)}
             updateLink={(r, c, idx, data) => cfg.updateLinkAtCell(r, c, idx, data)}
@@ -1481,6 +1484,7 @@ function TableGridTextCellInner({
       // 表体单元格框选拖拽
       if (
         !cfg.enableEditMode ||
+        cfg.disabledEditColSet?.has(colIndex) ||
         !isBody ||
         isInsertRowPlaceholder ||
         isInsertColPlaceholder ||
@@ -1610,7 +1614,7 @@ function TableGridTextCellInner({
         cfg.onInsertColumn();
         return;
       }
-      if (cfg.enableEditMode && isHeader && !isInsertColPlaceholder && colIndex < cfg.colCount) {
+      if (cfg.enableEditMode && !cfg.disabledEditColSet?.has(colIndex) && isHeader && !isInsertColPlaceholder && colIndex < cfg.colCount) {
         e.stopPropagation();
         const maxBodyR = cfg.rowCount >= 2 ? cfg.rowCount - 2 : -1;
         if (maxBodyR < 0) {
@@ -1626,6 +1630,7 @@ function TableGridTextCellInner({
       }
       if (
         cfg.enableEditMode &&
+        !cfg.disabledEditColSet?.has(colIndex) &&
         isBody &&
         !isInsertRowPlaceholder &&
         !isInsertColPlaceholder &&
@@ -1645,7 +1650,7 @@ function TableGridTextCellInner({
         ed.setSelectedCells(new Set([`${bodyRowIndex}:${colIndex}`]));
         ed.setSelectionAnchor({ r: bodyRowIndex, c: colIndex });
       }
-      if (isImageColumnBodyCell && cfg.enableEditMode) {
+      if (isImageColumnBodyCell && cfg.enableEditMode && !cfg.disabledEditColSet?.has(colIndex)) {
         e.stopPropagation();
         const api = edRef.current;
         if (!api) return;

@@ -502,7 +502,10 @@ export default function TableRows(props: TableRowsProps) {
       groupedColId,
       props.colCount,
       bodyRowCount,
-      props.groupingConfig?.expandedGroupKeys ?? new Set()
+      props.groupingConfig?.expandedGroupKeys ?? new Set(),
+      columnFieldKindByCol,
+      imageUrlsByCell,
+      linkDataByCell
     );
   }, [
     groupingEnabled,
@@ -512,6 +515,9 @@ export default function TableRows(props: TableRowsProps) {
     props.colCount,
     bodyRowCount,
     props.groupingConfig?.expandedGroupKeys,
+    columnFieldKindByCol,
+    imageUrlsByCell,
+    linkDataByCell,
   ]);
 
   const estimatedScrollContentHeight = useMemo(() => {
@@ -1026,6 +1032,34 @@ export default function TableRows(props: TableRowsProps) {
     });
   }, [props.onInsertColumn, props.enableFreezeLastCol, scrollTableViewportToRight, hoverStore]);
 
+  /** 分组场景：同步图片数据到分组内所有行 */
+  const syncImageUrlsToGroup = useCallback((groupValue: string, colIndex: number, imageUrls: ReadonlyArray<string>) => {
+    const groupInfo = groupTitleRows.find((g) => g.groupValue === groupValue);
+    if (!groupInfo || groupInfo.bodyRows.length === 0) return;
+    setImageUrlsByCell((prev) => {
+      const next = { ...prev };
+      for (const bodyRowIndex of groupInfo.bodyRows) {
+        const key = `${bodyRowIndex}-${colIndex}`;
+        next[key] = imageUrls;
+      }
+      return next;
+    });
+  }, [groupTitleRows]);
+
+  /** 分组场景：同步链接数据到分组内所有行 */
+  const syncLinkDataToGroup = useCallback((groupValue: string, colIndex: number, linkData: ReadonlyArray<CellLinkData>) => {
+    const groupInfo = groupTitleRows.find((g) => g.groupValue === groupValue);
+    if (!groupInfo || groupInfo.bodyRows.length === 0) return;
+    setLinkDataByCell((prev) => {
+      const next = { ...prev };
+      for (const bodyRowIndex of groupInfo.bodyRows) {
+        const key = `${bodyRowIndex}-${colIndex}`;
+        next[key] = linkData;
+      }
+      return next;
+    });
+  }, [groupTitleRows]);
+
   const staticConfig = useMemo((): TableGridStaticConfig => {
     const {
       bodyRowSelectionStore: _bs,
@@ -1085,6 +1119,9 @@ export default function TableRows(props: TableRowsProps) {
       onToggleAllGroupExpansion: props.onToggleAllGroupExpansion,
       // 列顺序变更回调
       onColumnOrderChange,
+      // 分组场景：同步图片/链接数据到组内所有行
+      syncImageUrlsToGroup,
+      syncLinkDataToGroup,
     };
   }, [
     typography,
@@ -1145,6 +1182,8 @@ export default function TableRows(props: TableRowsProps) {
     props.onInsertRowWithGroupValue,
     props.onToggleAllGroupExpansion,
     onColumnOrderChange,
+    syncImageUrlsToGroup,
+    syncLinkDataToGroup,
   ]);
 
   return (

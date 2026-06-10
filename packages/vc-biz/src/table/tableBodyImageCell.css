@@ -135,3 +135,73 @@
 .vc-biz-table-image-file-input {
   display: none;
 }
+
+/* 图片加载失败占位图 */
+.vc-biz-table-image-item--error {
+  background: var(--vc-biz-table-image-error-bg, #f5f5f5);
+}
+
+.vc-biz-table-image-error-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--vc-biz-table-image-error-icon, #bfbfbf);
+}
+
+/** 添加图片下拉面板样式（沿用链接面板样式） */
+.vc-biz-table-image-add-dropdown {
+  z-index: 1050;
+  background: var(--vc-token-color-neutral-background-container, #fff);
+  border-radius: 8px;
+}
+
+.vc-biz-table-image-add-panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  padding: 12px;
+  gap: 12px;
+  background: var(--vc-token-color-neutral-background-container, #fff);
+  border-radius: 8px;
+}
+
+.vc-biz-table-image-add-panel-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--vc-token-color-neutral-text-default, rgba(0, 0, 0, 0.88));
+}
+
+.vc-biz-table-image-add-panel-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vc-biz-table-image-add-panel-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vc-biz-table-image-add-panel-label {
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--vc-token-color-neutral-text-description, rgba(0, 0, 0, 0.45));
+}
+
+.vc-biz-table-image-add-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.vc-biz-table-image-add-panel-error {
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--vc-token-color-error-text, #EA572E);
+  margin-top: 4px;
+}

@@ -102,6 +102,9 @@ export type {
 export { TableFieldConfigPanel } from './table/TableFieldConfigPanel';
 export type { TableFieldConfigPanelProps } from './table/TableFieldConfigPanel';
 
+export { TableColumnEditModePanel } from './table/TableColumnEditModePanel';
+export type { TableColumnEditModePanelProps } from './table/TableColumnEditModePanel';
+
 export { TableCellLink } from './table/TableCellLink';
 export type { TableCellLinkProps } from './table/TableCellLink';
 export type { CellLinkData } from './table/tableGridTypes';

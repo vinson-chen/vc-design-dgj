@@ -2,9 +2,11 @@ import React, { useMemo, useSyncExternalStore, useState, useLayoutEffect, useRef
 import { flushSync } from 'react-dom';
 import { Checkbox, Input, Tooltip, Typography, VcIcon, vcTokens } from 'vc-design';
 import type { InputRef } from 'antd';
-import type { TableGroupTitleRowInfo } from './tableGridTypes';
+import type { CellLinkData, TableGroupTitleRowInfo } from './tableGridTypes';
 import { useTableGridConfigContext } from './tableGridConfigContext';
 import { useTableGridEditingDispatchersRef } from './tableGridEditingContext';
+import { TableCellImage } from './TableCellImage';
+import { TableCellLink } from './TableCellLink';
 import { VTableCell } from './VTableCell';
 import { useBodyRowSelectionStore } from './bodyRowSelectionStoreContext';
 import { useTableRowHoverStore } from './tableRowHoverStoreContext';
@@ -28,8 +30,19 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
     () => false
   );
 
+  // 空值组显示文案（根据列类型不同）
+  const groupedColKind = groupInfo.groupedColKind ?? 'text';
+  const isImageGroup = !groupInfo.isEmptyGroup && groupedColKind === 'image';
+  const isLinkGroup = !groupInfo.isEmptyGroup && groupedColKind === 'link';
+  const isTextGroup = !isImageGroup && !isLinkGroup;
+
+  // 空值组显示文本（根据列类型）
+  const emptyGroupLabel = groupInfo.isEmptyGroup
+    ? (groupedColKind === 'image' ? '无图片' : groupedColKind === 'link' ? '无链接' : '空值组')
+    : '';
+
   // 空值组显示"空值组"文案，非空组只显示组名
-  const fullGroupLabel = groupInfo.isEmptyGroup ? '空值组' : groupInfo.groupValue;
+  const fullGroupLabel = groupInfo.isEmptyGroup ? emptyGroupLabel : groupInfo.groupValue;
   const groupTextRef = useRef<HTMLDivElement | null>(null);
   const [groupLabelTruncated, setGroupLabelTruncated] = useState(false);
 
@@ -51,6 +64,81 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
 
   const showNarrowLead = cfg.narrowLeadWidth > 0;
   const groupedColIndex = groupInfo.groupedColIndex;
+
+  // 图片分组的数据提取
+  const groupImageUrls = useMemo(() => {
+    if (!isImageGroup) return [];
+    // 从 groupRawValue 获取，或从组内第一行获取
+    if (groupInfo.groupRawValue && Array.isArray(groupInfo.groupRawValue)) {
+      return groupInfo.groupRawValue as ReadonlyArray<string>;
+    }
+    // fallback：从组内第一行获取数据
+    const firstBodyRow = groupInfo.bodyRows[0];
+    if (firstBodyRow == null || groupedColIndex == null) return [];
+    const key = `${firstBodyRow}-${groupedColIndex}`;
+    return cfg.imageUrlsByCell[key] ?? [];
+  }, [isImageGroup, groupInfo, groupedColIndex, cfg.imageUrlsByCell]);
+
+  // 链接分组的数据提取
+  const groupLinkData = useMemo(() => {
+    if (!isLinkGroup) return [];
+    // 从 groupRawValue 获取，或从组内第一行获取
+    if (groupInfo.groupRawValue && Array.isArray(groupInfo.groupRawValue)) {
+      return groupInfo.groupRawValue as ReadonlyArray<CellLinkData>;
+    }
+    // fallback：从组内第一行获取数据
+    const firstBodyRow = groupInfo.bodyRows[0];
+    if (firstBodyRow == null || groupedColIndex == null) return [];
+    const key = `${firstBodyRow}-${groupedColIndex}`;
+    return cfg.linkDataByCell[key] ?? [];
+  }, [isLinkGroup, groupInfo, groupedColIndex, cfg.linkDataByCell]);
+
+  // 虚拟 bodyRowIndex 用于分组标题行的图片/链接编辑（避免与真实行冲突）
+  const GROUP_TITLE_VIRTUAL_BODY_ROW_INDEX = -1;
+
+  // 图片分组编辑包装函数
+  const imageGroupEditWrappers = useMemo(() => {
+    if (!isImageGroup || groupInfo.isEmptyGroup || groupedColIndex == null) return null;
+    return {
+      appendImageFiles: (_bodyRowIndex: number, _colIndex: number, files: readonly File[]) => {
+        // 分组标题不支持本地上传，这里做占位处理
+        // 若需要支持，需先上传得到 URL 再同步
+      },
+      appendImageUrls: (_bodyRowIndex: number, _colIndex: number, urls: readonly string[]) => {
+        const currentUrls = groupImageUrls;
+        const validUrls = urls.map((u) => u.trim()).filter(Boolean);
+        const newUrls = [...currentUrls, ...validUrls] as ReadonlyArray<string>;
+        cfg.syncImageUrlsToGroup(groupInfo.groupValue, groupedColIndex, newUrls);
+      },
+      removeImageAt: (_bodyRowIndex: number, _colIndex: number, imageIndex: number) => {
+        if (imageIndex < 0 || imageIndex >= groupImageUrls.length) return;
+        const newUrls = groupImageUrls.filter((_, i) => i !== imageIndex) as ReadonlyArray<string>;
+        cfg.syncImageUrlsToGroup(groupInfo.groupValue, groupedColIndex, newUrls);
+      },
+    };
+  }, [isImageGroup, groupInfo.isEmptyGroup, groupInfo.groupValue, groupedColIndex, groupImageUrls, cfg.syncImageUrlsToGroup]);
+
+  // 链接分组编辑包装函数
+  const linkGroupEditWrappers = useMemo(() => {
+    if (!isLinkGroup || groupInfo.isEmptyGroup || groupedColIndex == null) return null;
+    return {
+      appendLink: (_bodyRowIndex: number, _colIndex: number, data: CellLinkData) => {
+        const newLinks = [...groupLinkData, data] as ReadonlyArray<CellLinkData>;
+        cfg.syncLinkDataToGroup(groupInfo.groupValue, groupedColIndex, newLinks);
+      },
+      updateLink: (_bodyRowIndex: number, _colIndex: number, linkIndex: number, data: CellLinkData) => {
+        if (linkIndex < 0 || linkIndex >= groupLinkData.length) return;
+        const newLinks = [...groupLinkData];
+        newLinks[linkIndex] = data;
+        cfg.syncLinkDataToGroup(groupInfo.groupValue, groupedColIndex, newLinks as ReadonlyArray<CellLinkData>);
+      },
+      removeLink: (_bodyRowIndex: number, _colIndex: number, linkIndex: number) => {
+        if (linkIndex < 0 || linkIndex >= groupLinkData.length) return;
+        const newLinks = groupLinkData.filter((_, i) => i !== linkIndex) as ReadonlyArray<CellLinkData>;
+        cfg.syncLinkDataToGroup(groupInfo.groupValue, groupedColIndex, newLinks);
+      },
+    };
+  }, [isLinkGroup, groupInfo.isEmptyGroup, groupInfo.groupValue, groupedColIndex, groupLinkData, cfg.syncLinkDataToGroup]);
 
   // 分组列是否配置了多字段（空值组不显示）
   const isGroupColMultiField = !groupInfo.isEmptyGroup && groupedColIndex != null && (cfg.columnMultiFieldConfigByCol[groupedColIndex]?.fields?.length ?? 0) > 0;
@@ -460,7 +548,54 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
               width: '100%',
             }}
           >
-            {isEditingGroupTitle ? (
+            {/* 图片列分组标题 */}
+            {isImageGroup && !groupInfo.isEmptyGroup && imageGroupEditWrappers ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flex: 1,
+                  minWidth: 0,
+                  overflow: 'hidden',
+                }}
+              >
+                <TableCellImage
+                  bodyRowIndex={GROUP_TITLE_VIRTUAL_BODY_ROW_INDEX}
+                  colIndex={groupedColIndex ?? 0}
+                  imageUrls={groupImageUrls}
+                  isAnchor={true}
+                  enableEditMode={cfg.enableEditMode}
+                  editingApi={edRef.current!}
+                  appendImageFiles={imageGroupEditWrappers.appendImageFiles}
+                  appendImageUrls={imageGroupEditWrappers.appendImageUrls}
+                  removeImageAt={imageGroupEditWrappers.removeImageAt}
+                />
+              </div>
+            ) : isLinkGroup && !groupInfo.isEmptyGroup && linkGroupEditWrappers ? (
+              /* 链接列分组标题 */
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flex: 1,
+                  minWidth: 0,
+                  overflow: 'hidden',
+                }}
+              >
+                <TableCellLink
+                  bodyRowIndex={GROUP_TITLE_VIRTUAL_BODY_ROW_INDEX}
+                  colIndex={groupedColIndex ?? 0}
+                  linkData={groupLinkData}
+                  isAnchor={true}
+                  enableEditMode={cfg.enableEditMode}
+                  editingApi={edRef.current!}
+                  appendLink={linkGroupEditWrappers.appendLink}
+                  updateLink={linkGroupEditWrappers.updateLink}
+                  removeLink={linkGroupEditWrappers.removeLink}
+                />
+              </div>
+            ) : isEditingGroupTitle ? (
+              /* 文本列分组标题 - 编辑态 */
               <Input
                 ref={groupTitleInputRef}
                 value={groupTitleDraft}
@@ -478,6 +613,7 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
                 }}
               />
             ) : (
+              /* 文本列分组标题 - 显示态 */
               <Tooltip
                 title={groupLabelTruncated ? fullGroupLabel : undefined}
                 placement="top"
@@ -489,7 +625,9 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
                   style={{
                     ...m.tableTextStyle,
                     fontWeight: 500,
-                    color: vcTokens.color.neutral.text.default,
+                    color: groupInfo.isEmptyGroup
+                      ? vcTokens.color.neutral.text.placeholder
+                      : vcTokens.color.neutral.text.default,
                     whiteSpace: 'nowrap',
                     userSelect: 'none',
                     flex: 1,

@@ -24,6 +24,14 @@ export type InitialMultiFieldData = {
   multiFieldValueByCell?: MultiFieldValueByCell;
 };
 
+/** 初始化图片列数据（用于模拟数据等场景） */
+export type InitialImageData = {
+  /** 列类型配置（哪些列是图片列） */
+  columnFieldKindByCol?: Record<number, TableColumnFieldKind>;
+  /** 图片单元格 URL 数据（key 形如 `${bodyRow}-${col}`） */
+  imageUrlsByCell?: Record<string, ReadonlyArray<string>>;
+};
+
 /** 表头单元格值：标题 + 可选的分组身份标识 */
 export type HeaderCellValue = {
   title: string;
@@ -57,6 +65,15 @@ export type TableGroupTitleRowInfo = Readonly<{
   isEmptyGroup?: boolean;
   /** 分组列索引（基于 groupId 查找得到） */
   groupedColIndex?: number;
+  /** 分组列字段类型 */
+  groupedColKind?: TableColumnFieldKind;
+  /**
+   * 原始分组值，用于分组标题行渲染：
+   * - text 列：string | null
+   * - image 列：ReadonlyArray<string>（图片 URL 列表）
+   * - link 列：ReadonlyArray<CellLinkData>（链接数据列表）
+   */
+  groupRawValue?: unknown;
 }>;
 
 export type TableRowsProps = Readonly<{
@@ -96,6 +113,8 @@ export type TableRowsProps = Readonly<{
   onValueByCellChange?: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   /** 初始化多字段配置（列配置 + 单元格内容） */
   initialMultiFieldData?: InitialMultiFieldData;
+  /** 初始化图片列数据（列类型 + 图片 URL） */
+  initialImageData?: InitialImageData;
   /**
    * 表格区域最大高度（px），设置后整表（含表头为虚拟第 0 行 + sticky 钉顶、插入行尾同列表）垂直虚拟滚动。
    * 不传则全量挂载所有行。
@@ -130,6 +149,12 @@ export type TableRowsProps = Readonly<{
   setColumnHidden?: (colIndex: number, hidden: boolean) => void;
   /** 批量设置显隐（仅作用于当前总列数范围） */
   setAllColumnsHidden?: (nextHiddenCols: ReadonlySet<number>) => void;
+  /** 不可编辑列索引集合：默认空集表示所有列可编辑 */
+  disabledEditColSet?: ReadonlySet<number>;
+  /** 设置单列是否可编辑 */
+  setColumnEditDisabled?: (colIndex: number, disabled: boolean) => void;
+  /** 批量设置不可编辑列集合 */
+  setAllColumnsEditDisabled?: (nextDisabledCols: ReadonlySet<number>) => void;
   /** 单元格选中状态 store 回调：TableRows 内部创建后传出 */
   onCellSelectionStore?: (store: CellSelectionStore) => void;
   /** 显示分页：默认关闭；开启后插入行右侧显示简洁模式分页器 */
@@ -202,6 +227,8 @@ export type TableGridStaticConfig = Omit<
   /** 图片列：表体格内图片预览 URL 列表（key 形如 `${bodyRow}-${col}`） */
   imageUrlsByCell: Readonly<Record<string, ReadonlyArray<string>>>;
   appendImageFilesToCell: (bodyRowIndex: number, colIndex: number, files: readonly File[]) => void;
+  /** 追加外部图片 URL（非本地上传） */
+  appendImageUrls: (bodyRowIndex: number, colIndex: number, urls: readonly string[]) => void;
   removeImageAtCell: (bodyRowIndex: number, colIndex: number, imageIndex: number) => void;
   /** 链接列：表体格内链接数据列表（key 形如 `${bodyRow}-${col}`） */
   linkDataByCell: Readonly<Record<string, ReadonlyArray<CellLinkData>>>;
@@ -234,4 +261,8 @@ export type TableGridStaticConfig = Omit<
   groupTitleRows?: ReadonlyArray<TableGroupTitleRowInfo>;
   /** 组内插入行回调：自动填入分组值 */
   onInsertRowWithGroupValue?: (groupValue: string) => void;
+  /** 分组场景：同步图片数据到分组内所有行 */
+  syncImageUrlsToGroup: (groupValue: string, colIndex: number, imageUrls: ReadonlyArray<string>) => void;
+  /** 分组场景：同步链接数据到分组内所有行 */
+  syncLinkDataToGroup: (groupValue: string, colIndex: number, linkData: ReadonlyArray<CellLinkData>) => void;
 };

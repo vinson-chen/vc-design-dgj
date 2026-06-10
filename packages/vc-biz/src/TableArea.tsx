@@ -9,6 +9,7 @@ import { snapshotTableAreaState, useTableAreaUndoRedo } from './table/useTableAr
 import { useColumnResize } from './table/useTableGridState';
 import TableRows from './table/TableRows';
 import type { CellSelectionStore } from './table/cellSelectionStore';
+import type { InitialImageData } from './table/tableGridTypes';
 import { GRID_MAX_COL, GRID_MAX_ROW, GRID_MIN } from './tableAreaGridLimits';
 import { generateGroupId, findGroupedColIndex, getHeaderGroupId } from './table/headless/tableGridGroupingId';
 const MIN_RESIZABLE_TEXT_COL_W = 100;
@@ -96,7 +97,10 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     ...(options?.initialValueByCell ?? {}),
   }));
   const [hiddenColSet, setHiddenColSet] = useState<Set<number>>(() => new Set());
+  const [disabledEditColSet, setDisabledEditColSet] = useState<Set<number>>(() => new Set());
   const [undoRedoNonce, setUndoRedoNonce] = useState(0);
+  // 表格重置 nonce：用于强制重新挂载 TableRows，彻底清空所有内部状态
+  const [tableResetNonce, setTableResetNonce] = useState(0);
   const [tableViewportClientWidth, setTableViewportClientWidth] = useState<number>(0);
 
   // 分页状态
@@ -125,6 +129,8 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   const [initialMultiFieldData, setInitialMultiFieldData] = useState<
     import('./table/tableGridTypes').InitialMultiFieldData | undefined
   >(undefined);
+  // 图片列数据状态（用于传递给 TableRows）
+  const [initialImageData, setInitialImageData] = useState<InitialImageData | undefined>(undefined);
 
   const colCountRef = useRef(colCount);
   const rowCountRef = useRef(rowCount);
@@ -176,6 +182,18 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
 
   useLayoutEffect(() => {
     setHiddenColSet((prev) => {
+      let changed = false;
+      const next = new Set<number>();
+      prev.forEach((idx) => {
+        if (idx >= 0 && idx < colCount) {
+          next.add(idx);
+        } else {
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+    setDisabledEditColSet((prev) => {
       let changed = false;
       const next = new Set<number>();
       prev.forEach((idx) => {
@@ -326,6 +344,12 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
         prev.forEach((idx) => next.add(idx >= insertAt ? idx + 1 : idx));
         return next;
       });
+      setDisabledEditColSet((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set<number>();
+        prev.forEach((idx) => next.add(idx >= insertAt ? idx + 1 : idx));
+        return next;
+      });
     }
     setColCount((prev) => Math.min(GRID_MAX_COL, prev + 1));
   }, [enableFreezeLastCol, insertColumnWidthAt, recordIfNeeded]);
@@ -336,8 +360,16 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       removeColumnWidthAt(colIndex);
       setColCount((c) => c - 1);
       // 注意：valueByCell 数据重排已由 TableRows.editing.removeColumnAt 调用 remapValueByCellAfterRemoveColumn 处理
-      // 此处仅需处理元数据：列宽、列数、隐藏列集合
+      // 此处仅需处理元数据：列宽、列数、隐藏列集合、不可编辑列集合
       setHiddenColSet((prev) => {
+        const next = new Set<number>();
+        prev.forEach((idx) => {
+          if (idx === colIndex) return;
+          next.add(idx > colIndex ? idx - 1 : idx);
+        });
+        return next;
+      });
+      setDisabledEditColSet((prev) => {
         const next = new Set<number>();
         prev.forEach((idx) => {
           if (idx === colIndex) return;
@@ -803,14 +835,57 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     }
   }
 
-  const loadMockData = useCallback(() => {
+  const loadMockData = useCallback((silent?: boolean) => {
     startBatch();
     try {
       applyColWidthsSnapshot(Array.from({ length: GRID_MAX_COL }, () => null));
       setColCount(MOCK_COL_COUNT);
       setRowCount(MOCK_ROW_COUNT);
-      setValueByCellBase(MOCK_DATA);
+      // 关闭垂直居中（图片列需要顶部对齐）
+      setEnableVerticalCenter(false);
+
+      // 列重映射：将图片列（原列 4）移到商品标题（原列 1）右侧
+      // 原始：0=规格名称, 1=商品标题, 2=宝贝ID, 3=宝贝链接, 4=图片地址, 5=价格, 6=类目
+      // 目标：0=规格名称, 1=商品标题, 2=产品图, 3=宝贝ID, 4=宝贝链接, 5=价格, 6=类目
+      // 映射：原列 4→新列 2, 原列 2→新列 3, 原列 3→新列 4, 其他不变
+      const colRemap: Record<number, number> = { 0: 0, 1: 1, 2: 3, 3: 4, 4: 2, 5: 5, 6: 6 };
+      const IMAGE_NEW_COL = 2; // 图片列重映射后的新列号
+
+      const imageUrlsByCell: Record<string, ReadonlyArray<string>> = {};
+      const cleanedValueByCell: Record<string, string> = {};
+
+      for (const [key, value] of Object.entries(MOCK_DATA)) {
+        // 处理表头
+        const headerMatch = key.match(/^header-(\d+)$/);
+        if (headerMatch) {
+          const oldCol = Number(headerMatch[1]);
+          const newCol = colRemap[oldCol] ?? oldCol;
+          const newTitle = oldCol === 4 ? '产品图' : value;
+          cleanedValueByCell[`header-${newCol}`] = newTitle;
+          continue;
+        }
+        // 处理表体单元格
+        const bodyMatch = key.match(/^(\d+)-(\d+)$/);
+        if (bodyMatch) {
+          const row = bodyMatch[1];
+          const oldCol = Number(bodyMatch[2]);
+          const newCol = colRemap[oldCol] ?? oldCol;
+          const newKey = `${row}-${newCol}`;
+          // 图片列的 URL 存入 imageUrlsByCell，不放入文本值
+          if (oldCol === 4 && value.startsWith('http')) {
+            imageUrlsByCell[newKey] = [value];
+          } else {
+            cleanedValueByCell[newKey] = value;
+          }
+          continue;
+        }
+        // 其他 key 原样保留
+        cleanedValueByCell[key] = value;
+      }
+
+      setValueByCellBase(cleanedValueByCell);
       setHiddenColSet(new Set());
+      setDisabledEditColSet(new Set());
       setUndoRedoNonce((n) => n + 1);
       bodyRowSelectionStore.toggleAll(false);
       // 加载多字段配置和数据
@@ -818,14 +893,21 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
         columnMultiFieldConfigByCol: MOCK_MULTI_FIELD_CONFIG,
         multiFieldValueByCell: MOCK_MULTI_FIELD_VALUES,
       });
+      // 加载图片列数据
+      setInitialImageData({
+        columnFieldKindByCol: { [IMAGE_NEW_COL]: 'image' },
+        imageUrlsByCell,
+      });
     } finally {
       endBatch();
     }
-    message.success('已加载模拟数据');
-  }, [applyColWidthsSnapshot, bodyRowSelectionStore, endBatch, startBatch]);
+    if (!silent) {
+      message.success('已加载模拟数据');
+    }
+  }, [applyColWidthsSnapshot, bodyRowSelectionStore, endBatch, setEnableVerticalCenter, startBatch]);
 
   // 重置为初始状态
-  const resetToInitial = useCallback(() => {
+  const resetToInitial = useCallback((silent?: boolean) => {
     startBatch();
     try {
       applyColWidthsSnapshot(Array.from({ length: GRID_MAX_COL }, () => null));
@@ -833,25 +915,34 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       setRowCount(options?.initialRowCount ?? 20);
       setValueByCellBase({});
       setHiddenColSet(new Set());
+      setDisabledEditColSet(new Set());
       setUndoRedoNonce((n) => n + 1);
       bodyRowSelectionStore.toggleAll(false);
+      // 恢复垂直居中
+      setEnableVerticalCenter(true);
       // 重置分组状态
       setGroupedColId(undefined);
       setExpandedGroupKeys(new Set());
       // 清空多字段数据
       setInitialMultiFieldData(undefined);
+      // 清空图片列数据
+      setInitialImageData(undefined);
+      // 强制重新挂载 TableRows，彻底清空内部状态
+      setTableResetNonce((n) => n + 1);
     } finally {
       endBatch();
     }
-    message.success('已重置为初始状态');
-  }, [applyColWidthsSnapshot, bodyRowSelectionStore, endBatch, startBatch, options?.initialColCount, options?.initialRowCount]);
+    if (!silent) {
+      message.success('已重置为初始状态');
+    }
+  }, [applyColWidthsSnapshot, bodyRowSelectionStore, endBatch, setEnableVerticalCenter, startBatch, options?.initialColCount, options?.initialRowCount]);
 
   // 当模拟数据开关变化时，加载或重置数据
   useLayoutEffect(() => {
     if (enableMockData) {
-      loadMockData();
+      loadMockData(true);
     } else {
-      resetToInitial();
+      resetToInitial(true);
     }
   }, [enableMockData, loadMockData, resetToInitial]);
 
@@ -877,6 +968,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
           setRowCount(nextR);
           setValueByCellBase(nextV);
           setHiddenColSet(new Set());
+          setDisabledEditColSet(new Set());
           setUndoRedoNonce((n) => n + 1);
           bodyRowSelectionStore.toggleAll(false);
         } finally {
@@ -936,6 +1028,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     startUndoBatch: startBatch,
     endUndoBatch: endBatch,
     undoRedoNonce,
+    tableResetNonce,
     tableUndoRedo,
     importExcelFromFile,
     hiddenColSet,
@@ -952,6 +1045,21 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     },
     setAllColumnsHidden: (nextHiddenCols: ReadonlySet<number>) => {
       setHiddenColSet(new Set(nextHiddenCols));
+    },
+    disabledEditColSet,
+    setColumnEditDisabled: (colIndex: number, disabled: boolean) => {
+      setDisabledEditColSet((prev) => {
+        const next = new Set(prev);
+        if (disabled) {
+          next.add(colIndex);
+        } else {
+          next.delete(colIndex);
+        }
+        return next;
+      });
+    },
+    setAllColumnsEditDisabled: (nextDisabledCols: ReadonlySet<number>) => {
+      setDisabledEditColSet(new Set(nextDisabledCols));
     },
     setTableViewportClientWidth,
     onCellSelectionStore: options?.onCellSelectionStore,
@@ -981,6 +1089,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     enableMockData,
     setEnableMockData,
     initialMultiFieldData,
+    initialImageData,
     onGroupingChange: (groupId: string | undefined) => {
       setGroupedColId(groupId);
       // 切换分组列时，默认展开所有分组
@@ -1139,10 +1248,14 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     startUndoBatch,
     endUndoBatch,
     undoRedoNonce,
+    tableResetNonce,
     tableUndoRedo,
     hiddenColSet,
     setColumnHidden,
     setAllColumnsHidden,
+    disabledEditColSet,
+    setColumnEditDisabled,
+    setAllColumnsEditDisabled,
     setTableViewportClientWidth,
     onCellSelectionStore,
     enablePagination,
@@ -1158,10 +1271,12 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     onToggleAllGroupExpansion,
     onInsertRowWithGroupValue,
     initialMultiFieldData,
+    initialImageData,
   } = model;
 
   const rows = (
     <TableRows
+      key={tableResetNonce}
       rowCount={rowCount}
       colCount={colCount}
       rowMinWidth={rowMinWidth}
@@ -1197,6 +1312,9 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
       hiddenColSet={hiddenColSet}
       setColumnHidden={setColumnHidden}
       setAllColumnsHidden={setAllColumnsHidden}
+      disabledEditColSet={disabledEditColSet}
+      setColumnEditDisabled={setColumnEditDisabled}
+      setAllColumnsEditDisabled={setAllColumnsEditDisabled}
       onViewportClientWidthChange={setTableViewportClientWidth}
       onCellSelectionStore={onCellSelectionStore}
       enablePagination={enablePagination}
@@ -1210,6 +1328,7 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
       onToggleAllGroupExpansion={onToggleAllGroupExpansion}
       onInsertRowWithGroupValue={onInsertRowWithGroupValue}
       initialMultiFieldData={initialMultiFieldData}
+      initialImageData={initialImageData}
     />
   );
 

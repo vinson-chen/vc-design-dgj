@@ -189,13 +189,13 @@ export function TableHeaderCell({
 
   const onHeaderDoubleClick = useCallback(
     (e: React.MouseEvent) => {
-      if (!cfg.enableEditMode || isInsertColPlaceholder || colIndex >= cfg.colCount) return;
+      if (!cfg.enableEditMode || cfg.disabledEditColSet?.has(colIndex) || isInsertColPlaceholder || colIndex >= cfg.colCount) return;
       if (!showHeaderColumnMenu) return;
       e.stopPropagation();
       onHeaderMenuOpenChange?.(false);
       onHeaderFieldTypeSubOpenChange?.(true);
     },
-    [cfg.enableEditMode, isInsertColPlaceholder, colIndex, cfg.colCount, showHeaderColumnMenu, onHeaderMenuOpenChange, onHeaderFieldTypeSubOpenChange]
+    [cfg.enableEditMode, cfg.disabledEditColSet, colIndex, isInsertColPlaceholder, cfg.colCount, showHeaderColumnMenu, onHeaderMenuOpenChange, onHeaderFieldTypeSubOpenChange]
   );
 
   useEffect(() => {
@@ -405,6 +405,7 @@ export function TableHeaderCell({
                     value={headerColEditDraftKind}
                     onChange={(v) => setHeaderColEditDraftKind(v)}
                     options={HEADER_COL_TYPE_OPTIONS}
+                    disabled={cfg.disabledEditColSet?.has(colIndex)}
                     style={{ width: 240 }}
                     suffixIcon={
                       <VcIcon
