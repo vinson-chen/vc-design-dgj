@@ -1050,12 +1050,19 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     enableGrouping,
   ]);
 
-  // 当模拟数据开关变化时，加载或重置数据
+  // 模拟数据开关状态 ref，用于判断是用户主动切换还是初始加载
+  const prevEnableMockDataRef = useRef(enableMockData);
+
+  // 当模拟数据开关变化时，加载或重置数据（仅在用户主动切换时执行）
   useLayoutEffect(() => {
-    if (enableMockData) {
-      loadMockData(true);
-    } else {
-      resetToInitial(true);
+    // 仅在用户主动切换模拟数据开关时才执行（跳过初始加载）
+    if (prevEnableMockDataRef.current !== enableMockData) {
+      prevEnableMockDataRef.current = enableMockData;
+      if (enableMockData) {
+        loadMockData(true);
+      } else {
+        resetToInitial(true);
+      }
     }
   }, [enableMockData, loadMockData, resetToInitial]);
 
