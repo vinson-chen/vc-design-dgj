@@ -193,7 +193,8 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   } = useColumnResize(
     GRID_MAX_COL,
     MIN_RESIZABLE_TEXT_COL_W,
-    getResizeMaxWidthForColumn
+    getResizeMaxWidthForColumn,
+    savedData?.colWidths
   );
   const colWidthsRef = useRef(colWidths);
   colWidthsRef.current = colWidths;
@@ -202,13 +203,6 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     bodyRowSelectionStoreRef.current = new BodyRowSelectionStore();
   }
   const bodyRowSelectionStore = bodyRowSelectionStoreRef.current;
-
-  // 初始化时应用保存的列宽数据
-  useLayoutEffect(() => {
-    if (savedData?.colWidths) {
-      applyColWidthsSnapshot(savedData.colWidths);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 仅初始化时执行一次
 
   useLayoutEffect(() => {
     bodyRowSelectionStore.setBodyRowCount(Math.max(0, rowCount - 1));

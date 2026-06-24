@@ -3,10 +3,16 @@ import { useCallback, useState } from 'react';
 export function useColumnResize(
   gridMax: number,
   minTextColW: number,
-  getMaxWidthForColumn?: (colIndex: number) => number | null
+  getMaxWidthForColumn?: (colIndex: number) => number | null,
+  initialColWidths?: Array<number | null> | null
 ) {
   const [colWidths, setColWidths] = useState<Array<number | null>>(
-    () => Array.from({ length: gridMax }, () => null)
+    () => {
+      if (initialColWidths) {
+        return Array.from({ length: gridMax }, (_, i) => (i < initialColWidths.length ? (initialColWidths[i] ?? null) : null));
+      }
+      return Array.from({ length: gridMax }, () => null);
+    }
   );
 
   const onColumnResizeStart = useCallback(
