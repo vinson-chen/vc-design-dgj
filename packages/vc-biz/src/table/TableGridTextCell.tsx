@@ -245,6 +245,16 @@ function TableGridTextCellInner({
     !isImageColumnBodyCell &&
     !isLinkColumnBodyCell;
 
+  /** 表体单元格被禁用编辑：显示 not-allowed 光标 */
+  const isEditDisabledBodyCell =
+    isBody &&
+    !isInsertRowPlaceholder &&
+    !isInsertColPlaceholder &&
+    !isImageColumnBodyCell &&
+    !isLinkColumnBodyCell &&
+    colIndex < cfg.colCount &&
+    (!cfg.enableEditMode || cfg.disabledEditColSet?.has(colIndex));
+
   const cellR = isHeader ? -1 : bodyRowIndex;
 
   // 表头存储值
@@ -1308,7 +1318,9 @@ function TableGridTextCellInner({
               ? isColumnDraggingThis ? 'grabbing' : 'grab'
               : isEditableBodyCell
                 ? 'default'
-                : undefined,
+                : isEditDisabledBodyCell
+                  ? 'not-allowed'
+                  : undefined,
         ...freezeTailRowTopStyle,
       };
 
