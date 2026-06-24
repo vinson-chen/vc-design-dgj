@@ -24,12 +24,30 @@ export type InitialMultiFieldData = {
   multiFieldValueByCell?: MultiFieldValueByCell;
 };
 
+/** 多字段数据（受控模式） */
+export type MultiFieldData = {
+  /** 列多字段配置 */
+  columnMultiFieldConfigByCol: Record<number, ColumnMultiFieldConfig>;
+  /** 表体单元格多字段内容 */
+  multiFieldValueByCell: MultiFieldValueByCell;
+};
+
 /** 初始化图片列数据（用于模拟数据等场景） */
 export type InitialImageData = {
   /** 列类型配置（哪些列是图片列） */
   columnFieldKindByCol?: Record<number, TableColumnFieldKind>;
   /** 图片单元格 URL 数据（key 形如 `${bodyRow}-${col}`） */
   imageUrlsByCell?: Record<string, ReadonlyArray<string>>;
+};
+
+/** 图片列数据（受控模式） */
+export type ImageData = {
+  /** 列类型配置（哪些列是图片列/链接列） */
+  columnFieldKindByCol: Record<number, TableColumnFieldKind>;
+  /** 图片单元格 URL 数据 */
+  imageUrlsByCell: Record<string, ReadonlyArray<string>>;
+  /** 链接单元格数据 */
+  linkDataByCell: Record<string, ReadonlyArray<CellLinkData>>;
 };
 
 /** 表头单元格值：标题 + 可选的分组身份标识 */
@@ -113,8 +131,16 @@ export type TableRowsProps = Readonly<{
   onValueByCellChange?: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   /** 初始化多字段配置（列配置 + 单元格内容） */
   initialMultiFieldData?: InitialMultiFieldData;
+  /** 多字段数据（受控模式） */
+  multiFieldData?: MultiFieldData;
+  /** 多字段数据变更回调 */
+  onMultiFieldDataChange?: (data: MultiFieldData) => void;
   /** 初始化图片列数据（列类型 + 图片 URL） */
   initialImageData?: InitialImageData;
+  /** 图片列数据（受控模式） */
+  imageData?: ImageData;
+  /** 图片列数据变更回调 */
+  onImageDataChange?: (data: ImageData) => void;
   /**
    * 表格区域最大高度（px），设置后整表（含表头为虚拟第 0 行 + sticky 钉顶、插入行尾同列表）垂直虚拟滚动。
    * 不传则全量挂载所有行。
@@ -157,16 +183,6 @@ export type TableRowsProps = Readonly<{
   setAllColumnsEditDisabled?: (nextDisabledCols: ReadonlySet<number>) => void;
   /** 单元格选中状态 store 回调：TableRows 内部创建后传出 */
   onCellSelectionStore?: (store: CellSelectionStore) => void;
-  /** 图片列数据回调：TableRows 内部数据传出 */
-  onImageDataChange?: (data: {
-    columnFieldKindByCol: Record<number, TableColumnFieldKind>;
-    imageUrlsByCell: Record<string, ReadonlyArray<string>>;
-  }) => void;
-  /** 多字段数据回调：TableRows 内部数据传出 */
-  onMultiFieldDataChange?: (data: {
-    columnMultiFieldConfigByCol: Record<number, ColumnMultiFieldConfig>;
-    multiFieldValueByCell: MultiFieldValueByCell;
-  }) => void;
   /** 显示分页：默认关闭；开启后插入行右侧显示简洁模式分页器 */
   enablePagination?: boolean;
   /** 当前页码（1-based），受控模式 */

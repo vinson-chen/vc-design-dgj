@@ -51,6 +51,7 @@ type TableStorageData = {
   // 图片列数据
   imageUrlsByCell: Record<string, string[]>;
   columnFieldKindByCol: Record<number, string>;
+  linkDataByCell: Record<string, Array<{ name: string; url: string }>>;
   // 多字段数据
   columnMultiFieldConfigByCol?: Record<number, { fields: Array<{ name: string }> }>;
   multiFieldValueByCell?: Record<string, Array<{ name: string; content: string }>>;
@@ -194,20 +195,6 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   const [enableMockData, setEnableMockData] = useState(
     options?.initialEnableMockData ?? false
   );
-  // 多字段数据状态（用于传递给 TableRows）
-  const [initialMultiFieldData, setInitialMultiFieldData] = useState<
-    import('./table/tableGridTypes').InitialMultiFieldData | undefined
-  >(initialData?.columnMultiFieldConfigByCol || initialData?.multiFieldValueByCell ? {
-    columnMultiFieldConfigByCol: initialData.columnMultiFieldConfigByCol,
-    multiFieldValueByCell: initialData.multiFieldValueByCell,
-  } : undefined);
-  // 图片列数据状态（用于传递给 TableRows）
-  const [initialImageData, setInitialImageData] = useState<InitialImageData | undefined>(
-    initialData?.imageUrlsByCell || initialData?.columnFieldKindByCol ? {
-      columnFieldKindByCol: initialData.columnFieldKindByCol as Record<number, import('./table/tableGridTypes').TableColumnFieldKind>,
-      imageUrlsByCell: initialData.imageUrlsByCell,
-    } : undefined
-  );
 
   const colCountRef = useRef(colCount);
   const rowCountRef = useRef(rowCount);
@@ -216,29 +203,22 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   const valueByCellRef = useRef(valueByCell);
   valueByCellRef.current = valueByCell;
 
-  // 图片列和多字段数据 ref（由 TableRows 回调更新）
-  const imageDataRef = useRef<{
-    columnFieldKindByCol: Record<number, import('./table/tableGridTypes').TableColumnFieldKind>;
-    imageUrlsByCell: Record<string, ReadonlyArray<string>>;
-  }>({ columnFieldKindByCol: {}, imageUrlsByCell: {} });
-  const multiFieldDataRef = useRef<{
-    columnMultiFieldConfigByCol: Record<number, import('./table/tableGridTypes').ColumnMultiFieldConfig>;
-    multiFieldValueByCell: import('./table/tableGridTypes').MultiFieldValueByCell;
-  }>({ columnMultiFieldConfigByCol: {}, multiFieldValueByCell: {} });
+  // ========== 图片列数据（状态提升，受控模式） ==========
+  const [imageData, setImageData] = useState<import('./table/tableGridTypes').ImageData>(() => ({
+    columnFieldKindByCol: initialData?.columnFieldKindByCol as Record<number, import('./table/tableGridTypes').TableColumnFieldKind> ?? {},
+    imageUrlsByCell: initialData?.imageUrlsByCell ?? {},
+    linkDataByCell: initialData?.linkDataByCell ?? {},
+  }));
+  const imageDataRef = useRef(imageData);
+  imageDataRef.current = imageData;
 
-  const onImageDataChange = useCallback((data: {
-    columnFieldKindByCol: Record<number, import('./table/tableGridTypes').TableColumnFieldKind>;
-    imageUrlsByCell: Record<string, ReadonlyArray<string>>;
-  }) => {
-    imageDataRef.current = data;
-  }, []);
-
-  const onMultiFieldDataChange = useCallback((data: {
-    columnMultiFieldConfigByCol: Record<number, import('./table/tableGridTypes').ColumnMultiFieldConfig>;
-    multiFieldValueByCell: import('./table/tableGridTypes').MultiFieldValueByCell;
-  }) => {
-    multiFieldDataRef.current = data;
-  }, []);
+  // ========== 多字段数据（状态提升，受控模式） ==========
+  const [multiFieldData, setMultiFieldData] = useState<import('./table/tableGridTypes').MultiFieldData>(() => ({
+    columnMultiFieldConfigByCol: initialData?.columnMultiFieldConfigByCol as Record<number, import('./table/tableGridTypes').ColumnMultiFieldConfig> ?? {},
+    multiFieldValueByCell: initialData?.multiFieldValueByCell ?? {},
+  }));
+  const multiFieldDataRef = useRef(multiFieldData);
+  multiFieldDataRef.current = multiFieldData;
 
   const narrowLeadW = enableBatchSelection || enableShowRowIndex ? NARROW_W : 0;
 
@@ -295,11 +275,14 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       enablePagination,
       enableGrouping,
       imageUrlsByCell: Object.fromEntries(
-        Object.entries(imageDataRef.current.imageUrlsByCell).map(([k, v]) => [k, Array.from(v)])
+        Object.entries(imageData.imageUrlsByCell).map(([k, v]) => [k, Array.from(v)])
       ),
-      columnFieldKindByCol: imageDataRef.current.columnFieldKindByCol,
-      columnMultiFieldConfigByCol: multiFieldDataRef.current.columnMultiFieldConfigByCol,
-      multiFieldValueByCell: multiFieldDataRef.current.multiFieldValueByCell,
+      columnFieldKindByCol: imageData.columnFieldKindByCol as Record<number, string>,
+      linkDataByCell: Object.fromEntries(
+        Object.entries(imageData.linkDataByCell).map(([k, v]) => [k, Array.from(v)])
+      ),
+      columnMultiFieldConfigByCol: multiFieldData.columnMultiFieldConfigByCol,
+      multiFieldValueByCell: multiFieldData.multiFieldValueByCell,
       groupedColId,
       expandedGroupKeys: Array.from(expandedGroupKeys),
     };
@@ -326,6 +309,8 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     enableGrouping,
     groupedColId,
     expandedGroupKeys,
+    imageData,
+    multiFieldData,
   ]);
 
   // 状态变化时自动缓存到 sessionStorage
@@ -1051,15 +1036,16 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       setDisabledEditColSet(new Set());
       setUndoRedoNonce((n) => n + 1);
       bodyRowSelectionStore.toggleAll(false);
-      // 加载多字段配置和数据
-      setInitialMultiFieldData({
+      // 加载多字段配置和数据（受控模式）
+      setMultiFieldData({
         columnMultiFieldConfigByCol: MOCK_MULTI_FIELD_CONFIG,
         multiFieldValueByCell: MOCK_MULTI_FIELD_VALUES,
       });
-      // 加载图片列数据
-      setInitialImageData({
+      // 加载图片列数据（受控模式）
+      setImageData({
         columnFieldKindByCol: { [IMAGE_NEW_COL]: 'image' },
         imageUrlsByCell,
+        linkDataByCell: {},
       });
     } finally {
       endBatch();
@@ -1098,10 +1084,17 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       // 重置分组状态
       setGroupedColId(undefined);
       setExpandedGroupKeys(new Set());
-      // 清空多字段数据
-      setInitialMultiFieldData(undefined);
-      // 清空图片列数据
-      setInitialImageData(undefined);
+      // 清空图片列数据（状态提升）
+      setImageData({
+        columnFieldKindByCol: {},
+        imageUrlsByCell: {},
+        linkDataByCell: {},
+      });
+      // 清空多字段数据（状态提升）
+      setMultiFieldData({
+        columnMultiFieldConfigByCol: {},
+        multiFieldValueByCell: {},
+      });
       // 强制重新挂载 TableRows，彻底清空内部状态
       setTableResetNonce((n) => n + 1);
       // 清除所有存储数据
@@ -1140,12 +1133,15 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       enableGrouping,
       // 图片列数据
       imageUrlsByCell: Object.fromEntries(
-        Object.entries(imageDataRef.current.imageUrlsByCell).map(([k, v]) => [k, Array.from(v)])
+        Object.entries(imageData.imageUrlsByCell).map(([k, v]) => [k, Array.from(v)])
       ),
-      columnFieldKindByCol: imageDataRef.current.columnFieldKindByCol,
+      columnFieldKindByCol: imageData.columnFieldKindByCol as Record<number, string>,
+      linkDataByCell: Object.fromEntries(
+        Object.entries(imageData.linkDataByCell).map(([k, v]) => [k, Array.from(v)])
+      ),
       // 多字段数据
-      columnMultiFieldConfigByCol: multiFieldDataRef.current.columnMultiFieldConfigByCol,
-      multiFieldValueByCell: multiFieldDataRef.current.multiFieldValueByCell,
+      columnMultiFieldConfigByCol: multiFieldData.columnMultiFieldConfigByCol,
+      multiFieldValueByCell: multiFieldData.multiFieldValueByCell,
       // 分组数据
       groupedColId,
       expandedGroupKeys: Array.from(expandedGroupKeys),
@@ -1281,9 +1277,11 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     saveTableData,
     resetToInitial,
     hasSavedData,
-    // 图片列和多字段数据回调
-    onImageDataChange,
-    onMultiFieldDataChange,
+    // 图片列和多字段数据（受控模式）
+    imageData,
+    setImageData,
+    multiFieldData,
+    setMultiFieldData,
     hiddenColSet,
     setColumnHidden: (colIndex: number, hidden: boolean) => {
       setHiddenColSet((prev) => {
@@ -1341,8 +1339,6 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     // 模拟数据
     enableMockData,
     setEnableMockData,
-    initialMultiFieldData,
-    initialImageData,
     onGroupingChange: (groupId: string | undefined) => {
       setGroupedColId(groupId);
       // 切换分组列时，默认展开所有分组
@@ -1507,8 +1503,10 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     saveTableData,
     resetToInitial,
     hasSavedData,
-    onImageDataChange,
-    onMultiFieldDataChange,
+    imageData,
+    setImageData,
+    multiFieldData,
+    setMultiFieldData,
     hiddenColSet,
     setColumnHidden,
     setAllColumnsHidden,
@@ -1529,8 +1527,6 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     onGroupExpansionChange,
     onToggleAllGroupExpansion,
     onInsertRowWithGroupValue,
-    initialMultiFieldData,
-    initialImageData,
   } = model;
 
   const rows = (
@@ -1586,10 +1582,11 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
       onGroupExpansionChange={onGroupExpansionChange}
       onToggleAllGroupExpansion={onToggleAllGroupExpansion}
       onInsertRowWithGroupValue={onInsertRowWithGroupValue}
-      initialMultiFieldData={initialMultiFieldData}
-      initialImageData={initialImageData}
-      onImageDataChange={onImageDataChange}
-      onMultiFieldDataChange={onMultiFieldDataChange}
+      // 受控模式：图片列和多字段数据
+      imageData={imageData}
+      onImageDataChange={setImageData}
+      multiFieldData={multiFieldData}
+      onMultiFieldDataChange={setMultiFieldData}
     />
   );
 

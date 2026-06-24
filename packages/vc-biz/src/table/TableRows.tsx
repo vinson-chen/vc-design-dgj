@@ -17,7 +17,7 @@ import TableGridRow from './TableGridRow';
 import { TableRowHoverStoreContext } from './tableRowHoverStoreContext';
 import { createTableRowHoverStore } from './tableRowHoverStore';
 import type { TableGridStaticConfig } from './tableGridTypes';
-import type { TableColumnFieldKind, TableRowsProps, ColumnMultiFieldConfig, MultiFieldValueByCell, CellLinkData, InitialImageData } from './tableGridTypes';
+import type { TableColumnFieldKind, TableRowsProps, ColumnMultiFieldConfig, MultiFieldValueByCell, CellLinkData, ImageData, MultiFieldData } from './tableGridTypes';
 import {
   EDIT_TEXTAREA_MAX_ROWS,
   cellKey,
@@ -97,55 +97,42 @@ export default function TableRows(props: TableRowsProps) {
   }
   const hoverStore = hoverStoreRef.current;
   const [pointerHoverResetNonce, setPointerHoverResetNonce] = useState(0);
-  const [columnFieldKindByCol, setColumnFieldKindByCol] = useState<Record<number, TableColumnFieldKind>>(
-    props.initialImageData?.columnFieldKindByCol ?? {}
-  );
-  const [columnMultiFieldConfigByCol, setColumnMultiFieldConfigByCol] = useState<Record<number, ColumnMultiFieldConfig>>(
-    props.initialMultiFieldData?.columnMultiFieldConfigByCol ?? {}
-  );
-  const [multiFieldValueByCell, setMultiFieldValueByCell] = useState<MultiFieldValueByCell>(
-    props.initialMultiFieldData?.multiFieldValueByCell ?? {}
-  );
 
-  const [imageUrlsByCell, setImageUrlsByCell] = useState<Record<string, ReadonlyArray<string>>>(
-    props.initialImageData?.imageUrlsByCell ?? {}
-  );
+  // ========== 受控模式：图片列和链接列数据 ==========
+  // 内部状态（非受控模式时使用）
+  const [internalImageData, setInternalImageData] = useState<ImageData>(() => ({
+    columnFieldKindByCol: props.initialImageData?.columnFieldKindByCol ?? {},
+    imageUrlsByCell: props.initialImageData?.imageUrlsByCell ?? {},
+    linkDataByCell: {},
+  }));
 
-  // 同步图片列初始数据（用于模拟数据加载或重置）
-  useLayoutEffect(() => {
-    if (props.initialImageData) {
-      if (props.initialImageData.columnFieldKindByCol) {
-        setColumnFieldKindByCol(props.initialImageData.columnFieldKindByCol);
-      }
-      if (props.initialImageData.imageUrlsByCell) {
-        setImageUrlsByCell(props.initialImageData.imageUrlsByCell);
-      }
-    } else {
-      // 当 initialImageData 为 undefined 时清空（恢复默认）
-      setColumnFieldKindByCol({});
-      setImageUrlsByCell({});
-    }
-  }, [props.initialImageData]);
+  // 判断是否受控模式
+  const isImageDataControlled = props.imageData !== undefined;
+  const imageData = isImageDataControlled ? props.imageData : internalImageData;
+  const setImageData = isImageDataControlled
+    ? (data: ImageData) => props.onImageDataChange?.(data)
+    : setInternalImageData;
 
-  // 同步多字段初始数据（用于模拟数据加载或重置）
-  useLayoutEffect(() => {
-    if (props.initialMultiFieldData) {
-      if (props.initialMultiFieldData.columnMultiFieldConfigByCol) {
-        setColumnMultiFieldConfigByCol(props.initialMultiFieldData.columnMultiFieldConfigByCol);
-      }
-      if (props.initialMultiFieldData.multiFieldValueByCell) {
-        setMultiFieldValueByCell(props.initialMultiFieldData.multiFieldValueByCell);
-      }
-    } else {
-      // 当 initialMultiFieldData 为 undefined 时清空（恢复默认）
-      setColumnMultiFieldConfigByCol({});
-      setMultiFieldValueByCell({});
-    }
-  }, [props.initialMultiFieldData]);
+  // 解构 imageData
+  const { columnFieldKindByCol, imageUrlsByCell, linkDataByCell } = imageData;
+
+  // ========== 受控模式：多字段数据 ==========
+  const [internalMultiFieldData, setInternalMultiFieldData] = useState<MultiFieldData>(() => ({
+    columnMultiFieldConfigByCol: props.initialMultiFieldData?.columnMultiFieldConfigByCol ?? {},
+    multiFieldValueByCell: props.initialMultiFieldData?.multiFieldValueByCell ?? {},
+  }));
+
+  const isMultiFieldDataControlled = props.multiFieldData !== undefined;
+  const multiFieldData = isMultiFieldDataControlled ? props.multiFieldData : internalMultiFieldData;
+  const setMultiFieldData = isMultiFieldDataControlled
+    ? (data: MultiFieldData) => props.onMultiFieldDataChange?.(data)
+    : setInternalMultiFieldData;
+
+  // 解构 multiFieldData
+  const { columnMultiFieldConfigByCol, multiFieldValueByCell } = multiFieldData;
 
   // 追踪 blob URL，用于区分本地上传和外部链接，正确清理内存
   const blobUrlSetRef = useRef<Set<string>>(new Set());
-  const [linkDataByCell, setLinkDataByCell] = useState<Record<string, ReadonlyArray<CellLinkData>>>({});
   const effectiveMinResizableTextColWidth = props.minResizableTextColWidth;
 
   const gridNavMaxBodyRowIndex = props.rowCount >= 2 ? props.rowCount - 2 : -1;
@@ -177,42 +164,19 @@ export default function TableRows(props: TableRowsProps) {
     [typography.lineHeightPx]
   );
 
+  // ========== 图片列数据 setter ==========
   const setColumnFieldKind = useCallback((colIndex: number, kind: TableColumnFieldKind) => {
     if (colIndex < 0) return;
-    setColumnFieldKindByCol((prev) => {
-      const next = { ...prev };
+    setImageData((prev) => {
+      const nextColumnFieldKindByCol = { ...prev.columnFieldKindByCol };
       if (kind === 'text') {
-        delete next[colIndex];
+        delete nextColumnFieldKindByCol[colIndex];
       } else {
-        next[colIndex] = kind;
+        nextColumnFieldKindByCol[colIndex] = kind;
       }
-      return next;
+      return { ...prev, columnFieldKindByCol: nextColumnFieldKindByCol };
     });
-  }, []);
-
-  const setColumnMultiFieldFields = useCallback((colIndex: number, fields: Array<{ name: string }>) => {
-    if (colIndex < 0) return;
-    setColumnMultiFieldConfigByCol((prev) => {
-      const next = { ...prev };
-      if (fields.length > 0) {
-        next[colIndex] = { fields };
-      } else {
-        delete next[colIndex];
-      }
-      return next;
-    });
-  }, []);
-
-  const setMultiFieldContentByCell = useCallback((bodyRowIndex: number, colIndex: number, fieldIndex: number, content: string) => {
-    if (bodyRowIndex < 0 || colIndex < 0) return;
-    const key = `${bodyRowIndex}-${colIndex}`;
-    setMultiFieldValueByCell((prev) => {
-      const current = prev[key] ?? [];
-      const next = [...current];
-      next[fieldIndex] = { ...next[fieldIndex], name: next[fieldIndex]?.name ?? '', content };
-      return { ...prev, [key]: next };
-    });
-  }, []);
+  }, [setImageData]);
 
   const appendImageFilesToCell = useCallback(
     (bodyRowIndex: number, colIndex: number, files: readonly File[]) => {
@@ -222,13 +186,13 @@ export default function TableRows(props: TableRowsProps) {
       if (!urls.length) return;
       // 标记为 blob URL
       urls.forEach((url) => blobUrlSetRef.current.add(url));
-      setImageUrlsByCell((prev) => {
+      setImageData((prev) => {
         const key = cellKey(bodyRowIndex, colIndex);
-        const existing = prev[key] ?? [];
-        return { ...prev, [key]: [...existing, ...urls] };
+        const existing = prev.imageUrlsByCell[key] ?? [];
+        return { ...prev, imageUrlsByCell: { ...prev.imageUrlsByCell, [key]: [...existing, ...urls] } };
       });
     },
-    []
+    [setImageData]
   );
 
   // 新增：追加外部图片 URL
@@ -240,20 +204,21 @@ export default function TableRows(props: TableRowsProps) {
       const validUrls = urls.map((u) => u.trim()).filter(Boolean);
       if (!validUrls.length) return;
       // 外部 URL 不加入 blobUrlSet
-      setImageUrlsByCell((prev) => {
+      setImageData((prev) => {
         const key = cellKey(bodyRowIndex, colIndex);
-        const existing = prev[key] ?? [];
-        return { ...prev, [key]: [...existing, ...validUrls] };
+        const existing = prev.imageUrlsByCell[key] ?? [];
+        return { ...prev, imageUrlsByCell: { ...prev.imageUrlsByCell, [key]: [...existing, ...validUrls] } };
       });
     },
-    []
+    [setImageData]
   );
 
   const removeImageAtCell = useCallback((bodyRowIndex: number, colIndex: number, imageIndex: number) => {
     if (bodyRowIndex < 0 || colIndex < 0 || imageIndex < 0) return;
     const key = cellKey(bodyRowIndex, colIndex);
-    setImageUrlsByCell((prev) => {
-      const existing = prev[key] ?? [];
+    setImageData((prev) => {
+      const existing = prev.imageUrlsByCell[key] ?? [];
+      if (imageIndex >= existing.length) return prev;
       if (imageIndex >= existing.length) return prev;
       const toRevoke = existing[imageIndex];
       // 仅 revoke blob URL，外部链接不需要清理
@@ -273,44 +238,69 @@ export default function TableRows(props: TableRowsProps) {
   const appendLinkToCell = useCallback(
     (bodyRowIndex: number, colIndex: number, data: CellLinkData) => {
       if (bodyRowIndex < 0 || colIndex < 0) return;
-      setLinkDataByCell((prev) => {
+      setImageData((prev) => {
         const key = cellKey(bodyRowIndex, colIndex);
-        const existing = prev[key] ?? [];
-        return { ...prev, [key]: [...existing, data] };
+        const existing = prev.linkDataByCell[key] ?? [];
+        return { ...prev, linkDataByCell: { ...prev.linkDataByCell, [key]: [...existing, data] } };
       });
     },
-    []
+    [setImageData]
   );
 
   const updateLinkAtCell = useCallback(
     (bodyRowIndex: number, colIndex: number, linkIndex: number, data: CellLinkData) => {
       if (bodyRowIndex < 0 || colIndex < 0 || linkIndex < 0) return;
-      setLinkDataByCell((prev) => {
+      setImageData((prev) => {
         const key = cellKey(bodyRowIndex, colIndex);
-        const existing = prev[key] ?? [];
+        const existing = prev.linkDataByCell[key] ?? [];
         if (linkIndex >= existing.length) return prev;
         const nextList = [...existing];
         nextList[linkIndex] = data;
-        return { ...prev, [key]: nextList };
+        return { ...prev, linkDataByCell: { ...prev.linkDataByCell, [key]: nextList } };
       });
     },
-    []
+    [setImageData]
   );
 
   const removeLinkAtCell = useCallback((bodyRowIndex: number, colIndex: number, linkIndex: number) => {
     if (bodyRowIndex < 0 || colIndex < 0 || linkIndex < 0) return;
     const key = cellKey(bodyRowIndex, colIndex);
-    setLinkDataByCell((prev) => {
-      const existing = prev[key] ?? [];
+    setImageData((prev) => {
+      const existing = prev.linkDataByCell[key] ?? [];
       if (linkIndex >= existing.length) return prev;
       const nextList = existing.filter((_, i) => i !== linkIndex);
       if (nextList.length === 0) {
-        const { [key]: _, ...rest } = prev;
-        return rest;
+        const { [key]: _, ...rest } = prev.linkDataByCell;
+        return { ...prev, linkDataByCell: rest };
       }
-      return { ...prev, [key]: nextList };
+      return { ...prev, linkDataByCell: { ...prev.linkDataByCell, [key]: nextList } };
     });
-  }, []);
+  }, [setImageData]);
+
+  // ========== 多字段数据 setter ==========
+  const setColumnMultiFieldFields = useCallback((colIndex: number, fields: Array<{ name: string }>) => {
+    if (colIndex < 0) return;
+    setMultiFieldData((prev) => {
+      const nextColumnMultiFieldConfigByCol = { ...prev.columnMultiFieldConfigByCol };
+      if (fields.length > 0) {
+        nextColumnMultiFieldConfigByCol[colIndex] = { fields };
+      } else {
+        delete nextColumnMultiFieldConfigByCol[colIndex];
+      }
+      return { ...prev, columnMultiFieldConfigByCol: nextColumnMultiFieldConfigByCol };
+    });
+  }, [setMultiFieldData]);
+
+  const setMultiFieldContentByCell = useCallback((bodyRowIndex: number, colIndex: number, fieldIndex: number, content: string) => {
+    if (bodyRowIndex < 0 || colIndex < 0) return;
+    const key = `${bodyRowIndex}-${colIndex}`;
+    setMultiFieldData((prev) => {
+      const current = prev.multiFieldValueByCell[key] ?? [];
+      const next = [...current];
+      next[fieldIndex] = { ...next[fieldIndex], name: next[fieldIndex]?.name ?? '', content };
+      return { ...prev, multiFieldValueByCell: { ...prev.multiFieldValueByCell, [key]: next } };
+    });
+  }, [setMultiFieldData]);
 
   const imageUrlsByCellRef = useRef({} as Record<string, ReadonlyArray<string>>);
   useLayoutEffect(() => {
@@ -586,15 +576,15 @@ export default function TableRows(props: TableRowsProps) {
     // 从 groupTitleRows 找到分组内的所有 bodyRowIndex
     const groupInfo = groupTitleRows.find((g) => g.groupValue === groupValue);
     if (!groupInfo || groupInfo.bodyRows.length === 0) return;
-    setMultiFieldValueByCell((prev) => {
-      const next = { ...prev };
+    setMultiFieldData((prev) => {
+      const next = { ...prev.multiFieldValueByCell };
       for (const bodyRowIndex of groupInfo.bodyRows) {
         const key = `${bodyRowIndex}-${colIndex}`;
         next[key] = fieldsContent;
       }
-      return next;
+      return { ...prev, multiFieldValueByCell: next };
     });
-  }, [groupTitleRows]);
+  }, [groupTitleRows, setMultiFieldData]);
 
   const effectiveRowMinWidth = useMemo(() => {
     // 关键：隐藏列后行的 minWidth 必须随“可见列”收缩，否则可视区足够也会残留横向滚动条，
@@ -814,8 +804,11 @@ export default function TableRows(props: TableRowsProps) {
       props.startUndoBatch?.();
       try {
         editing.removeColumnAt(colIndex);
-        setColumnFieldKindByCol((prev) => remapColumnFieldKindsAfterRemoveColumn(prev, colIndex));
-        setImageUrlsByCell((prev) => remapImageUrlsByCellAfterRemoveColumn(prev, colIndex));
+        setImageData((prev) => ({
+          ...prev,
+          columnFieldKindByCol: remapColumnFieldKindsAfterRemoveColumn(prev.columnFieldKindByCol, colIndex),
+          imageUrlsByCell: remapImageUrlsByCellAfterRemoveColumn(prev.imageUrlsByCell, colIndex),
+        }));
         props.onDeleteColumn?.(colIndex);
 
         // 新方案：groupId 嵌入数据中，删除列时 groupId 随数据移动或消失
@@ -846,7 +839,10 @@ export default function TableRows(props: TableRowsProps) {
       props.startUndoBatch?.();
       try {
         editing.removeBodyRowAt(bodyRowIndex);
-        setImageUrlsByCell((prev) => remapImageUrlsByCellAfterRemoveBodyRow(prev, bodyRowIndex));
+        setImageData((prev) => ({
+          ...prev,
+          imageUrlsByCell: remapImageUrlsByCellAfterRemoveBodyRow(prev.imageUrlsByCell, bodyRowIndex),
+        }));
         props.onDeleteBodyRow?.(bodyRowIndex);
       } finally {
         props.endUndoBatch?.();
@@ -881,14 +877,12 @@ export default function TableRows(props: TableRowsProps) {
         editing.setValueByCell((prev) =>
           remapValueByCellAfterColumnOrderChange(prev, fromIndex, toIndex)
         );
-        // 重映射列字段类型
-        setColumnFieldKindByCol((prev) =>
-          remapColumnFieldKindsAfterColumnOrderChange(prev, fromIndex, toIndex)
-        );
-        // 重映射图片 URL
-        setImageUrlsByCell((prev) =>
-          remapImageUrlsByCellAfterColumnOrderChange(prev, fromIndex, toIndex)
-        );
+        // 重映射图片列数据（包含列字段类型和图片 URL）
+        setImageData((prev) => ({
+          ...prev,
+          columnFieldKindByCol: remapColumnFieldKindsAfterColumnOrderChange(prev.columnFieldKindByCol, fromIndex, toIndex),
+          imageUrlsByCell: remapImageUrlsByCellAfterColumnOrderChange(prev.imageUrlsByCell, fromIndex, toIndex),
+        }));
         // 重映射列宽
         if (props.colWidths) {
           const newColWidths = remapColWidthsAfterColumnOrderChange(props.colWidths, fromIndex, toIndex);
@@ -1000,12 +994,14 @@ export default function TableRows(props: TableRowsProps) {
 
     // 复制多字段内容到新行
     const targetKey = `${newBodyRowIndex}-${groupedColIndex}`;
-    setMultiFieldValueByCell((prev) => {
-      const next = { ...prev };
-      next[targetKey] = sourceValues.map((v) => ({ ...v }));
-      return next;
-    });
-  }, [props.onInsertRowWithGroupValue, groupTitleRows, columnMultiFieldConfigByCol, multiFieldValueByCell, setMultiFieldValueByCell]);
+    setMultiFieldData((prev) => ({
+      ...prev,
+      multiFieldValueByCell: {
+        ...prev.multiFieldValueByCell,
+        [targetKey]: sourceValues.map((v) => ({ ...v })),
+      },
+    }));
+  }, [props.onInsertRowWithGroupValue, groupTitleRows, columnMultiFieldConfigByCol, multiFieldValueByCell, setMultiFieldData]);
 
   const onInsertRowWrapped = useCallback(() => {
     props.onInsertRow();
@@ -1047,29 +1043,29 @@ export default function TableRows(props: TableRowsProps) {
   const syncImageUrlsToGroup = useCallback((groupValue: string, colIndex: number, imageUrls: ReadonlyArray<string>) => {
     const groupInfo = groupTitleRows.find((g) => g.groupValue === groupValue);
     if (!groupInfo || groupInfo.bodyRows.length === 0) return;
-    setImageUrlsByCell((prev) => {
-      const next = { ...prev };
+    setImageData((prev) => {
+      const next = { ...prev.imageUrlsByCell };
       for (const bodyRowIndex of groupInfo.bodyRows) {
         const key = `${bodyRowIndex}-${colIndex}`;
         next[key] = imageUrls;
       }
-      return next;
+      return { ...prev, imageUrlsByCell: next };
     });
-  }, [groupTitleRows]);
+  }, [groupTitleRows, setImageData]);
 
   /** 分组场景：同步链接数据到分组内所有行 */
   const syncLinkDataToGroup = useCallback((groupValue: string, colIndex: number, linkData: ReadonlyArray<CellLinkData>) => {
     const groupInfo = groupTitleRows.find((g) => g.groupValue === groupValue);
     if (!groupInfo || groupInfo.bodyRows.length === 0) return;
-    setLinkDataByCell((prev) => {
-      const next = { ...prev };
+    setImageData((prev) => {
+      const next = { ...prev.linkDataByCell };
       for (const bodyRowIndex of groupInfo.bodyRows) {
         const key = `${bodyRowIndex}-${colIndex}`;
         next[key] = linkData;
       }
-      return next;
+      return { ...prev, linkDataByCell: next };
     });
-  }, [groupTitleRows]);
+  }, [groupTitleRows, setImageData]);
 
   const staticConfig = useMemo((): TableGridStaticConfig => {
     const {
