@@ -17,6 +17,19 @@ const DEFAULT_TEXT_COL_W = 200;
 /** checkbox / 序号 / 插入列等窄格统一宽度（与 padding 0 下四位序号对齐，避免开关「显示序号」时列宽抖动） */
 const NARROW_W = 40;
 
+/** localStorage key for saved table data */
+const TABLE_DATA_STORAGE_KEY = 'vc-biz-table-demo-data';
+
+/** Saved table data structure */
+type SavedTableData = {
+  rowCount: number;
+  colCount: number;
+  valueByCell: Record<string, string>;
+  hiddenColSet: number[];
+  disabledEditColSet: number[];
+  colWidths: Array<number | null>;
+};
+
 export type TableAreaDemoOptions = Readonly<{
   initialRowCount?: number;
   initialColCount?: number;
@@ -58,8 +71,24 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     options?.bodyScrollMaxHeight === undefined ? 520 : options.bodyScrollMaxHeight;
   const showEditKeyboardHints = options?.showEditKeyboardHints ?? false;
 
-  const [rowCount, setRowCount] = useState(options?.initialRowCount ?? 20);
-  const [colCount, setColCount] = useState(options?.initialColCount ?? 10);
+  // 尝试从 localStorage 加载保存的数据
+  const getSavedData = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(TABLE_DATA_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved) as SavedTableData;
+      }
+    } catch {
+      // ignore parse errors
+    }
+    return null;
+  }, []);
+
+  const savedData = getSavedData();
+  const hasSavedData = savedData !== null;
+
+  const [rowCount, setRowCount] = useState(savedData?.rowCount ?? options?.initialRowCount ?? 20);
+  const [colCount, setColCount] = useState(savedData?.colCount ?? options?.initialColCount ?? 10);
   const [enableColumnResize, setEnableColumnResize] = useState(
     options?.initialEnableColumnResize ?? true
   );
@@ -94,10 +123,14 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     options?.initialEnableRegularTableFont ?? true
   );
   const [valueByCell, setValueByCellBase] = useState<Record<string, string>>(() => ({
-    ...(options?.initialValueByCell ?? {}),
+    ...(savedData?.valueByCell ?? options?.initialValueByCell ?? {}),
   }));
-  const [hiddenColSet, setHiddenColSet] = useState<Set<number>>(() => new Set());
-  const [disabledEditColSet, setDisabledEditColSet] = useState<Set<number>>(() => new Set());
+  const [hiddenColSet, setHiddenColSet] = useState<Set<number>>(() =>
+    new Set(savedData?.hiddenColSet ?? [])
+  );
+  const [disabledEditColSet, setDisabledEditColSet] = useState<Set<number>>(() =>
+    new Set(savedData?.disabledEditColSet ?? [])
+  );
   const [undoRedoNonce, setUndoRedoNonce] = useState(0);
   // 表格重置 nonce：用于强制重新挂载 TableRows，彻底清空所有内部状态
   const [tableResetNonce, setTableResetNonce] = useState(0);
@@ -169,6 +202,13 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     bodyRowSelectionStoreRef.current = new BodyRowSelectionStore();
   }
   const bodyRowSelectionStore = bodyRowSelectionStoreRef.current;
+
+  // 初始化时应用保存的列宽数据
+  useLayoutEffect(() => {
+    if (savedData?.colWidths) {
+      applyColWidthsSnapshot(savedData.colWidths);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 仅初始化时执行一次
 
   useLayoutEffect(() => {
     bodyRowSelectionStore.setBodyRowCount(Math.max(0, rowCount - 1));
@@ -929,13 +969,60 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       setInitialImageData(undefined);
       // 强制重新挂载 TableRows，彻底清空内部状态
       setTableResetNonce((n) => n + 1);
+      // 清除 localStorage 保存的数据
+      localStorage.removeItem(TABLE_DATA_STORAGE_KEY);
     } finally {
       endBatch();
     }
     if (!silent) {
-      message.success('已重置为初始状态');
+      message.success('已恢复为默认配置');
     }
   }, [applyColWidthsSnapshot, bodyRowSelectionStore, endBatch, setEnableVerticalCenter, startBatch, options?.initialColCount, options?.initialRowCount]);
+
+  // 保存当前数据到 localStorage
+  const saveTableData = useCallback(() => {
+    const dataToSave: SavedTableData = {
+      rowCount: rowCountRef.current,
+      colCount: colCountRef.current,
+      valueByCell: valueByCellRef.current,
+      hiddenColSet: Array.from(hiddenColSet),
+      disabledEditColSet: Array.from(disabledEditColSet),
+      colWidths: colWidthsRef.current,
+    };
+    try {
+      localStorage.setItem(TABLE_DATA_STORAGE_KEY, JSON.stringify(dataToSave));
+      message.success('数据已保存');
+    } catch {
+      message.error('保存失败，请检查浏览器存储空间');
+    }
+  }, [hiddenColSet, disabledEditColSet]);
+
+  // 恢复到上次保存的数据
+  const restoreToSaved = useCallback(() => {
+    const saved = getSavedData();
+    if (!saved) {
+      message.warning('没有找到已保存的数据');
+      return;
+    }
+    startBatch();
+    try {
+      applyColWidthsSnapshot(saved.colWidths);
+      setColCount(saved.colCount);
+      setRowCount(saved.rowCount);
+      setValueByCellBase(saved.valueByCell);
+      setHiddenColSet(new Set(saved.hiddenColSet));
+      setDisabledEditColSet(new Set(saved.disabledEditColSet));
+      setUndoRedoNonce((n) => n + 1);
+      bodyRowSelectionStore.toggleAll(false);
+      // 清空多字段和图片数据（保存时不包含这些）
+      setInitialMultiFieldData(undefined);
+      setInitialImageData(undefined);
+      setTableResetNonce((n) => n + 1);
+    } finally {
+      endBatch();
+    }
+    message.success('已恢复到上次保存的数据');
+  }, [applyColWidthsSnapshot, bodyRowSelectionStore, endBatch, getSavedData, startBatch]);
 
   // 当模拟数据开关变化时，加载或重置数据
   useLayoutEffect(() => {
@@ -1031,6 +1118,10 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     tableResetNonce,
     tableUndoRedo,
     importExcelFromFile,
+    // 保存/恢复功能
+    saveTableData,
+    resetToInitial,
+    hasSavedData,
     hiddenColSet,
     setColumnHidden: (colIndex: number, hidden: boolean) => {
       setHiddenColSet((prev) => {

@@ -73,6 +73,10 @@ export default function BizTableDemo() {
     setEnableRegularTableFont,
     disabledEditColSet,
     setColumnEditDisabled,
+    // 保存/恢复功能
+    saveTableData,
+    resetToInitial,
+    hasSavedData,
   } = demo;
 
   return (
@@ -293,6 +297,12 @@ export default function BizTableDemo() {
             </Button>
           </span>
         </Dropdown>
+        <Button type="primary" onClick={saveTableData}>
+          保存数据
+        </Button>
+        <Button type="default" onClick={resetToInitial}>
+          恢复默认
+        </Button>
       </div>
 
       <div
