@@ -297,6 +297,8 @@ export default function BizTableDemo() {
             </Button>
           </span>
         </Dropdown>
+        {/* 占位元素，将右侧按钮推向右边 */}
+        <div style={{ flex: 1 }} />
         <Button type="primary" onClick={saveTableData}>
           保存数据
         </Button>
