@@ -530,8 +530,8 @@ export function TableHeaderCell({
                       );
                     })}
                   </div>
-                  {/* 添加字段按钮：最多5个字段 */}
-                  {headerColEditDraftFields.length < 5 ? (
+                  {/* 添加字段按钮：最多10个字段 */}
+                  {headerColEditDraftFields.length < 10 ? (
                     <Button
                       type="text"
                       icon={<VcIcon type="add" fontSize={16} style={{ lineHeight: 1, color: vcTokens.color.neutral.text.icon }} />}
