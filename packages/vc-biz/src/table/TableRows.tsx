@@ -107,21 +107,11 @@ export default function TableRows(props: TableRowsProps) {
     props.initialMultiFieldData?.multiFieldValueByCell ?? {}
   );
 
-  // 同步 props 更新（用于模拟数据加载）
-  useLayoutEffect(() => {
-    if (props.initialMultiFieldData?.columnMultiFieldConfigByCol) {
-      setColumnMultiFieldConfigByCol(props.initialMultiFieldData.columnMultiFieldConfigByCol);
-    }
-    if (props.initialMultiFieldData?.multiFieldValueByCell) {
-      setMultiFieldValueByCell(props.initialMultiFieldData.multiFieldValueByCell);
-    }
-  }, [props.initialMultiFieldData]);
-
   const [imageUrlsByCell, setImageUrlsByCell] = useState<Record<string, ReadonlyArray<string>>>(
     props.initialImageData?.imageUrlsByCell ?? {}
   );
 
-  // 同步图片列初始数据（用于模拟数据加载）
+  // 同步图片列初始数据（用于模拟数据加载或重置）
   useLayoutEffect(() => {
     if (props.initialImageData) {
       if (props.initialImageData.columnFieldKindByCol) {
@@ -130,28 +120,28 @@ export default function TableRows(props: TableRowsProps) {
       if (props.initialImageData.imageUrlsByCell) {
         setImageUrlsByCell(props.initialImageData.imageUrlsByCell);
       }
+    } else {
+      // 当 initialImageData 为 undefined 时清空（恢复默认）
+      setColumnFieldKindByCol({});
+      setImageUrlsByCell({});
     }
   }, [props.initialImageData]);
 
-  // 图片列数据变化时传出给父组件
-  useEffect(() => {
-    if (props.onImageDataChange) {
-      props.onImageDataChange({
-        columnFieldKindByCol,
-        imageUrlsByCell,
-      });
+  // 同步多字段初始数据（用于模拟数据加载或重置）
+  useLayoutEffect(() => {
+    if (props.initialMultiFieldData) {
+      if (props.initialMultiFieldData.columnMultiFieldConfigByCol) {
+        setColumnMultiFieldConfigByCol(props.initialMultiFieldData.columnMultiFieldConfigByCol);
+      }
+      if (props.initialMultiFieldData.multiFieldValueByCell) {
+        setMultiFieldValueByCell(props.initialMultiFieldData.multiFieldValueByCell);
+      }
+    } else {
+      // 当 initialMultiFieldData 为 undefined 时清空（恢复默认）
+      setColumnMultiFieldConfigByCol({});
+      setMultiFieldValueByCell({});
     }
-  }, [columnFieldKindByCol, imageUrlsByCell, props.onImageDataChange]);
-
-  // 多字段数据变化时传出给父组件
-  useEffect(() => {
-    if (props.onMultiFieldDataChange) {
-      props.onMultiFieldDataChange({
-        columnMultiFieldConfigByCol,
-        multiFieldValueByCell,
-      });
-    }
-  }, [columnMultiFieldConfigByCol, multiFieldValueByCell, props.onMultiFieldDataChange]);
+  }, [props.initialMultiFieldData]);
 
   // 追踪 blob URL，用于区分本地上传和外部链接，正确清理内存
   const blobUrlSetRef = useRef<Set<string>>(new Set());
