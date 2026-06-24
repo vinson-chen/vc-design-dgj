@@ -132,6 +132,27 @@ export default function TableRows(props: TableRowsProps) {
       }
     }
   }, [props.initialImageData]);
+
+  // 图片列数据变化时传出给父组件
+  useEffect(() => {
+    if (props.onImageDataChange) {
+      props.onImageDataChange({
+        columnFieldKindByCol,
+        imageUrlsByCell,
+      });
+    }
+  }, [columnFieldKindByCol, imageUrlsByCell, props.onImageDataChange]);
+
+  // 多字段数据变化时传出给父组件
+  useEffect(() => {
+    if (props.onMultiFieldDataChange) {
+      props.onMultiFieldDataChange({
+        columnMultiFieldConfigByCol,
+        multiFieldValueByCell,
+      });
+    }
+  }, [columnMultiFieldConfigByCol, multiFieldValueByCell, props.onMultiFieldDataChange]);
+
   // 追踪 blob URL，用于区分本地上传和外部链接，正确清理内存
   const blobUrlSetRef = useRef<Set<string>>(new Set());
   const [linkDataByCell, setLinkDataByCell] = useState<Record<string, ReadonlyArray<CellLinkData>>>({});

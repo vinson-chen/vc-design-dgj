@@ -45,6 +45,15 @@ type SavedTableData = {
   enableRegularTableFont: boolean;
   enablePagination: boolean;
   enableGrouping: boolean;
+  // 图片列数据
+  imageUrlsByCell: Record<string, string[]>;
+  columnFieldKindByCol: Record<number, string>;
+  // 多字段数据
+  columnMultiFieldConfigByCol?: Record<number, { fields: Array<{ name: string }> }>;
+  multiFieldValueByCell?: Record<string, Array<{ name: string; content: string }>>;
+  // 分组数据
+  groupedColId: string | undefined;
+  expandedGroupKeys: string[];
 };
 
 export type TableAreaDemoOptions = Readonly<{
@@ -168,8 +177,12 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   const [enableGrouping, setEnableGrouping] = useState(
     savedData?.enableGrouping ?? options?.initialEnableGrouping ?? true
   );
-  const [groupedColId, setGroupedColId] = useState<string | undefined>(undefined);
-  const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(() => new Set());
+  const [groupedColId, setGroupedColId] = useState<string | undefined>(
+    savedData?.groupedColId ?? undefined
+  );
+  const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(() =>
+    new Set(savedData?.expandedGroupKeys ?? [])
+  );
 
   // 模拟数据状态
   const [enableMockData, setEnableMockData] = useState(
@@ -178,9 +191,17 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   // 多字段数据状态（用于传递给 TableRows）
   const [initialMultiFieldData, setInitialMultiFieldData] = useState<
     import('./table/tableGridTypes').InitialMultiFieldData | undefined
-  >(undefined);
+  >(savedData?.columnMultiFieldConfigByCol || savedData?.multiFieldValueByCell ? {
+    columnMultiFieldConfigByCol: savedData.columnMultiFieldConfigByCol,
+    multiFieldValueByCell: savedData.multiFieldValueByCell,
+  } : undefined);
   // 图片列数据状态（用于传递给 TableRows）
-  const [initialImageData, setInitialImageData] = useState<InitialImageData | undefined>(undefined);
+  const [initialImageData, setInitialImageData] = useState<InitialImageData | undefined>(
+    savedData?.imageUrlsByCell || savedData?.columnFieldKindByCol ? {
+      columnFieldKindByCol: savedData.columnFieldKindByCol as Record<number, import('./table/tableGridTypes').TableColumnFieldKind>,
+      imageUrlsByCell: savedData.imageUrlsByCell,
+    } : undefined
+  );
 
   const colCountRef = useRef(colCount);
   const rowCountRef = useRef(rowCount);
@@ -188,6 +209,30 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   rowCountRef.current = rowCount;
   const valueByCellRef = useRef(valueByCell);
   valueByCellRef.current = valueByCell;
+
+  // 图片列和多字段数据 ref（由 TableRows 回调更新）
+  const imageDataRef = useRef<{
+    columnFieldKindByCol: Record<number, import('./table/tableGridTypes').TableColumnFieldKind>;
+    imageUrlsByCell: Record<string, ReadonlyArray<string>>;
+  }>({ columnFieldKindByCol: {}, imageUrlsByCell: {} });
+  const multiFieldDataRef = useRef<{
+    columnMultiFieldConfigByCol: Record<number, import('./table/tableGridTypes').ColumnMultiFieldConfig>;
+    multiFieldValueByCell: import('./table/tableGridTypes').MultiFieldValueByCell;
+  }>({ columnMultiFieldConfigByCol: {}, multiFieldValueByCell: {} });
+
+  const onImageDataChange = useCallback((data: {
+    columnFieldKindByCol: Record<number, import('./table/tableGridTypes').TableColumnFieldKind>;
+    imageUrlsByCell: Record<string, ReadonlyArray<string>>;
+  }) => {
+    imageDataRef.current = data;
+  }, []);
+
+  const onMultiFieldDataChange = useCallback((data: {
+    columnMultiFieldConfigByCol: Record<number, import('./table/tableGridTypes').ColumnMultiFieldConfig>;
+    multiFieldValueByCell: import('./table/tableGridTypes').MultiFieldValueByCell;
+  }) => {
+    multiFieldDataRef.current = data;
+  }, []);
 
   const narrowLeadW = enableBatchSelection || enableShowRowIndex ? NARROW_W : 0;
 
@@ -1025,6 +1070,17 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       enableRegularTableFont,
       enablePagination,
       enableGrouping,
+      // 图片列数据
+      imageUrlsByCell: Object.fromEntries(
+        Object.entries(imageDataRef.current.imageUrlsByCell).map(([k, v]) => [k, Array.from(v)])
+      ),
+      columnFieldKindByCol: imageDataRef.current.columnFieldKindByCol,
+      // 多字段数据
+      columnMultiFieldConfigByCol: multiFieldDataRef.current.columnMultiFieldConfigByCol,
+      multiFieldValueByCell: multiFieldDataRef.current.multiFieldValueByCell,
+      // 分组数据
+      groupedColId,
+      expandedGroupKeys: Array.from(expandedGroupKeys),
     };
     try {
       localStorage.setItem(TABLE_DATA_STORAGE_KEY, JSON.stringify(dataToSave));
@@ -1048,6 +1104,8 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     enableRegularTableFont,
     enablePagination,
     enableGrouping,
+    groupedColId,
+    expandedGroupKeys,
   ]);
 
   // 模拟数据开关状态 ref，用于判断是用户主动切换还是初始加载
@@ -1155,6 +1213,9 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     saveTableData,
     resetToInitial,
     hasSavedData,
+    // 图片列和多字段数据回调
+    onImageDataChange,
+    onMultiFieldDataChange,
     hiddenColSet,
     setColumnHidden: (colIndex: number, hidden: boolean) => {
       setHiddenColSet((prev) => {
@@ -1374,6 +1435,12 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
     undoRedoNonce,
     tableResetNonce,
     tableUndoRedo,
+    importExcelFromFile,
+    saveTableData,
+    resetToInitial,
+    hasSavedData,
+    onImageDataChange,
+    onMultiFieldDataChange,
     hiddenColSet,
     setColumnHidden,
     setAllColumnsHidden,
@@ -1453,6 +1520,8 @@ export function TableAreaTableInstance(model: TableAreaDemoModel) {
       onInsertRowWithGroupValue={onInsertRowWithGroupValue}
       initialMultiFieldData={initialMultiFieldData}
       initialImageData={initialImageData}
+      onImageDataChange={onImageDataChange}
+      onMultiFieldDataChange={onMultiFieldDataChange}
     />
   );
 

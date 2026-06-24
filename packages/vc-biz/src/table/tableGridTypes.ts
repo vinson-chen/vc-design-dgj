@@ -157,6 +157,16 @@ export type TableRowsProps = Readonly<{
   setAllColumnsEditDisabled?: (nextDisabledCols: ReadonlySet<number>) => void;
   /** 单元格选中状态 store 回调：TableRows 内部创建后传出 */
   onCellSelectionStore?: (store: CellSelectionStore) => void;
+  /** 图片列数据回调：TableRows 内部数据传出 */
+  onImageDataChange?: (data: {
+    columnFieldKindByCol: Record<number, TableColumnFieldKind>;
+    imageUrlsByCell: Record<string, ReadonlyArray<string>>;
+  }) => void;
+  /** 多字段数据回调：TableRows 内部数据传出 */
+  onMultiFieldDataChange?: (data: {
+    columnMultiFieldConfigByCol: Record<number, ColumnMultiFieldConfig>;
+    multiFieldValueByCell: MultiFieldValueByCell;
+  }) => void;
   /** 显示分页：默认关闭；开启后插入行右侧显示简洁模式分页器 */
   enablePagination?: boolean;
   /** 当前页码（1-based），受控模式 */
