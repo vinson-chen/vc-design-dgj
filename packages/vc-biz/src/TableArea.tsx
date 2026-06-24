@@ -22,12 +22,29 @@ const TABLE_DATA_STORAGE_KEY = 'vc-biz-table-demo-data';
 
 /** Saved table data structure */
 type SavedTableData = {
+  // 表格尺寸
   rowCount: number;
   colCount: number;
+  // 单元格内容
   valueByCell: Record<string, string>;
+  // 列配置
   hiddenColSet: number[];
   disabledEditColSet: number[];
   colWidths: Array<number | null>;
+  // 表格配置项
+  enableColumnResize: boolean;
+  enableVerticalCenter: boolean;
+  enableFreezeFirstCol: boolean;
+  enableFreezeLastCol: boolean;
+  enableFreezeLastRow: boolean;
+  enableBodyCellRightBorder: boolean;
+  enableShowRowIndex: boolean;
+  enableBatchSelection: boolean;
+  enableInsertRowCol: boolean;
+  enableEditMode: boolean;
+  enableRegularTableFont: boolean;
+  enablePagination: boolean;
+  enableGrouping: boolean;
 };
 
 export type TableAreaDemoOptions = Readonly<{
@@ -90,37 +107,37 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   const [rowCount, setRowCount] = useState(savedData?.rowCount ?? options?.initialRowCount ?? 20);
   const [colCount, setColCount] = useState(savedData?.colCount ?? options?.initialColCount ?? 10);
   const [enableColumnResize, setEnableColumnResize] = useState(
-    options?.initialEnableColumnResize ?? true
+    savedData?.enableColumnResize ?? options?.initialEnableColumnResize ?? true
   );
   const [enableVerticalCenter, setEnableVerticalCenter] = useState(
-    options?.initialEnableVerticalCenter ?? true
+    savedData?.enableVerticalCenter ?? options?.initialEnableVerticalCenter ?? true
   );
   const [enableFreezeFirstCol, setEnableFreezeFirstCol] = useState(
-    options?.initialEnableFreezeFirstCol ?? true
+    savedData?.enableFreezeFirstCol ?? options?.initialEnableFreezeFirstCol ?? true
   );
   const [enableFreezeLastCol, setEnableFreezeLastCol] = useState(
-    options?.initialEnableFreezeLastCol ?? false
+    savedData?.enableFreezeLastCol ?? options?.initialEnableFreezeLastCol ?? false
   );
   const [enableFreezeLastRow, setEnableFreezeLastRow] = useState(
-    options?.initialEnableFreezeLastRow ?? true
+    savedData?.enableFreezeLastRow ?? options?.initialEnableFreezeLastRow ?? true
   );
   const [enableBodyCellRightBorder, setEnableBodyCellRightBorder] = useState(
-    options?.initialEnableBodyCellRightBorder ?? true
+    savedData?.enableBodyCellRightBorder ?? options?.initialEnableBodyCellRightBorder ?? true
   );
   const [enableShowRowIndex, setEnableShowRowIndex] = useState(
-    options?.initialEnableShowRowIndex ?? true
+    savedData?.enableShowRowIndex ?? options?.initialEnableShowRowIndex ?? true
   );
   const [enableBatchSelection, setEnableBatchSelection] = useState(
-    options?.initialEnableBatchSelection ?? true
+    savedData?.enableBatchSelection ?? options?.initialEnableBatchSelection ?? true
   );
   const [enableInsertRowCol, setEnableInsertRowCol] = useState(
-    options?.initialEnableInsertRowCol ?? true
+    savedData?.enableInsertRowCol ?? options?.initialEnableInsertRowCol ?? true
   );
   const [enableEditMode, setEnableEditMode] = useState(
-    options?.initialEnableEditMode ?? true
+    savedData?.enableEditMode ?? options?.initialEnableEditMode ?? true
   );
   const [enableRegularTableFont, setEnableRegularTableFont] = useState(
-    options?.initialEnableRegularTableFont ?? true
+    savedData?.enableRegularTableFont ?? options?.initialEnableRegularTableFont ?? true
   );
   const [valueByCell, setValueByCellBase] = useState<Record<string, string>>(() => ({
     ...(savedData?.valueByCell ?? options?.initialValueByCell ?? {}),
@@ -138,7 +155,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
 
   // 分页状态
   const [enablePagination, setEnablePagination] = useState(
-    options?.initialEnablePagination ?? true
+    savedData?.enablePagination ?? options?.initialEnablePagination ?? true
   );
   const [paginationCurrent, setPaginationCurrent] = useState(
     options?.initialPaginationCurrent ?? 1
@@ -149,7 +166,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
 
   // 分组状态
   const [enableGrouping, setEnableGrouping] = useState(
-    options?.initialEnableGrouping ?? true
+    savedData?.enableGrouping ?? options?.initialEnableGrouping ?? true
   );
   const [groupedColId, setGroupedColId] = useState<string | undefined>(undefined);
   const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(() => new Set());
@@ -952,8 +969,20 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       setDisabledEditColSet(new Set());
       setUndoRedoNonce((n) => n + 1);
       bodyRowSelectionStore.toggleAll(false);
-      // 恢复垂直居中
-      setEnableVerticalCenter(true);
+      // 恢复所有配置项为默认值
+      setEnableColumnResize(options?.initialEnableColumnResize ?? true);
+      setEnableVerticalCenter(options?.initialEnableVerticalCenter ?? true);
+      setEnableFreezeFirstCol(options?.initialEnableFreezeFirstCol ?? true);
+      setEnableFreezeLastCol(options?.initialEnableFreezeLastCol ?? false);
+      setEnableFreezeLastRow(options?.initialEnableFreezeLastRow ?? true);
+      setEnableBodyCellRightBorder(options?.initialEnableBodyCellRightBorder ?? true);
+      setEnableShowRowIndex(options?.initialEnableShowRowIndex ?? true);
+      setEnableBatchSelection(options?.initialEnableBatchSelection ?? true);
+      setEnableInsertRowCol(options?.initialEnableInsertRowCol ?? true);
+      setEnableEditMode(options?.initialEnableEditMode ?? true);
+      setEnableRegularTableFont(options?.initialEnableRegularTableFont ?? true);
+      setEnablePagination(options?.initialEnablePagination ?? true);
+      setEnableGrouping(options?.initialEnableGrouping ?? true);
       // 重置分组状态
       setGroupedColId(undefined);
       setExpandedGroupKeys(new Set());
@@ -982,6 +1011,20 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       hiddenColSet: Array.from(hiddenColSet),
       disabledEditColSet: Array.from(disabledEditColSet),
       colWidths: colWidthsRef.current,
+      // 表格配置项
+      enableColumnResize,
+      enableVerticalCenter,
+      enableFreezeFirstCol,
+      enableFreezeLastCol,
+      enableFreezeLastRow,
+      enableBodyCellRightBorder,
+      enableShowRowIndex,
+      enableBatchSelection,
+      enableInsertRowCol,
+      enableEditMode,
+      enableRegularTableFont,
+      enablePagination,
+      enableGrouping,
     };
     try {
       localStorage.setItem(TABLE_DATA_STORAGE_KEY, JSON.stringify(dataToSave));
@@ -989,34 +1032,23 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     } catch {
       message.error('保存失败，请检查浏览器存储空间');
     }
-  }, [hiddenColSet, disabledEditColSet]);
-
-  // 恢复到上次保存的数据
-  const restoreToSaved = useCallback(() => {
-    const saved = getSavedData();
-    if (!saved) {
-      message.warning('没有找到已保存的数据');
-      return;
-    }
-    startBatch();
-    try {
-      applyColWidthsSnapshot(saved.colWidths);
-      setColCount(saved.colCount);
-      setRowCount(saved.rowCount);
-      setValueByCellBase(saved.valueByCell);
-      setHiddenColSet(new Set(saved.hiddenColSet));
-      setDisabledEditColSet(new Set(saved.disabledEditColSet));
-      setUndoRedoNonce((n) => n + 1);
-      bodyRowSelectionStore.toggleAll(false);
-      // 清空多字段和图片数据（保存时不包含这些）
-      setInitialMultiFieldData(undefined);
-      setInitialImageData(undefined);
-      setTableResetNonce((n) => n + 1);
-    } finally {
-      endBatch();
-    }
-    message.success('已恢复到上次保存的数据');
-  }, [applyColWidthsSnapshot, bodyRowSelectionStore, endBatch, getSavedData, startBatch]);
+  }, [
+    hiddenColSet,
+    disabledEditColSet,
+    enableColumnResize,
+    enableVerticalCenter,
+    enableFreezeFirstCol,
+    enableFreezeLastCol,
+    enableFreezeLastRow,
+    enableBodyCellRightBorder,
+    enableShowRowIndex,
+    enableBatchSelection,
+    enableInsertRowCol,
+    enableEditMode,
+    enableRegularTableFont,
+    enablePagination,
+    enableGrouping,
+  ]);
 
   // 当模拟数据开关变化时，加载或重置数据
   useLayoutEffect(() => {
