@@ -294,6 +294,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
   }, [
     hiddenColSet,
     disabledEditColSet,
+    colWidths,
     enableColumnResize,
     enableVerticalCenter,
     enableFreezeFirstCol,
@@ -1065,6 +1066,9 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
             // 图片列的 URL 存入 imageUrlsByCell，不放入文本值
             if (oldCol === 4 && value.startsWith('http')) {
               imageUrlsByCell[newKey] = [value];
+            } else if (oldCol === 1) {
+              // 列1商品标题添加分组ID
+              cleanedValueByCell[newKey] = JSON.stringify({ title: value, groupId: MOCK_GROUP_ID });
             } else {
               cleanedValueByCell[newKey] = value;
             }
