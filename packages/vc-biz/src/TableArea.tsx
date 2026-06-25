@@ -1066,10 +1066,8 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
             // 图片列的 URL 存入 imageUrlsByCell，不放入文本值
             if (oldCol === 4 && value.startsWith('http')) {
               imageUrlsByCell[newKey] = [value];
-            } else if (oldCol === 1) {
-              // 列1商品标题添加分组ID
-              cleanedValueByCell[newKey] = JSON.stringify({ title: value, groupId: MOCK_GROUP_ID });
             } else {
+              // 表体列1商品标题保持纯文本，不添加分组ID
               cleanedValueByCell[newKey] = value;
             }
           }
@@ -1089,7 +1087,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       // 为每行生成新增列数据
       for (let row = 0; row < MOCK_ROW_COUNT - 1; row++) {
         const specId = cleanedValueByCell[`${row}-3`]; // 规格ID
-        const title = cleanedValueByCell[`${row}-1`]; // 商品标题（已包含分组JSON）
+        const title = cleanedValueByCell[`${row}-1`]; // 商品标题（纯文本）
         const specName = cleanedValueByCell[`${row}-0`]; // 规格名称
 
         // 列4: 规格编码 = SKU + 规格ID后6位
@@ -1106,17 +1104,8 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
         }
 
         // 列7: 重量 = 根据商品类型
-        // 从列1提取商品标题文本
-        if (title) {
-          try {
-            const titleObj = JSON.parse(title);
-            const titleText = titleObj.title;
-            if (titleText && weightMap[titleText]) {
-              cleanedValueByCell[`${row}-7`] = String(weightMap[titleText]);
-            }
-          } catch {
-            // ignore parse errors
-          }
+        if (title && weightMap[title]) {
+          cleanedValueByCell[`${row}-7`] = String(weightMap[title]);
         }
 
         // 列8: 操作列 - 链接按钮
