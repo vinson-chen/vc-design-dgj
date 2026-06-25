@@ -948,8 +948,10 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     '55-5': '10.01',
     '55-6': '手提秤',
   };
-  const MOCK_COL_COUNT = 7;
+  const MOCK_COL_COUNT = 9;
   const MOCK_ROW_COUNT = 57; // 1 header + 56 data rows (10商品 × 平均5.6规格)
+  const MOCK_GROUP_ID = 'group-1782352302294-ov43bli';
+  const MOCK_IMAGE_COL = 2; // 图片列号
 
   // 多字段配置：商品标题列（列1）配置两个多字段
   const MOCK_MULTI_FIELD_CONFIG: Record<number, import('./table/tableGridTypes').ColumnMultiFieldConfig> = {
@@ -992,24 +994,62 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       // 关闭垂直居中（图片列需要顶部对齐）
       setEnableVerticalCenter(false);
 
-      // 列重映射：将图片列（原列 4）移到商品标题（原列 1）右侧
+      // 新表格结构（9列）：
+      // 0=规格名称, 1=商品标题(隐藏+分组), 2=规格图, 3=规格ID, 4=规格编码, 5=关联数, 6=简称, 7=重量, 8=操作
+
+      // 列重映射：将原有的图片列（原列 4）移到商品标题（原列 1）右侧
       // 原始：0=规格名称, 1=商品标题, 2=宝贝ID, 3=宝贝链接, 4=图片地址, 5=价格, 6=类目
-      // 目标：0=规格名称, 1=商品标题, 2=产品图, 3=宝贝ID, 4=宝贝链接, 5=价格, 6=类目
-      // 映射：原列 4→新列 2, 原列 2→新列 3, 原列 3→新列 4, 其他不变
-      const colRemap: Record<number, number> = { 0: 0, 1: 1, 2: 3, 3: 4, 4: 2, 5: 5, 6: 6 };
-      const IMAGE_NEW_COL = 2; // 图片列重映射后的新列号
+      // 映射：原列 0→新列 0, 原列 1→新列 1, 原列 4→新列 2, 原列 2→新列 3, 原3-6删除，新列 4-8为新增
+      const colRemap: Record<number, number> = { 0: 0, 1: 1, 2: 3, 4: 2 };
 
       const imageUrlsByCell: Record<string, ReadonlyArray<string>> = {};
+      const linkDataByCell: Record<string, ReadonlyArray<{ name: string; url: string }>> = {};
       const cleanedValueByCell: Record<string, string> = {};
+
+      // 商品重量映射（单位：克）
+      const weightMap: Record<string, number> = {
+        '脚踩打气筒自行车用通用高压充气泵电动车摩托车': 850,
+        '现货剪指甲刀套装指甲剪套盒指甲钳修脚工具美容套7件套挖耳勺器': 120,
+        '新款强光远射手电筒迷你便携小手电户外多功能夹帽灯手电': 180,
+        '打气筒自行车汽车家用多功能高压充气泵电动电动车摩托车篮球便携': 650,
+        '10个装防滑无痕衣架简约晾衣服防肩角衣架': 280,
+        '特惠100双一次性筷子方便家用竹筷独立包装商用': 450,
+        '【商超中文包装+69码可入仓】五档三眼怪超长续航强光手电筒': 220,
+        '衣架家用无痕加粗款成人款衣架子居家防滑晾晒晾衣撑衣服撑子': 320,
+        '泡泡水补充液泡泡枪泡泡机吹泡泡七彩泡泡液浓缩液直销': 350,
+        '手提电子秤精准迷你厨房小型便携式吊秤弹簧秤': 95,
+      };
+
+      // 规格简称映射
+      const shortNameMap: Record<string, string> = {
+        '有线款': '有线', '无线款': '无线', '双缸高压款': '双缸', '迷你便携款': '便携',
+        '5件套': '5件', '7件套': '7件', '10件套豪华款': '豪华', '不锈钢款': '不锈钢', '防锈抗菌款': '抗菌',
+        '单只装': '单只', '双只装': '双只', '礼盒装': '礼盒', '充电款': '充电', '防水款': '防水', '战术款': '战术',
+        '迷你款': '迷你', '家用款': '家用', '商用高压款': '商用', '电动款': '电动', '静音款': '静音',
+        '10个装': '10个', '20个装': '20个', '50个装': '50个', '加厚款10个': '加厚', '防滑款10个': '防滑', '彩色款10个': '彩色', '豪华款20个': '豪华',
+        '50双装': '50双', '100双装': '100双', '200双装': '200双', '竹制款': '竹制', '木制款': '木制', '环保可降解款': '环保',
+        '基础款': '基础', '升级款': '升级', '超长续航款': '续航',
+        '成人款10个': '成人', '儿童款10个': '儿童', '多功能款': '多功能', '无痕款': '无痕', '浸塑款': '浸塑', '豪华套装20个': '豪华',
+        '小瓶100ml': '小瓶', '中瓶250ml': '中瓶', '大瓶500ml': '大瓶', '补充液套装': '套装', '浓缩液': '浓缩', '香薰泡泡液': '香薰', '无毒儿童款': '儿童',
+        '1kg量程': '1kg', '5kg量程': '5kg', '10kg量程': '10kg', '精准款0.1g': '精准', '背光显示款': '背光',
+      };
 
       for (const [key, value] of Object.entries(MOCK_DATA)) {
         // 处理表头
         const headerMatch = key.match(/^header-(\d+)$/);
         if (headerMatch) {
           const oldCol = Number(headerMatch[1]);
-          const newCol = colRemap[oldCol] ?? oldCol;
-          const newTitle = oldCol === 4 ? '产品图' : value;
-          cleanedValueByCell[`header-${newCol}`] = newTitle;
+          if (colRemap[oldCol] !== undefined) {
+            const newCol = colRemap[oldCol];
+            // 列1商品标题添加分组ID
+            if (oldCol === 1) {
+              cleanedValueByCell[`header-${newCol}`] = JSON.stringify({ title: value, groupId: MOCK_GROUP_ID });
+            } else if (oldCol === 4) {
+              cleanedValueByCell[`header-${newCol}`] = '规格图';
+            } else {
+              cleanedValueByCell[`header-${newCol}`] = value;
+            }
+          }
           continue;
         }
         // 处理表体单元格
@@ -1017,13 +1057,15 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
         if (bodyMatch) {
           const row = bodyMatch[1];
           const oldCol = Number(bodyMatch[2]);
-          const newCol = colRemap[oldCol] ?? oldCol;
-          const newKey = `${row}-${newCol}`;
-          // 图片列的 URL 存入 imageUrlsByCell，不放入文本值
-          if (oldCol === 4 && value.startsWith('http')) {
-            imageUrlsByCell[newKey] = [value];
-          } else {
-            cleanedValueByCell[newKey] = value;
+          if (colRemap[oldCol] !== undefined) {
+            const newCol = colRemap[oldCol];
+            const newKey = `${row}-${newCol}`;
+            // 图片列的 URL 存入 imageUrlsByCell，不放入文本值
+            if (oldCol === 4 && value.startsWith('http')) {
+              imageUrlsByCell[newKey] = [value];
+            } else {
+              cleanedValueByCell[newKey] = value;
+            }
           }
           continue;
         }
@@ -1031,8 +1073,52 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
         cleanedValueByCell[key] = value;
       }
 
+      // 新增表头（列4-8）
+      cleanedValueByCell['header-4'] = '规格编码';
+      cleanedValueByCell['header-5'] = '关联数';
+      cleanedValueByCell['header-6'] = '简称';
+      cleanedValueByCell['header-7'] = '重量';
+      cleanedValueByCell['header-8'] = '操作';
+
+      // 为每行生成新增列数据
+      for (let row = 0; row < MOCK_ROW_COUNT - 1; row++) {
+        const specId = cleanedValueByCell[`${row}-3`]; // 规格ID
+        const title = cleanedValueByCell[`${row}-1`]; // 商品标题（已包含分组JSON）
+        const specName = cleanedValueByCell[`${row}-0`]; // 规格名称
+
+        // 列4: 规格编码 = SKU + 规格ID后6位
+        if (specId) {
+          cleanedValueByCell[`${row}-4`] = `SKU-${specId.slice(-6)}`;
+        }
+
+        // 列5: 关联数 = 随机3-35
+        cleanedValueByCell[`${row}-5`] = String(Math.floor(Math.random() * 33) + 3);
+
+        // 列6: 简称 = 规格名称缩写
+        if (specName && shortNameMap[specName]) {
+          cleanedValueByCell[`${row}-6`] = shortNameMap[specName];
+        }
+
+        // 列7: 重量 = 根据商品类型
+        // 从列1提取商品标题文本
+        if (title) {
+          try {
+            const titleObj = JSON.parse(title);
+            const titleText = titleObj.title;
+            if (titleText && weightMap[titleText]) {
+              cleanedValueByCell[`${row}-7`] = String(weightMap[titleText]);
+            }
+          } catch {
+            // ignore parse errors
+          }
+        }
+
+        // 列8: 操作列 - 链接按钮
+        linkDataByCell[`${row}-8`] = [{ name: '关联订单商品', url: '' }];
+      }
+
       setValueByCellBase(cleanedValueByCell);
-      setHiddenColSet(new Set());
+      setHiddenColSet(new Set([1])); // 隐藏列1（商品标题）
       setDisabledEditColSet(new Set());
       setUndoRedoNonce((n) => n + 1);
       bodyRowSelectionStore.toggleAll(false);
@@ -1041,12 +1127,26 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
         columnMultiFieldConfigByCol: MOCK_MULTI_FIELD_CONFIG,
         multiFieldValueByCell: MOCK_MULTI_FIELD_VALUES,
       });
-      // 加载图片列数据（受控模式）
+      // 加载图片列和链接列数据（受控模式）
       setImageData({
-        columnFieldKindByCol: { [IMAGE_NEW_COL]: 'image' },
+        columnFieldKindByCol: { [MOCK_IMAGE_COL]: 'image', 8: 'link' },
         imageUrlsByCell,
-        linkDataByCell: {},
+        linkDataByCell,
       });
+      // 设置分组状态
+      setGroupedColId(MOCK_GROUP_ID);
+      setExpandedGroupKeys(new Set([
+        '脚踩打气筒自行车用通用高压充气泵电动车摩托车',
+        '现货剪指甲刀套装指甲剪套盒指甲钳修脚工具美容套7件套挖耳勺器',
+        '新款强光远射手电筒迷你便携小手电户外多功能夹帽灯手电',
+        '打气筒自行车汽车家用多功能高压充气泵电动电动车摩托车篮球便携',
+        '10个装防滑无痕衣架简约晾衣服防肩角衣架',
+        '特惠100双一次性筷子方便家用竹筷独立包装商用',
+        '【商超中文包装+69码可入仓】五档三眼怪超长续航强光手电筒',
+        '衣架家用无痕加粗款成人款衣架子居家防滑晾晒晾衣撑衣服撑子',
+        '泡泡水补充液泡泡枪泡泡机吹泡泡七彩泡泡液浓缩液直销',
+        '手提电子秤精准迷你厨房小型便携式吊秤弹簧秤',
+      ]));
     } finally {
       endBatch();
     }
