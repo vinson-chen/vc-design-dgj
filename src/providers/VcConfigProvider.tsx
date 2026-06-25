@@ -1,5 +1,5 @@
 import React, { useEffect, PropsWithChildren } from 'react';
-import { ConfigProvider, type ConfigProviderProps } from 'antd';
+import { ConfigProvider, App, type ConfigProviderProps } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { buildAntdTheme } from '../theme/buildAntdTheme';
 import '../icons/iconfont.css';
@@ -41,7 +41,7 @@ export const VcConfigProvider: React.FC<PropsWithChildren<VcConfigProviderProps>
       wave={{ disabled: false }}
       {...rest}
     >
-      {children}
+      <App>{children}</App>
     </ConfigProvider>
   );
 };
