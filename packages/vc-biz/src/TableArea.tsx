@@ -993,6 +993,8 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       setRowCount(MOCK_ROW_COUNT);
       // 关闭垂直居中（图片列需要顶部对齐）
       setEnableVerticalCenter(false);
+      // 关闭分页（模拟数据默认不分页）
+      setEnablePagination(false);
 
       // 新表格结构（9列）：
       // 0=规格名称, 1=商品标题(隐藏+分组), 2=规格图, 3=规格ID, 4=规格编码, 5=关联数, 6=简称, 7=重量, 8=操作
