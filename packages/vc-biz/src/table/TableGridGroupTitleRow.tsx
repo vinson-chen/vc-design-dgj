@@ -153,7 +153,8 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
     content: storedValues?.[idx]?.content ?? '',
   }));
 
-  // 计算分组标题行专用的 Grid 模板：窄列 + 第一列 + 合并右侧列 + 插入列（可选）
+  // 计算分组标题行专用的 Grid 模板：窄列 + 第一列 + 中间合并列 + 末列 + 插入列（可选）
+  // 开启冻结末列时，末列独立为一个 track，以便应用 sticky 定位
   const groupTitleRowGridTemplateColumns = useMemo(() => {
     // 第一列宽度
     const firstColRealIndex = cfg.visibleColIndexes[0];
@@ -161,17 +162,22 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
       ? cfg.colWidths[firstColRealIndex]
       : cfg.defaultTextColWidth;
 
-    // 右侧合并列宽度 = 所有其他可见列宽度之和
-    let rightSideWidth = 0;
-    for (let i = 1; i < cfg.visibleColIndexes.length; i++) {
+    // 末列宽度
+    const lastColRealIndex = cfg.visibleColIndexes[cfg.visibleColIndexes.length - 1];
+    const lastColWidth = cfg.enableColumnResize && cfg.colWidths[lastColRealIndex] != null
+      ? cfg.colWidths[lastColRealIndex]
+      : cfg.defaultTextColWidth;
+
+    // 中间合并列宽度 = 所有其他列 - 末列（第一列之外、末列之前的所有可见列）
+    let middleSideWidth = 0;
+    for (let i = 1; i < cfg.visibleColIndexes.length - 1; i++) {
       const colIndex = cfg.visibleColIndexes[i];
       const colW = cfg.enableColumnResize && cfg.colWidths[colIndex] != null
         ? cfg.colWidths[colIndex]
         : cfg.defaultTextColWidth;
-      rightSideWidth += colW;
+      middleSideWidth += colW;
     }
-    // 确保 rightSideWidth 至少为 0，避免布局问题
-    rightSideWidth = Math.max(0, rightSideWidth);
+    middleSideWidth = Math.max(0, middleSideWidth);
 
     // 插入列宽度
     const insertColW = cfg.enableInsertRowCol ? cfg.narrowWidth : 0;
@@ -182,7 +188,11 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
       parts.push(`${cfg.narrowLeadWidth}px`);
     }
     parts.push(`${firstColWidth}px`);
-    parts.push(`${rightSideWidth}px`);
+    // 只有 2 列时，中间合并列宽度为 0，跳过
+    if (cfg.visibleColIndexes.length > 2) {
+      parts.push(`${middleSideWidth}px`);
+    }
+    parts.push(`${lastColWidth}px`);
     if (insertColW > 0) {
       parts.push(`${insertColW}px`);
     }
@@ -425,8 +435,10 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
 
   // 第一列是否需要右描边
   const firstColShowRightBorder = cfg.enableFreezeFirstCol;
-  // 合并右侧列是否需要右描边（取决于末列设置）
-  const rightSideShowRightBorder = cfg.enableBodyCellRightBorder || cfg.enableFreezeLastCol;
+  // 中间合并列是否需要右描边（冻结末列时不再需要，由末列单独显示）
+  const middleSideShowRightBorder = cfg.enableBodyCellRightBorder && !cfg.enableFreezeLastCol;
+  // 末列是否需要右描边
+  const lastColShowRightBorder = cfg.enableBodyCellRightBorder || cfg.enableFreezeLastCol;
 
   return (
     <div
@@ -671,127 +683,176 @@ export function TableGridGroupTitleRow({ groupInfo, rowIndex }: TableGridGroupTi
         </VTableCell>
       </div>
 
-      {/* 合并右侧列：多字段平铺显示 */}
-      <VTableCell
-        variant="tbody"
-        hovered={rowHovered}
-        hoverByCell={false}
-        pointerHoverResetNonce={cfg.pointerHoverResetNonce}
-        active={false}
-        isLastRow={false}
-        isFrozen={false}
-        showRightBorder={rightSideShowRightBorder}
-        contentPaddingX={m.bodyCellPaddingX}
-        contentPaddingY={m.headerCellPaddingY}
-        contentAlignX="flex-start"
-        contentAlignY="center"
-        tbodyMinHeightPx={m.theadCellMinHeightPx}
-        style={{ borderTop: `1px solid ${vcTokens.color.neutral.border.default}` }}
-      >
-        {isGroupColMultiField && groupColValues.length > 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 24,
-              width: '100%',
-              minWidth: 0,
-              overflow: 'hidden',
-            }}
-          >
-            {groupColValues.map((field, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  minWidth: 0,
-                  flexShrink: 0,
-                }}
-              >
-                <Typography.Text
-                  style={{
-                    color: vcTokens.color.neutral.text.description,
-                    fontSize: m.fontSizePx,
-                    lineHeight: `${m.lineHeightPx}px`,
-                    whiteSpace: 'nowrap',
-                    userSelect: 'none',
-                  }}
-                >
-                  {field.name}：
-                </Typography.Text>
-                {editingFieldIndex === idx ? (
-                  <>
-                    <Input
-                      ref={fieldInputRef}
-                      value={editingFieldDraft}
-                      placeholder="无"
-                      onChange={(e) => setEditingFieldDraft(e.target.value)}
-                      onBlur={saveFieldEdit}
-                      onKeyDown={onFieldInputKeyDown}
-                      onClick={(e) => e.stopPropagation()}
-                      variant="borderless"
-                      styles={{ input: { padding: 0, borderRadius: 0 } }}
-                      style={{
-                        width: fieldInputWidth,
-                        maxWidth: 240,
-                        ...m.tableTextStyle,
-                      }}
-                      className="vc-biz-table-field-edit-input"
-                    />
-                  </>
-                ) : (
-                  <Tooltip
-                    title={fieldTruncatedMap[idx] ? field.content : undefined}
-                    placement="top"
-                    mouseEnterDelay={0.3}
-                  >
-                    <span
-                      ref={(el) => { fieldContentRefs.current[idx] = el; }}
-                      onDoubleClick={() => onFieldDoubleClick(idx, field.content)}
-                      style={{
-                        fontSize: m.fontSizePx,
-                        lineHeight: `${m.lineHeightPx}px`,
-                        color: field.content
-                          ? vcTokens.color.neutral.text.default
-                          : vcTokens.color.neutral.text.placeholder,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: 240,
-                        display: 'inline-block',
-                        cursor: canEditMultiField ? 'text' : undefined,
-                      }}
-                    >
-                      {field.content || '无'}
-                    </span>
-                  </Tooltip>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </VTableCell>
-
-      {/* 插入列占位 */}
-      {cfg.enableInsertRowCol ? (
+      {/* 中间合并列：多字段平铺显示（只有 >2 列时才渲染） */}
+      {cfg.visibleColIndexes.length > 2 ? (
         <VTableCell
           variant="tbody"
-          hovered={false}
+          hovered={rowHovered}
           hoverByCell={false}
           pointerHoverResetNonce={cfg.pointerHoverResetNonce}
           active={false}
           isLastRow={false}
-          suppressBottomBorder
-          showRightBorder={false}
-          contentPaddingX={0}
+          isFrozen={false}
+          showRightBorder={middleSideShowRightBorder}
+          contentPaddingX={m.bodyCellPaddingX}
           contentPaddingY={m.headerCellPaddingY}
-          contentAlignX="center"
+          contentAlignX="flex-start"
           contentAlignY="center"
           tbodyMinHeightPx={m.theadCellMinHeightPx}
+          style={{ borderTop: `1px solid ${vcTokens.color.neutral.border.default}` }}
+        >
+          {isGroupColMultiField && groupColValues.length > 0 ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 24,
+                width: '100%',
+                minWidth: 0,
+                overflow: 'hidden',
+              }}
+            >
+              {groupColValues.map((field, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    minWidth: 0,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Typography.Text
+                    style={{
+                      color: vcTokens.color.neutral.text.description,
+                      fontSize: m.fontSizePx,
+                      lineHeight: `${m.lineHeightPx}px`,
+                      whiteSpace: 'nowrap',
+                      userSelect: 'none',
+                    }}
+                  >
+                    {field.name}：
+                  </Typography.Text>
+                  {editingFieldIndex === idx ? (
+                    <>
+                      <Input
+                        ref={fieldInputRef}
+                        value={editingFieldDraft}
+                        placeholder="无"
+                        onChange={(e) => setEditingFieldDraft(e.target.value)}
+                        onBlur={saveFieldEdit}
+                        onKeyDown={onFieldInputKeyDown}
+                        onClick={(e) => e.stopPropagation()}
+                        variant="borderless"
+                        styles={{ input: { padding: 0, borderRadius: 0 } }}
+                        style={{
+                          width: fieldInputWidth,
+                          maxWidth: 240,
+                          ...m.tableTextStyle,
+                        }}
+                        className="vc-biz-table-field-edit-input"
+                      />
+                    </>
+                  ) : (
+                    <Tooltip
+                      title={fieldTruncatedMap[idx] ? field.content : undefined}
+                      placement="top"
+                      mouseEnterDelay={0.3}
+                    >
+                      <span
+                        ref={(el) => { fieldContentRefs.current[idx] = el; }}
+                        onDoubleClick={() => onFieldDoubleClick(idx, field.content)}
+                        style={{
+                          fontSize: m.fontSizePx,
+                          lineHeight: `${m.lineHeightPx}px`,
+                          color: field.content
+                            ? vcTokens.color.neutral.text.default
+                            : vcTokens.color.neutral.text.placeholder,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: 240,
+                          display: 'inline-block',
+                          cursor: canEditMultiField ? 'text' : undefined,
+                        }}
+                      >
+                        {field.content || '无'}
+                      </span>
+                    </Tooltip>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </VTableCell>
+      ) : null}
+
+      {/* 末列：冻结时 sticky */}
+      <div
+        style={{
+          display: 'flex',
+          minWidth: 0,
+          alignItems: 'stretch',
+          position: cfg.enableFreezeLastCol ? 'sticky' : undefined,
+          right: cfg.enableFreezeLastCol
+            ? (cfg.enableInsertRowCol ? cfg.narrowWidth : 0)
+            : undefined,
+          zIndex: cfg.enableFreezeLastCol ? 3 : undefined,
+          boxSizing: 'border-box',
+        }}
+      >
+        <VTableCell
+          variant="tbody"
+          hovered={rowHovered}
+          hoverByCell={false}
+          pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+          active={false}
+          isLastRow={false}
+          isFrozen={cfg.enableFreezeLastCol}
+          showRightBorder={lastColShowRightBorder}
+          contentPaddingX={m.bodyCellPaddingX}
+          contentPaddingY={m.headerCellPaddingY}
+          contentAlignX="flex-start"
+          contentAlignY="center"
+          tbodyMinHeightPx={m.theadCellMinHeightPx}
+          style={{ borderTop: `1px solid ${vcTokens.color.neutral.border.default}` }}
         >
           {null}
         </VTableCell>
+      </div>
+
+      {/* 插入列占位 */}
+      {cfg.enableInsertRowCol ? (
+        <div
+          style={{
+            display: 'flex',
+            minWidth: 0,
+            alignItems: 'stretch',
+            position: cfg.enableFreezeLastCol ? 'sticky' : undefined,
+            right: cfg.enableFreezeLastCol ? 0 : undefined,
+            zIndex: cfg.enableFreezeLastCol ? 5 : undefined,
+            boxSizing: 'border-box',
+          }}
+        >
+          <VTableCell
+            variant="tbody"
+            hovered={false}
+            hoverByCell={false}
+            pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+            active={false}
+            isLastRow={false}
+            suppressBottomBorder
+            showRightBorder={false}
+            contentPaddingX={0}
+            contentPaddingY={m.headerCellPaddingY}
+            contentAlignX="center"
+            contentAlignY="center"
+            tbodyMinHeightPx={m.theadCellMinHeightPx}
+            style={{ width: cfg.narrowWidth }}
+          >
+            {null}
+          </VTableCell>
+        </div>
       ) : null}
     </div>
   );

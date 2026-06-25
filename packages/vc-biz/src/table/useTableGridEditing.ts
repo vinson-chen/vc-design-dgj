@@ -623,15 +623,19 @@ export function useTableGridEditing(
         return;
       }
 
-      // 进入编辑态
+      // 直接输入字符：确保 contenteditable 有焦点，让 IME 正常工作
+      // 参考 vinson/Vdesign：不阻止默认行为，只确保焦点，浏览器处理 IME
       if (shouldEnterEditMode(ctx, e.key) && selectedCell) {
-        e.preventDefault();
-        const k = cellStorageKey(selectedCell.r, selectedCell.c);
-        const displayText = valueByCellRef.current[k] ?? '';
-        pendingFocusAfterKeyboardOpenRef.current = true;
-        const next = displayText + e.key;
-        editingDraftRef.current = next;
-        setEditingCell({ r: selectedCell.r, c: selectedCell.c });
+        // 找到选中单元格中的 contenteditable 元素并确认焦点
+        const selectedCellElement = document.querySelector(
+          `[data-hover-lock-cell][data-body-row="${selectedCell.r}"][data-col="${selectedCell.c}"]`
+        );
+        const contenteditable = selectedCellElement?.querySelector('[contenteditable="true"]') as HTMLElement;
+        if (contenteditable && document.activeElement !== contenteditable) {
+          // 如果焦点还没建立，立即建立（但不阻止默认行为）
+          contenteditable.focus();
+        }
+        // 不阻止默认行为，让浏览器处理 IME 输入
       }
     };
 

@@ -174,7 +174,7 @@ export function TableCellLink({
             className="vc-biz-table-link-item"
           >
             <Button
-              type="default"
+              type="link"
               className="vc-biz-table-link-btn"
               onClick={(e) => onLinkClick(link.url, e)}
               onPointerDown={(e) => e.stopPropagation()}

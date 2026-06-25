@@ -617,7 +617,7 @@ function TableGridGroupInsertTailRow({
   const store = useTableRowHoverStore();
   const hovered = useRowHovered(rowIndex);
   const rowHovered = !isColumnResizeDragging() && hovered;
-  const gridTemplateColumns = useRowGridTemplateColumns();
+  const m = cfg.typography;
 
   const onAddClick = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
@@ -629,8 +629,67 @@ function TableGridGroupInsertTailRow({
     }
   };
 
-  const visibleTextColCount = cfg.visibleColIndexes.length;
   const showNarrowLead = cfg.narrowLeadWidth > 0;
+
+  // 计算组内插入行专用的 Grid 模板：窄列 + 第一列 + 中间合并列 + 末列 + 插入列（可选）
+  // 与分组标题行布局一致
+  const gridTemplateColumns = useMemo(() => {
+    // 第一列宽度
+    const firstColRealIndex = cfg.visibleColIndexes[0];
+    const firstColWidth = cfg.enableColumnResize && cfg.colWidths[firstColRealIndex] != null
+      ? cfg.colWidths[firstColRealIndex]
+      : cfg.defaultTextColWidth;
+
+    // 末列宽度
+    const lastColRealIndex = cfg.visibleColIndexes[cfg.visibleColIndexes.length - 1];
+    const lastColWidth = cfg.enableColumnResize && cfg.colWidths[lastColRealIndex] != null
+      ? cfg.colWidths[lastColRealIndex]
+      : cfg.defaultTextColWidth;
+
+    // 中间合并列宽度 = 所有其他列 - 末列（第一列之外、末列之前的所有可见列）
+    let middleSideWidth = 0;
+    for (let i = 1; i < cfg.visibleColIndexes.length - 1; i++) {
+      const colIndex = cfg.visibleColIndexes[i];
+      const colW = cfg.enableColumnResize && cfg.colWidths[colIndex] != null
+        ? cfg.colWidths[colIndex]
+        : cfg.defaultTextColWidth;
+      middleSideWidth += colW;
+    }
+    middleSideWidth = Math.max(0, middleSideWidth);
+
+    // 插入列宽度
+    const insertColW = cfg.enableInsertRowCol ? cfg.narrowWidth : 0;
+
+    // 组合 Grid 模板
+    const parts: string[] = [];
+    if (showNarrowLead) {
+      parts.push(`${cfg.narrowLeadWidth}px`);
+    }
+    parts.push(`${firstColWidth}px`);
+    // 只有 2 列时，中间合并列宽度为 0，跳过
+    if (cfg.visibleColIndexes.length > 2) {
+      parts.push(`${middleSideWidth}px`);
+    }
+    parts.push(`${lastColWidth}px`);
+    if (insertColW > 0) {
+      parts.push(`${insertColW}px`);
+    }
+    return parts.join(' ');
+  }, [
+    showNarrowLead,
+    cfg.narrowLeadWidth,
+    cfg.visibleColIndexes,
+    cfg.enableColumnResize,
+    cfg.colWidths,
+    cfg.defaultTextColWidth,
+    cfg.enableInsertRowCol,
+    cfg.narrowWidth,
+  ]);
+
+  // 右描边逻辑
+  const firstColShowRightBorder = cfg.enableFreezeFirstCol;
+  const middleSideShowRightBorder = cfg.enableBodyCellRightBorder && !cfg.enableFreezeLastCol;
+  const lastColShowRightBorder = cfg.enableBodyCellRightBorder || cfg.enableFreezeLastCol;
 
   return (
     <div
@@ -676,10 +735,10 @@ function TableGridGroupInsertTailRow({
             isFrozen={cfg.enableFreezeFirstCol}
             showRightBorder={false}
             contentPaddingX={0}
-            contentPaddingY={cfg.typography.headerCellPaddingY}
+            contentPaddingY={m.headerCellPaddingY}
             contentAlignX="center"
             contentAlignY="center"
-            tbodyMinHeightPx={cfg.typography.theadCellMinHeightPx}
+            tbodyMinHeightPx={m.theadCellMinHeightPx}
             style={{ width: cfg.narrowLeadWidth }}
           >
             {cfg.enableInsertRowCol ? (
@@ -697,83 +756,115 @@ function TableGridGroupInsertTailRow({
         </div>
       ) : null}
 
-      {/* 其他列：空占位，第一列需要冻结 */}
-      {cfg.visibleColIndexes.map((realColIndex, viewColIndex) => {
-        const isFirstCol = viewColIndex === 0;
-        const isLastVisibleTextCol = viewColIndex === cfg.visibleColIndexes.length - 1;
-        // 只有冻结首列时的第一列、以及末列显示右描边
-        const showRightBorder = isFirstCol
-          ? cfg.enableFreezeFirstCol
-          : isLastVisibleTextCol;
-
-        return isFirstCol ? (
-          // 第一列：用 sticky div 包裹
-          <div
-            key={`group-insert-col-${realColIndex}`}
-            style={{
-              display: 'flex',
-              minWidth: 0,
-              alignItems: 'stretch',
-              position: cfg.enableFreezeFirstCol ? 'sticky' : undefined,
-              left: cfg.enableFreezeFirstCol ? cfg.narrowLeadWidth : undefined,
-              zIndex: cfg.enableFreezeFirstCol ? 4 : undefined,
-              boxSizing: 'border-box',
-            }}
-          >
-            <VTableCell
-              variant="tbody"
-              hovered={rowHovered}
-              hoverByCell={false}
-              pointerHoverResetNonce={cfg.pointerHoverResetNonce}
-              active={false}
-              isLastRow={false}
-              isFrozen={cfg.enableFreezeFirstCol}
-              showRightBorder={showRightBorder}
-              contentPaddingX={0}
-              contentPaddingY={cfg.typography.headerCellPaddingY}
-              contentAlignX="center"
-              contentAlignY="center"
-              tbodyMinHeightPx={cfg.typography.theadCellMinHeightPx}
-            />
-          </div>
-        ) : (
-          // 其他列：正常渲染
-          <VTableCell
-            key={`group-insert-col-${realColIndex}`}
-            variant="tbody"
-            hovered={rowHovered}
-            hoverByCell={false}
-            pointerHoverResetNonce={cfg.pointerHoverResetNonce}
-            active={false}
-            isLastRow={false}
-            isFrozen={false}
-            showRightBorder={showRightBorder}
-            contentPaddingX={0}
-            contentPaddingY={cfg.typography.headerCellPaddingY}
-            contentAlignX="center"
-            contentAlignY="center"
-            tbodyMinHeightPx={cfg.typography.theadCellMinHeightPx}
-          />
-        );
-      })}
-
-      {/* 插入列占位 */}
-      {cfg.enableInsertRowCol ? (
+      {/* 第一列：空占位 */}
+      <div
+        style={{
+          display: 'flex',
+          minWidth: 0,
+          alignItems: 'stretch',
+          position: cfg.enableFreezeFirstCol ? 'sticky' : undefined,
+          left: cfg.enableFreezeFirstCol ? (showNarrowLead ? cfg.narrowLeadWidth : 0) : undefined,
+          zIndex: cfg.enableFreezeFirstCol ? 4 : undefined,
+          boxSizing: 'border-box',
+        }}
+      >
         <VTableCell
           variant="tbody"
-          hovered={false}
+          hovered={rowHovered}
           hoverByCell={false}
           pointerHoverResetNonce={cfg.pointerHoverResetNonce}
           active={false}
           isLastRow={false}
-          suppressBottomBorder
-          showRightBorder={false}
+          isFrozen={cfg.enableFreezeFirstCol}
+          showRightBorder={firstColShowRightBorder}
           contentPaddingX={0}
-          contentPaddingY={cfg.typography.headerCellPaddingY}
+          contentPaddingY={m.headerCellPaddingY}
           contentAlignX="center"
           contentAlignY="center"
-          tbodyMinHeightPx={cfg.typography.theadCellMinHeightPx}
+          tbodyMinHeightPx={m.theadCellMinHeightPx}
         />
+      </div>
+
+      {/* 中间合并列：空占位（只有 >2 列时才渲染） */}
+      {cfg.visibleColIndexes.length > 2 ? (
+        <VTableCell
+          variant="tbody"
+          hovered={rowHovered}
+          hoverByCell={false}
+          pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+          active={false}
+          isLastRow={false}
+          isFrozen={false}
+          showRightBorder={middleSideShowRightBorder}
+          contentPaddingX={0}
+          contentPaddingY={m.headerCellPaddingY}
+          contentAlignX="center"
+          contentAlignY="center"
+          tbodyMinHeightPx={m.theadCellMinHeightPx}
+        />
+      ) : null}
+
+      {/* 末列：冻结时 sticky */}
+      <div
+        style={{
+          display: 'flex',
+          minWidth: 0,
+          alignItems: 'stretch',
+          position: cfg.enableFreezeLastCol ? 'sticky' : undefined,
+          right: cfg.enableFreezeLastCol
+            ? (cfg.enableInsertRowCol ? cfg.narrowWidth : 0)
+            : undefined,
+          zIndex: cfg.enableFreezeLastCol ? 3 : undefined,
+          boxSizing: 'border-box',
+        }}
+      >
+        <VTableCell
+          variant="tbody"
+          hovered={rowHovered}
+          hoverByCell={false}
+          pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+          active={false}
+          isLastRow={false}
+          isFrozen={cfg.enableFreezeLastCol}
+          showRightBorder={lastColShowRightBorder}
+          contentPaddingX={0}
+          contentPaddingY={m.headerCellPaddingY}
+          contentAlignX="center"
+          contentAlignY="center"
+          tbodyMinHeightPx={m.theadCellMinHeightPx}
+        />
+      </div>
+
+      {/* 插入列占位 */}
+      {cfg.enableInsertRowCol ? (
+        <div
+          style={{
+            display: 'flex',
+            minWidth: 0,
+            alignItems: 'stretch',
+            position: cfg.enableFreezeLastCol ? 'sticky' : undefined,
+            right: cfg.enableFreezeLastCol ? 0 : undefined,
+            zIndex: cfg.enableFreezeLastCol ? 5 : undefined,
+            boxSizing: 'border-box',
+          }}
+        >
+          <VTableCell
+            variant="tbody"
+            hovered={false}
+            hoverByCell={false}
+            pointerHoverResetNonce={cfg.pointerHoverResetNonce}
+            active={false}
+            isLastRow={false}
+            suppressBottomBorder
+            showRightBorder={false}
+            contentPaddingX={0}
+            contentPaddingY={m.headerCellPaddingY}
+            contentAlignX="center"
+            contentAlignY="center"
+            tbodyMinHeightPx={m.theadCellMinHeightPx}
+            style={{ width: cfg.narrowWidth }}
+          />
+        </div>
       ) : null}
     </div>
   );

@@ -466,8 +466,23 @@ function TableGridTextCellInner({
     if (!isSelectedIdle) return;
     const el = selectedIdleTextareaRef.current;
     if (!el) return;
-    syncBodyTextareaHeight(el);
-  }, [isSelectedIdle, displayText, syncBodyTextareaHeight]);
+    // 选中态：设置 contenteditable 内容为当前单元格值
+    const expectedValue = displayText;
+    if (el.textContent !== expectedValue) {
+      el.textContent = expectedValue;
+    }
+    // 选中态确保有焦点（这样才能接收键盘输入）
+    if (document.activeElement !== el) {
+      el.focus();
+      // 光标移到末尾（防止输入插入到开头）
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false); // false = 移到末尾
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+  }, [isSelectedIdle, displayText]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -1251,21 +1266,71 @@ function TableGridTextCellInner({
       ) : isSelectedIdle ? (
         wrapBodyTextInsetPanel(
           <div className="vc-biz-table-body-edit-wrap" style={{ display: 'flex', alignItems: cfg.enableVerticalCenter ? 'center' : 'flex-start' }}>
-            <textarea
+            {/* 选中态：使用 contenteditable（隐藏光标），用户按键直接触发 IME */}
+            <div
               key={`sel-idle-${bodyRowIndex}-${colIndex}`}
               ref={selectedIdleTextareaRef}
-              readOnly
-              tabIndex={-1}
-              value={displayText}
-              rows={1}
-              className="vc-biz-table-body-edit-native-textarea vc-biz-table-body-edit-native-textarea--readonly-idle"
-              style={bodyEditNativeTextareaStyle}
-              onMouseDown={(e) => {
-                /** 避免抢走焦点，保持「失焦态」描边样式；点击仍会冒泡到单元格以进入编辑 */
-                e.preventDefault();
+              contentEditable={true}
+              suppressContentEditableWarning
+              tabIndex={0}
+              className="vc-biz-table-body-edit-native-textarea"
+              style={{
+                ...bodyEditNativeTextareaStyle,
+                width: '100%',
+                minHeight: m.lineHeightPx,
+                // 选中态：隐藏光标，看起来像普通文本
+                caretColor: 'transparent',
+                cursor: 'text',
               }}
-              onFocus={(e) => e.currentTarget.blur()}
-            />
+              onInput={(e) => {
+                /** 选中态检测到输入 → 进入编辑态，传入当前输入的内容 */
+                const text = e.currentTarget.textContent || '';
+                ed.editingDraftRef.current = text;
+                ed.setEditingCell({ r: bodyRowIndex, c: colIndex });
+              }}
+              onKeyDown={(e) => {
+                /** 选中态：处理 Delete/Backspace */
+                if (!ed.editingCell) {
+                  if (e.key === 'Delete') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // 清空内容，不进入编辑态
+                    ed.setValueByCell((prev) => ({ ...prev, [key]: '' }));
+                    e.currentTarget.textContent = '';
+                  } else if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // 删除末尾1个字符，进入编辑态
+                    const currentValue = displayText;
+                    const newValue = currentValue.slice(0, -1);
+                    ed.editingDraftRef.current = newValue;
+                    ed.setEditingCell({ r: bodyRowIndex, c: colIndex });
+                  }
+                }
+              }}
+              onDoubleClick={(e) => {
+                /** 双击进入编辑态，显示光标 */
+                e.stopPropagation();
+                ed.editingDraftRef.current = displayText;
+                ed.setEditingCell({ r: bodyRowIndex, c: colIndex });
+              }}
+              onPaste={(e) => {
+                /** 粘贴 → 进入编辑态 */
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+                ed.editingDraftRef.current = text;
+                ed.setEditingCell({ r: bodyRowIndex, c: colIndex });
+              }}
+              onBlur={(e) => {
+                /** 选中态失焦：恢复显示原值 */
+                if (!ed.editingCell) {
+                  e.currentTarget.textContent = displayText;
+                }
+              }}
+            >
+              {displayText}
+            </div>
           </div>
         )
       ) : (
