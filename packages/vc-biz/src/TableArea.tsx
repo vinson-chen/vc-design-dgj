@@ -1022,8 +1022,9 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
           cleanedValueByCell[`${row}-4`] = `SKU-${specId.slice(-6)}`;
         }
 
-        // 列5: 关联数 = 随机3-35
-        cleanedValueByCell[`${row}-5`] = String(Math.floor(Math.random() * 33) + 3);
+        // 列5: 关联数 = 链接按钮（数字作为按钮名称）
+        const linkCount = Math.floor(Math.random() * 33) + 3;
+        linkDataByCell[`${row}-5`] = [{ name: String(linkCount), url: '' }];
 
         // 列6: 简称 = 规格名称缩写
         if (specName && shortNameMap[specName]) {
@@ -1051,7 +1052,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       });
       // 加载图片列和链接列数据（受控模式）
       setImageData({
-        columnFieldKindByCol: { [MOCK_IMAGE_COL]: 'image', 8: 'link' },
+        columnFieldKindByCol: { [MOCK_IMAGE_COL]: 'image', 5: 'link', 8: 'link' },
         imageUrlsByCell,
         linkDataByCell,
       });
