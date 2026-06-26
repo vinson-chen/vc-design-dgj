@@ -31,6 +31,7 @@ import {
   remapValueByCellAfterColumnOrderChange,
   remapColumnFieldKindsAfterColumnOrderChange,
   remapImageUrlsByCellAfterColumnOrderChange,
+  remapLinkDataByCellAfterColumnOrderChange,
   remapColWidthsAfterColumnOrderChange,
   remapHiddenColSetAfterColumnOrderChange,
   adjustSelectionSetAfterColumnOrderChange,
@@ -877,11 +878,12 @@ export default function TableRows(props: TableRowsProps) {
         editing.setValueByCell((prev) =>
           remapValueByCellAfterColumnOrderChange(prev, fromIndex, toIndex)
         );
-        // 重映射图片列数据（包含列字段类型和图片 URL）
+        // 重映射图片列数据（包含列字段类型、图片 URL 和链接数据）
         setImageData((prev) => ({
           ...prev,
           columnFieldKindByCol: remapColumnFieldKindsAfterColumnOrderChange(prev.columnFieldKindByCol, fromIndex, toIndex),
           imageUrlsByCell: remapImageUrlsByCellAfterColumnOrderChange(prev.imageUrlsByCell, fromIndex, toIndex),
+          linkDataByCell: remapLinkDataByCellAfterColumnOrderChange(prev.linkDataByCell, fromIndex, toIndex),
         }));
         // 重映射列宽
         if (props.colWidths) {

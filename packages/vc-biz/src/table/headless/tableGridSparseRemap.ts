@@ -281,6 +281,27 @@ export function remapImageUrlsByCellAfterColumnOrderChange(
   return next;
 }
 
+/** 列顺序调整后重映射链接数据集合 */
+export function remapLinkDataByCellAfterColumnOrderChange(
+  prev: Readonly<Record<string, ReadonlyArray<{ name: string; url: string }>>>,
+  fromIndex: number,
+  toIndex: number
+): Record<string, ReadonlyArray<{ name: string; url: string }>> {
+  const next: Record<string, ReadonlyArray<{ name: string; url: string }>> = {};
+  for (const [k, list] of Object.entries(prev)) {
+    const [rRaw, cRaw] = k.split('-');
+    const r = Number(rRaw);
+    const c = Number(cRaw);
+    if (Number.isNaN(r) || Number.isNaN(c)) {
+      next[k] = list;
+      continue;
+    }
+    const newC = remapColumnIndexAfterOrderChange(c, fromIndex, toIndex);
+    next[cellKey(r, newC)] = list;
+  }
+  return next;
+}
+
 /** 列顺序调整后重映射列宽数组 */
 export function remapColWidthsAfterColumnOrderChange(
   prev: ReadonlyArray<number | null>,
