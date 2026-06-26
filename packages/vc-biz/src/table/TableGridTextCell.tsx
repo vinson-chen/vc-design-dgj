@@ -1124,7 +1124,7 @@ function TableGridTextCellInner({
       contentAlignX={isInsertTailFirstVisibleCol ? 'flex-start' : undefined}
       contentAlignY={
         isImageColumnBodyCell || isLinkColumnBodyCell
-          ? 'flex-start'
+          ? cfg.enableVerticalCenter ? 'center' : 'flex-start'
           : !isHeader && !cfg.enableVerticalCenter
             ? 'flex-start'
             : 'center'
@@ -1185,13 +1185,23 @@ function TableGridTextCellInner({
               }}
               onClick={(e) => {
                 e.stopPropagation();
-                cfg.onInsertRow();
+                // 分组模式下添加空组，非分组模式下添加普通行
+                if (cfg.groupingConfig?.groupedColId != null) {
+                  cfg.onInsertEmptyGroup?.();
+                } else {
+                  cfg.onInsertRow();
+                }
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   e.stopPropagation();
-                  cfg.onInsertRow();
+                  // 分组模式下添加空组，非分组模式下添加普通行
+                  if (cfg.groupingConfig?.groupedColId != null) {
+                    cfg.onInsertEmptyGroup?.();
+                  } else {
+                    cfg.onInsertRow();
+                  }
                 }
               }}
             />
@@ -1242,6 +1252,7 @@ function TableGridTextCellInner({
             isAnchor={isAnchorCell}
             enableEditMode={cfg.enableEditMode && !cfg.disabledEditColSet?.has(colIndex)}
             editingApi={ed}
+            typography={m}
             appendLink={(r, c, data) => cfg.appendLinkToCell(r, c, data)}
             updateLink={(r, c, idx, data) => cfg.updateLinkAtCell(r, c, idx, data)}
             removeLink={(r, c, idx) => cfg.removeLinkAtCell(r, c, idx)}

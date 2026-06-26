@@ -1005,6 +1005,40 @@ export default function TableRows(props: TableRowsProps) {
     }));
   }, [props.onInsertRowWithGroupValue, groupTitleRows, columnMultiFieldConfigByCol, multiFieldValueByCell, setMultiFieldData]);
 
+  // 分组模式下添加空组：插入新行并设置分组列值为空
+  const onInsertEmptyGroup = useCallback(() => {
+    // 先调用原回调插入行
+    props.onInsertRow();
+    scrollTableViewportToBottom();
+
+    // 计算新行的 bodyRowIndex
+    const currentBodyRowCount = props.rowCount - 1;
+    const newBodyRowIndex = currentBodyRowCount > 0 ? currentBodyRowCount - 1 : 0;
+
+    // 找到分组列索引
+    if (groupedColId != null) {
+      const groupedColIndex = findGroupedColIndex(groupedColId, editing.valueByCell, props.colCount);
+      if (groupedColIndex != null && groupedColIndex >= 0 && groupedColIndex < props.colCount) {
+        // 设置新行的分组列值为空字符串（属于空组）
+        const cellKey = `${newBodyRowIndex}-${groupedColIndex}`;
+        editing.setValueByCell((prev) => ({
+          ...prev,
+          [cellKey]: '', // 空值会让该行属于空组
+        }));
+      }
+    }
+
+    // 插入行后调整选中区域
+    editing.insertBodyRowAt(newBodyRowIndex, props.colCount);
+  }, [
+    props.onInsertRow,
+    scrollTableViewportToBottom,
+    props.rowCount,
+    props.colCount,
+    groupedColId,
+    editing,
+  ]);
+
   const onInsertRowWrapped = useCallback(() => {
     props.onInsertRow();
     scrollTableViewportToBottom();
@@ -1124,6 +1158,8 @@ export default function TableRows(props: TableRowsProps) {
       groupTitleRows,
       // 组内插入行回调（包装后自动复制多字段内容）
       onInsertRowWithGroupValue: onInsertRowWithGroupValueWrapped,
+      // 分组模式下添加空组回调
+      onInsertEmptyGroup,
       // 批量展开/收起分组回调
       onToggleAllGroupExpansion: props.onToggleAllGroupExpansion,
       // 列顺序变更回调
@@ -1188,6 +1224,7 @@ export default function TableRows(props: TableRowsProps) {
     props.onPaginationChange,
     groupTitleRows,
     onInsertRowWithGroupValueWrapped,
+    onInsertEmptyGroup,
     props.onInsertRowWithGroupValue,
     props.onToggleAllGroupExpansion,
     onColumnOrderChange,

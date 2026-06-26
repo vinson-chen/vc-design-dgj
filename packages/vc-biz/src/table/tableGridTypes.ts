@@ -207,6 +207,8 @@ export type TableRowsProps = Readonly<{
   onToggleAllGroupExpansion?: (expandAll: boolean) => void;
   /** 组内插入行回调：自动填入分组值 */
   onInsertRowWithGroupValue?: (groupValue: string) => void;
+  /** 分组模式下添加空组回调 */
+  onInsertEmptyGroup?: () => void;
   /** 列顺序变更回调 */
   onColumnOrderChange?: (fromIndex: number, toIndex: number) => void;
 }>;
