@@ -17,9 +17,6 @@ const DEFAULT_TEXT_COL_W = 200;
 /** checkbox / 序号 / 插入列等窄格统一宽度（与 padding 0 下四位序号对齐，避免开关「显示序号」时列宽抖动） */
 const NARROW_W = 40;
 
-/** sessionStorage key for cached table data (刷新页面保留，关闭Tab清除) */
-const TABLE_CACHE_STORAGE_KEY = 'vc-biz-table-demo-cache';
-
 /** localStorage key for saved table data (点击保存数据按钮持久化) */
 const TABLE_DATA_STORAGE_KEY = 'vc-biz-table-demo-data';
 
@@ -101,10 +98,10 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     options?.bodyScrollMaxHeight === undefined ? 520 : options.bodyScrollMaxHeight;
   const showEditKeyboardHints = options?.showEditKeyboardHints ?? false;
 
-  // 存储读写工具函数
-  const getStorageData = useCallback((key: string): TableStorageData | null => {
+  // 存储读取工具函数
+  const getSavedData = useCallback((): TableStorageData | null => {
     try {
-      const data = sessionStorage.getItem(key) || localStorage.getItem(key);
+      const data = localStorage.getItem(TABLE_DATA_STORAGE_KEY);
       if (data) {
         return JSON.parse(data) as TableStorageData;
       }
@@ -114,55 +111,52 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     return null;
   }, []);
 
-  // 优先级：sessionStorage > localStorage > 默认值
-  const cachedData = getStorageData(TABLE_CACHE_STORAGE_KEY);
-  const savedData = getStorageData(TABLE_DATA_STORAGE_KEY);
-  const initialData = cachedData || savedData;
+  const savedData = getSavedData();
   const hasSavedData = savedData !== null;
 
-  const [rowCount, setRowCount] = useState(initialData?.rowCount ?? options?.initialRowCount ?? 20);
-  const [colCount, setColCount] = useState(initialData?.colCount ?? options?.initialColCount ?? 10);
+  const [rowCount, setRowCount] = useState(savedData?.rowCount ?? options?.initialRowCount ?? 20);
+  const [colCount, setColCount] = useState(savedData?.colCount ?? options?.initialColCount ?? 10);
   const [enableColumnResize, setEnableColumnResize] = useState(
-    initialData?.enableColumnResize ?? options?.initialEnableColumnResize ?? true
+    savedData?.enableColumnResize ?? options?.initialEnableColumnResize ?? true
   );
   const [enableVerticalCenter, setEnableVerticalCenter] = useState(
-    initialData?.enableVerticalCenter ?? options?.initialEnableVerticalCenter ?? true
+    savedData?.enableVerticalCenter ?? options?.initialEnableVerticalCenter ?? true
   );
   const [enableFreezeFirstCol, setEnableFreezeFirstCol] = useState(
-    initialData?.enableFreezeFirstCol ?? options?.initialEnableFreezeFirstCol ?? true
+    savedData?.enableFreezeFirstCol ?? options?.initialEnableFreezeFirstCol ?? true
   );
   const [enableFreezeLastCol, setEnableFreezeLastCol] = useState(
-    initialData?.enableFreezeLastCol ?? options?.initialEnableFreezeLastCol ?? false
+    savedData?.enableFreezeLastCol ?? options?.initialEnableFreezeLastCol ?? false
   );
   const [enableFreezeLastRow, setEnableFreezeLastRow] = useState(
-    initialData?.enableFreezeLastRow ?? options?.initialEnableFreezeLastRow ?? true
+    savedData?.enableFreezeLastRow ?? options?.initialEnableFreezeLastRow ?? true
   );
   const [enableBodyCellRightBorder, setEnableBodyCellRightBorder] = useState(
-    initialData?.enableBodyCellRightBorder ?? options?.initialEnableBodyCellRightBorder ?? true
+    savedData?.enableBodyCellRightBorder ?? options?.initialEnableBodyCellRightBorder ?? true
   );
   const [enableShowRowIndex, setEnableShowRowIndex] = useState(
-    initialData?.enableShowRowIndex ?? options?.initialEnableShowRowIndex ?? true
+    savedData?.enableShowRowIndex ?? options?.initialEnableShowRowIndex ?? true
   );
   const [enableBatchSelection, setEnableBatchSelection] = useState(
-    initialData?.enableBatchSelection ?? options?.initialEnableBatchSelection ?? true
+    savedData?.enableBatchSelection ?? options?.initialEnableBatchSelection ?? true
   );
   const [enableInsertRowCol, setEnableInsertRowCol] = useState(
-    initialData?.enableInsertRowCol ?? options?.initialEnableInsertRowCol ?? true
+    savedData?.enableInsertRowCol ?? options?.initialEnableInsertRowCol ?? true
   );
   const [enableEditMode, setEnableEditMode] = useState(
-    initialData?.enableEditMode ?? options?.initialEnableEditMode ?? true
+    savedData?.enableEditMode ?? options?.initialEnableEditMode ?? true
   );
   const [enableRegularTableFont, setEnableRegularTableFont] = useState(
-    initialData?.enableRegularTableFont ?? options?.initialEnableRegularTableFont ?? true
+    savedData?.enableRegularTableFont ?? options?.initialEnableRegularTableFont ?? true
   );
   const [valueByCell, setValueByCellBase] = useState<Record<string, string>>(() => ({
-    ...(initialData?.valueByCell ?? options?.initialValueByCell ?? {}),
+    ...(savedData?.valueByCell ?? options?.initialValueByCell ?? {}),
   }));
   const [hiddenColSet, setHiddenColSet] = useState<Set<number>>(() =>
-    new Set(initialData?.hiddenColSet ?? [])
+    new Set(savedData?.hiddenColSet ?? [])
   );
   const [disabledEditColSet, setDisabledEditColSet] = useState<Set<number>>(() =>
-    new Set(initialData?.disabledEditColSet ?? [])
+    new Set(savedData?.disabledEditColSet ?? [])
   );
   const [undoRedoNonce, setUndoRedoNonce] = useState(0);
   // 表格重置 nonce：用于强制重新挂载 TableRows，彻底清空所有内部状态
@@ -171,7 +165,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
 
   // 分页状态
   const [enablePagination, setEnablePagination] = useState(
-    initialData?.enablePagination ?? options?.initialEnablePagination ?? true
+    savedData?.enablePagination ?? options?.initialEnablePagination ?? true
   );
   const [paginationCurrent, setPaginationCurrent] = useState(
     options?.initialPaginationCurrent ?? 1
@@ -182,13 +176,13 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
 
   // 分组状态
   const [enableGrouping, setEnableGrouping] = useState(
-    initialData?.enableGrouping ?? options?.initialEnableGrouping ?? true
+    savedData?.enableGrouping ?? options?.initialEnableGrouping ?? true
   );
   const [groupedColId, setGroupedColId] = useState<string | undefined>(
-    initialData?.groupedColId ?? undefined
+    savedData?.groupedColId ?? undefined
   );
   const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(() =>
-    new Set(initialData?.expandedGroupKeys ?? [])
+    new Set(savedData?.expandedGroupKeys ?? [])
   );
 
   // 模拟数据状态
@@ -205,17 +199,17 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
 
   // ========== 图片列数据（状态提升，受控模式） ==========
   const [imageData, setImageData] = useState<import('./table/tableGridTypes').ImageData>(() => ({
-    columnFieldKindByCol: initialData?.columnFieldKindByCol as Record<number, import('./table/tableGridTypes').TableColumnFieldKind> ?? {},
-    imageUrlsByCell: initialData?.imageUrlsByCell ?? {},
-    linkDataByCell: initialData?.linkDataByCell ?? {},
+    columnFieldKindByCol: savedData?.columnFieldKindByCol as Record<number, import('./table/tableGridTypes').TableColumnFieldKind> ?? {},
+    imageUrlsByCell: savedData?.imageUrlsByCell ?? {},
+    linkDataByCell: savedData?.linkDataByCell ?? {},
   }));
   const imageDataRef = useRef(imageData);
   imageDataRef.current = imageData;
 
   // ========== 多字段数据（状态提升，受控模式） ==========
   const [multiFieldData, setMultiFieldData] = useState<import('./table/tableGridTypes').MultiFieldData>(() => ({
-    columnMultiFieldConfigByCol: initialData?.columnMultiFieldConfigByCol as Record<number, import('./table/tableGridTypes').ColumnMultiFieldConfig> ?? {},
-    multiFieldValueByCell: initialData?.multiFieldValueByCell ?? {},
+    columnMultiFieldConfigByCol: savedData?.columnMultiFieldConfigByCol as Record<number, import('./table/tableGridTypes').ColumnMultiFieldConfig> ?? {},
+    multiFieldValueByCell: savedData?.multiFieldValueByCell ?? {},
   }));
   const multiFieldDataRef = useRef(multiFieldData);
   multiFieldDataRef.current = multiFieldData;
@@ -242,7 +236,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     GRID_MAX_COL,
     MIN_RESIZABLE_TEXT_COL_W,
     getResizeMaxWidthForColumn,
-    initialData?.colWidths
+    savedData?.colWidths
   );
   const colWidthsRef = useRef(colWidths);
   colWidthsRef.current = colWidths;
@@ -251,73 +245,6 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
     bodyRowSelectionStoreRef.current = new BodyRowSelectionStore();
   }
   const bodyRowSelectionStore = bodyRowSelectionStoreRef.current;
-
-  // sessionStorage 自动缓存（刷新页面保留）
-  const cacheTableData = useCallback(() => {
-    const data: TableStorageData = {
-      rowCount: rowCountRef.current,
-      colCount: colCountRef.current,
-      valueByCell: valueByCellRef.current,
-      hiddenColSet: Array.from(hiddenColSet),
-      disabledEditColSet: Array.from(disabledEditColSet),
-      colWidths: colWidthsRef.current,
-      enableColumnResize,
-      enableVerticalCenter,
-      enableFreezeFirstCol,
-      enableFreezeLastCol,
-      enableFreezeLastRow,
-      enableBodyCellRightBorder,
-      enableShowRowIndex,
-      enableBatchSelection,
-      enableInsertRowCol,
-      enableEditMode,
-      enableRegularTableFont,
-      enablePagination,
-      enableGrouping,
-      imageUrlsByCell: Object.fromEntries(
-        Object.entries(imageData.imageUrlsByCell).map(([k, v]) => [k, Array.from(v)])
-      ),
-      columnFieldKindByCol: imageData.columnFieldKindByCol as Record<number, string>,
-      linkDataByCell: Object.fromEntries(
-        Object.entries(imageData.linkDataByCell).map(([k, v]) => [k, Array.from(v)])
-      ),
-      columnMultiFieldConfigByCol: multiFieldData.columnMultiFieldConfigByCol,
-      multiFieldValueByCell: multiFieldData.multiFieldValueByCell,
-      groupedColId,
-      expandedGroupKeys: Array.from(expandedGroupKeys),
-    };
-    try {
-      sessionStorage.setItem(TABLE_CACHE_STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      // sessionStorage 满时静默失败
-    }
-  }, [
-    hiddenColSet,
-    disabledEditColSet,
-    colWidths,
-    enableColumnResize,
-    enableVerticalCenter,
-    enableFreezeFirstCol,
-    enableFreezeLastCol,
-    enableFreezeLastRow,
-    enableBodyCellRightBorder,
-    enableShowRowIndex,
-    enableBatchSelection,
-    enableInsertRowCol,
-    enableEditMode,
-    enableRegularTableFont,
-    enablePagination,
-    enableGrouping,
-    groupedColId,
-    expandedGroupKeys,
-    imageData,
-    multiFieldData,
-  ]);
-
-  // 状态变化时自动缓存到 sessionStorage
-  useLayoutEffect(() => {
-    cacheTableData();
-  }, [cacheTableData]);
 
   useLayoutEffect(() => {
     bodyRowSelectionStore.setBodyRowCount(Math.max(0, rowCount - 1));
@@ -1192,8 +1119,7 @@ export function useTableAreaDemoState(options?: TableAreaDemoOptions) {
       });
       // 强制重新挂载 TableRows，彻底清空内部状态
       setTableResetNonce((n) => n + 1);
-      // 清除所有存储数据
-      sessionStorage.removeItem(TABLE_CACHE_STORAGE_KEY);
+      // 清除 localStorage 保存的数据
       localStorage.removeItem(TABLE_DATA_STORAGE_KEY);
     } finally {
       endBatch();
