@@ -309,7 +309,12 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
 
   const onAddClick = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
-    cfg.onInsertRow();
+    // 分组模式下添加空组，非分组模式下添加普通行
+    if (cfg.groupingConfig?.groupedColId != null) {
+      cfg.onInsertEmptyGroup?.();
+    } else {
+      cfg.onInsertRow();
+    }
   };
 
   // 判断当前页是否已全选
@@ -359,8 +364,8 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
     ? `${footerSelected}/${footerTotal} 条数据`
     : `${footerTotal} 条数据`;
 
-  // 判断分组模式下是否隐藏 "+" 按钮（分组模式下只有组内插入行有 "+" 按钮）
-  const hideAddButtonInGroupingMode = cfg.enableGrouping && cfg.groupTitleRows && cfg.groupTitleRows.length > 0;
+  // 分组模式下也显示 "+" 按钮（点击添加空组）
+  // const hideAddButtonInGroupingMode = cfg.enableGrouping && cfg.groupTitleRows && cfg.groupTitleRows.length > 0;
 
   return (
     <div
@@ -378,8 +383,8 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
       <div
         onMouseEnter={() => store.setHoveredRowIndex(isColumnResizeDragging() ? null : rowIndex)}
         onMouseLeave={() => store.setHoveredRowIndex(null)}
-        onClick={cfg.enableInsertRowCol && !hideAddButtonInGroupingMode ? onAddClick : undefined}
-        style={{ cursor: cfg.enableInsertRowCol && !hideAddButtonInGroupingMode ? 'pointer' : 'default' }}
+        onClick={cfg.enableInsertRowCol ? onAddClick : undefined}
+        style={{ cursor: cfg.enableInsertRowCol ? 'pointer' : 'default' }}
       >
         <VTableCell
           variant="tbody"
@@ -406,7 +411,7 @@ function TableGridInsertTailRow({ rowIndex }: { rowIndex: number }) {
             ...freezeTailShellTop,
           }}
         >
-        {cfg.enableInsertRowCol && !hideAddButtonInGroupingMode ? (
+        {cfg.enableInsertRowCol ? (
           <VcIcon
             type="add"
             fontSize={16}
